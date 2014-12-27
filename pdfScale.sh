@@ -5,6 +5,8 @@
 # Scale PDF to specified percentage of original size.
 # Ref: http://ma.juii.net/blog/scale-page-content-of-pdf-files.
 
+echo "This script doesn't handle files with spaces in them."
+
 SCALE=0.95 # scaling factor (0.95 = 95%, e.g.)
 
 # Validate args.
