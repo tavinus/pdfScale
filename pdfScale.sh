@@ -11,7 +11,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="1.0.8"
+VERSION="1.0.9"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -95,7 +95,7 @@ printDependency() {
 parseScale() {
 	if ! [[ -n "$1" && "$1" =~ ^-?[0-9]*([.][0-9]+)?$ && (($1 > 0 )) ]] ; then
 		echo >&2 "Invalid factor: $1"
-		echo >&2 "The factor must be a number between 0 and 1."
+		echo >&2 "The factor must be a floating point number greater than 0"
 		echo >&2 "Example: for 80% use 0.8"
 		exit 2
 	fi
