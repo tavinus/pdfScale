@@ -52,5 +52,5 @@ Please note that the system installer will name the executable as `pdfscale` wit
 If you have `make` installed you can use it to install to `usr/local/bin/pdfscale` with:  
 `sudo make install`  
   
-The you can remove the script with  
+To remove the installation use:  
 `sudo make uninstall`  
