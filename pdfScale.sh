@@ -11,13 +11,24 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="1.0.5"
-SCALE=0.95   # scaling factor (0.95 = 95%, e.g.)
-VERBOSE=0    # verbosity Level
+VERSION="1.0.7"
+SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
+VERBOSE=0                  # verbosity Level
+BASENAME="$(basename $0)"  # simplified name of this script
+GSBIN=""                   # Set with which after we check dependencies
+BCBIN=""                   # Set with which after we check dependencies
 
+LC_MEASUREMENT="C"         # To make sure our numbers have .decimals
+LC_ALL="C"                 # Some languages use , as decimal token
+LC_CTYPE="C"
+LC_NUMERIC="C"
 
 printVersion() {
-	echo "$(basename $0) v$VERSION"
+	if [[ $1 -eq 2 ]]; then
+		echo >&2 "$BASENAME v$VERSION"
+	else
+		echo "$BASENAME v$VERSION"
+	fi
 }
 
 printHelp() {
@@ -29,6 +40,7 @@ Usage: $0 [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]
 
 Parameters:
  -v          Verbose mode, prints extra information
+             Use twice for even more information
  -h          Print this help to screen and exits
  -V          Prints version to screen and exits
  -s <factor> Changes the scaling factor, defaults to 0.95
@@ -49,40 +61,71 @@ Notes:
 Examples:
  pdfScale myPdfFile.pdf
  pdfScale myPdfFile.pdf myScaledPdf
- pdfScale -v myPdfFile.pdf
+ pdfScale -v -v myPdfFile.pdf
  pdfScale -s 0.85 myPdfFile.pdf myScaledPdf.pdf
- pdfScale -v -s 0.7 myPdfFile.pdf
+ pdfScale -v -v -s 0.7 myPdfFile.pdf
  pdfScale -h
 "
 }
 
 usage() { 
-	printVersion
-	echo "Usage: $0 [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]" 1>&2
-	echo "Try:   $0 -h # for help" 1>&2
+	printVersion 2
+	echo >&2 "Usage: $0 [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]"
+	echo >&2 "Try:   $0 -h # for help"
 	exit 1
+}
+
+vprint() {
+	[[ $VERBOSE -eq 0 ]] && return 0
+	timestamp=""
+	[[ $VERBOSE -gt 1 ]] && timestamp="$(date +%Y-%m-%d:%H:%M:%S) | "
+	echo "$timestamp$1"
+}
+
+printDependency() {
+	printVersion 2
+	echo >&2 $'\n'"ERROR! You need to install the package '$1'"$'\n'
+	echo >&2 "Linux apt-get.: sudo apt-get install $1"
+	echo >&2 "Linux yum.....: sudo yum install $1"
+	echo >&2 "MacOS homebrew: brew install $1"
+	echo >&2 $'\n'"Aborting..."
+	exit 3
 }
 
 parseScale() {
 	if ! [[ -n "$1" && "$1" =~ ^-?[0-9]*([.][0-9]+)?$ && (($1 > 0 )) ]] ; then
-		echo "Invalid factor: $1"
-		echo "The factor must be a number between 0 and 1."
-		echo "Example: for 80% use 0.8"
+		echo >&2 "Invalid factor: $1"
+		echo >&2 "The factor must be a number between 0 and 1."
+		echo >&2 "Example: for 80% use 0.8"
 		exit 2
 	fi
 	SCALE=$1
 }
 
-vprint() {
-	[[ $VERBOSE -eq 0 ]] && return 0
-	timestamp="$(date +%Y-%m-%d:%H:%M:%S)"
-	echo "$timestamp | $1"
+
+getPageSize() {
+	# get MediaBox info from PDF file using cat and grep, these are all possible
+	# /MediaBox [0 0 595 841]
+	# /MediaBox [ 0 0 595.28 841.89]
+	# /MediaBox[ 0 0 595.28 841.89 ]
+	local mediaBox="$(cat "$INFILEPDF" | grep -a '/MediaBox')" # done with externals
+	findex=$(expr index "$mediaBox" "0")    # Find first Zero
+	findex=$(($findex+3))                   # Adjust postion to 1st number
+	mediaBox="${mediaBox:$findex}"          # Re-set base string
+	findex=$(expr index "$mediaBox" ' ')    # Tokenize
+	PGWIDTH=$(printf '%.0f' "${mediaBox:0:(($findex-1))}")  # Get Round Width
+	mediaBox="${mediaBox:$findex}"          # Re-set base string
+	findex=$(expr index "$mediaBox" ' ')    # Ends with space or ]
+	[[ $findex -eq 0 ]] && findex=$(expr index "$mediaBox" ']')
+	PGHEIGHT=$(printf '%.0f' "${mediaBox:0:(($findex-1))}") # Get Round Height
+	vprint "         Width: $PGWIDTH postscript-points"
+	vprint "        Height: $PGHEIGHT postscript-points"
 }
 
 while getopts ":vhVs:" o; do
     case "${o}" in
         v)
-            VERBOSE=1
+            ((VERBOSE++))
             ;;
         h)
             printHelp
@@ -102,31 +145,25 @@ while getopts ":vhVs:" o; do
 done
 shift $((OPTIND-1))
 
-printDependency() {
-	echo >&2 $'\n'"ERROR! You need to install the package '$1'"$'\n'
-	echo >&2 "Linux apt-get.: sudo apt-get install $1"
-	echo >&2 "Linux yum.....: sudo yum install $1"
-	echo >&2 "MacOS homebrew: brew install $1"
-	echo >&2 $'\n'"Aborting..."
-	exit 3
-}
-
 vprint "$(basename $0) v$VERSION - Verbose execution"
 
 # Dependencies
 vprint "Checking dependencies"
-command -v identify >/dev/null 2>&1 || printDependency 'imagemagick'
 command -v gs >/dev/null 2>&1 || printDependency 'ghostscript'
 command -v bc >/dev/null 2>&1 || printDependency 'bc'
 
+GSBIN=$(which gs 2>/dev/null)
+BCBIN=$(which bc 2>/dev/null)
+
 vprint "  Scale factor: $SCALE"
 
-# Validate args.
+# Validate args
 [[ $# -lt 1 ]] && { usage; exit 1; }
 INFILEPDF="$1"
 [[ "$INFILEPDF" =~ ^..*\.pdf$ ]] || { usage; exit 2; }
 vprint "    Input file: $INFILEPDF"
 
+# Parse output filename
 if [[ -z $2 ]]; then
 	OUTFILEPDF="${INFILEPDF%.pdf}.SCALED.pdf"
 else
@@ -134,30 +171,17 @@ else
 fi
 vprint "   Output file: $OUTFILEPDF"
 
-
-# Get width/height in postscript points (1/72-inch), via ImageMagick identify command.
-# (Alternatively, could use Poppler pdfinfo command; or grep/sed the PDF by hand.)
-IDENTIFY=$(identify -format "%G" "$INFILEPDF" 2>/dev/null)
-[[ -z $IDENTIFY ]] && { echo "Error when getting PDF size! Aborting..." ; exit 11; }
-
-IDENTIFY="$(echo "$IDENTIFY" | tr "x" " " 2>/dev/null | tr -d "+" 2>/dev/null)"
-IDENTIFY=($(echo "$IDENTIFY")) # transform in a bash array
-PGWIDTH=${IDENTIFY[0]}
-PGHEIGHT=${IDENTIFY[1]}
-vprint "         Width: $PGWIDTH postscript-points"
-vprint "        Height: $PGHEIGHT postscript-points"
-
+# Set PGWIDTH and PGHEIGHT
+getPageSize
 
 # Compute translation factors (to center page.
-XTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGWIDTH" | bc)
-YTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGHEIGHT" | bc)
+XTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGWIDTH" | "$BCBIN")
+YTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGHEIGHT" | "$BCBIN")
 vprint " Translation X: $XTRANS"
 vprint " Translation Y: $YTRANS"
 
-#echo $PGWIDTH , $PGHEIGHT , $OUTFILEPDF , $SCALE , $XTRANS , $YTRANS , $INFILEPDF , $OUTFILEPDF
-
 # Do it.
-gs \
+"$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
 -dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
 -dColorConversionStrategy=/LeaveColorUnchanged \
