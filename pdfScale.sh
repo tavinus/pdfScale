@@ -11,7 +11,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="1.0.7"
+VERSION="1.0.8"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -34,9 +34,9 @@ printVersion() {
 printHelp() {
 	printVersion
 	echo "
-Usage: $0 [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]
-       $0 -h
-       $0 -V
+Usage: $BASENAME [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]
+       $BASENAME -h
+       $BASENAME -V
 
 Parameters:
  -v          Verbose mode, prints extra information
@@ -59,12 +59,12 @@ Notes:
    result on cropping parts of the pdf.
 
 Examples:
- pdfScale myPdfFile.pdf
- pdfScale myPdfFile.pdf myScaledPdf
- pdfScale -v -v myPdfFile.pdf
- pdfScale -s 0.85 myPdfFile.pdf myScaledPdf.pdf
- pdfScale -v -v -s 0.7 myPdfFile.pdf
- pdfScale -h
+ $BASENAME myPdfFile.pdf
+ $BASENAME myPdfFile.pdf myScaledPdf
+ $BASENAME -v -v myPdfFile.pdf
+ $BASENAME -s 0.85 myPdfFile.pdf myScaledPdf.pdf
+ $BASENAME -v -v -s 0.7 myPdfFile.pdf
+ $BASENAME -h
 "
 }
 
