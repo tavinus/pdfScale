@@ -6,14 +6,20 @@ The "paper" size does not change, just the elements are resized.
 
 ## Dependencies  
 The script uses `basename`, `cat`, `grep`, `bc` and `gs` (ghostscript)  
-You probably have everything already, except for ghostscript  
+You probably have everything installed already, except for ghostscript  
 
 ##### apt-get
-`sudo apt-get install ghostscript bc`
+```
+sudo apt-get install ghostscript bc
+```
 ##### yum
-`sudo yum install ghostscript bc`
+```
+sudo yum install ghostscript bc
+```
 ##### homebrew MacOS
-`brew install ghostscript`
+```
+brew install ghostscript
+```
 
 ## Help info
 ```
@@ -56,7 +62,11 @@ Examples:
 Please note that the system installer will name the executable as `pdfscale` with no uppercase chars and without the `.sh` extension.  
   
 If you have `make` installed you can use it to install to `usr/local/bin/pdfscale` with:  
-`sudo make install`  
+```
+sudo make install
+```  
   
 To remove the installation use:  
-`sudo make uninstall`  
+```
+sudo make uninstall
+```
