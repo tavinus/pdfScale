@@ -1,26 +1,32 @@
 # pdfScale.sh
 Bash Script to scale PDFs from the command line.  
 Uses ghostscript to create a scaled version of the pdf input.  
-The "paper" size does not change, just the elements are resized.
+The "paper" size does not change, just the elements are resized.   
+#####Does not require ImageMagick anymore!  
 
-## Dependencies
+## Dependencies  
+The script uses `basename`, `cat`, `grep`, `bc` and `gs` (ghostscript)  
+You probably have everything already, except for ghostscript  
+
 ##### apt-get
-`sudo apt-get install imagemagick ghostscript bc`
+`sudo apt-get install ghostscript bc`
 ##### yum
-`sudo yum install ImageMagick ghostscript bc`
+`sudo yum install ghostscript bc`
 ##### homebrew MacOS
-`brew install imagemagick ghostscript`
+`brew install ghostscript`
 
 ## Help info
 ```
-pdfScale.sh v1.0.4
+$ pdfscale -h
+pdfscale v1.0.8
 
-Usage: ./pdfScale.sh [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]
-       ./pdfScale.sh -h
-       ./pdfScale.sh -V
+Usage: pdfscale [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]
+       pdfscale -h
+       pdfscale -V
 
 Parameters:
  -v          Verbose mode, prints extra information
+             Use twice for even more information
  -h          Print this help to screen and exits
  -V          Prints version to screen and exits
  -s <factor> Changes the scaling factor, defaults to 0.95
@@ -39,12 +45,12 @@ Notes:
    result on cropping parts of the pdf.
 
 Examples:
- pdfScale myPdfFile.pdf
- pdfScale myPdfFile.pdf myScaledPdf
- pdfScale -v myPdfFile.pdf
- pdfScale -s 0.85 myPdfFile.pdf myScaledPdf.pdf
- pdfScale -v -s 0.7 myPdfFile.pdf
- pdfScale -h
+ pdfscale myPdfFile.pdf
+ pdfscale myPdfFile.pdf myScaledPdf
+ pdfscale -v -v myPdfFile.pdf
+ pdfscale -s 0.85 myPdfFile.pdf myScaledPdf.pdf
+ pdfscale -v -v -s 0.7 myPdfFile.pdf
+ pdfscale -h
 ```
 ## System Install
 Please note that the system installer will name the executable as `pdfscale` with no uppercase chars and without the `.sh` extension.  
