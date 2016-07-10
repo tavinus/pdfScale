@@ -3,10 +3,13 @@
 # pdfScale.sh
 #
 # Scale PDF to specified percentage of original size.
-# Based on: http://ma.juii.net/blog/scale-page-content-of-pdf-files
-#      And: 
+#
+# Gutavo Arnosti Neves - 2016 / 07 / 10
+#
+# This script: https://github.com/tavinus/pdfScale
+#    Based on: http://ma.juii.net/blog/scale-page-content-of-pdf-files
+#         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
-#echo "This script HANDLES files with spaces in them."
 
 VERSION="1.0.5"
 SCALE=0.95   # scaling factor (0.95 = 95%, e.g.)
