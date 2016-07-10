@@ -11,7 +11,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="1.0.9"
+VERSION="1.0.11"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -70,8 +70,8 @@ Examples:
 
 usage() { 
 	printVersion 2
-	echo >&2 "Usage: $0 [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]"
-	echo >&2 "Try:   $0 -h # for help"
+	echo >&2 "Usage: $BASENAME [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]"
+	echo >&2 "Try:   $BASENAME -h # for help"
 	exit 1
 }
 
@@ -109,15 +109,18 @@ getPageSize() {
 	# /MediaBox [ 0 0 595.28 841.89]
 	# /MediaBox[ 0 0 595.28 841.89 ]
 	local mediaBox="$(cat "$INFILEPDF" | grep -a '/MediaBox')" # done with externals
-	findex=$(expr index "$mediaBox" "0")    # Find first Zero
-	findex=$(($findex+3))                   # Adjust postion to 1st number
-	mediaBox="${mediaBox:$findex}"          # Re-set base string
-	findex=$(expr index "$mediaBox" ' ')    # Tokenize
-	PGWIDTH=$(printf '%.0f' "${mediaBox:0:(($findex-1))}")  # Get Round Width
-	mediaBox="${mediaBox:$findex}"          # Re-set base string
-	findex=$(expr index "$mediaBox" ' ')    # Ends with space or ]
-	[[ $findex -eq 0 ]] && findex=$(expr index "$mediaBox" ']')
-	PGHEIGHT=$(printf '%.0f' "${mediaBox:0:(($findex-1))}") # Get Round Height
+	#mediaBox="/MediaBox [0 0 595 841]"
+	#echo "mediaBox $mediaBox"
+	mediaBox="${mediaBox#*0 0 }"
+	#echo "mediaBox $mediaBox"
+	PGWIDTH=$(printf '%.0f' "${mediaBox%% *}")  # Get Round Width
+	#echo "PGWIDTH $PGWIDTH"
+	mediaBox="${mediaBox#* }"
+	#echo "mediaBox $mediaBox"
+	PGHEIGHT="${mediaBox%%]*}"              # Get value, may have spaces
+	#echo "PGHEIGHT $PGHEIGHT"
+	PGHEIGHT=$(printf '%.0f' "${PGHEIGHT%% *}") # Get Round Height
+	#echo "PGHEIGHT $PGHEIGHT"
 	vprint "         Width: $PGWIDTH postscript-points"
 	vprint "        Height: $PGHEIGHT postscript-points"
 }
