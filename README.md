@@ -7,7 +7,7 @@ The "paper" size does not change, just the elements are resized.
 ##### apt-get
 `sudo apt-get install imagemagick ghostscript bc`
 ##### yum
-`sudo yum install imagemagick ghostscript bc`
+`sudo yum install ImageMagick ghostscript bc`
 ##### homebrew MacOS
 `brew install imagemagick ghostscript`
 
