@@ -4,7 +4,7 @@ Uses ghostscript to create a scaled version of the pdf input.
 The "paper" size does not change, just the elements are resized.   
 
 ## Dependencies  
-The script uses `basename`, `cat`, `grep`, `bc` and `gs` (ghostscript)  
+The script uses `basename`, `cat`, `grep`, `bc`, `head` and `gs` (ghostscript)
 You probably have everything installed already, except for ghostscript  
 
 ##### apt-get
