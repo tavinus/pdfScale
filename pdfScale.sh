@@ -11,7 +11,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="1.2.7"
+VERSION="1.2.9"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -221,13 +221,13 @@ command -v bc >/dev/null 2>&1 || printDependency 'bc'
 if [[ $USEIMGMGK -eq $TRUE ]]; then
         vprint "Checking for imagemagick's identify"
         command -v identify >/dev/null 2>&1 || printDependency 'imagemagick'
+        IDBIN=$(which identify 2>/dev/null)
 fi
 
 
 # Get dependency binaries
 GSBIN=$(which gs 2>/dev/null)
 BCBIN=$(which bc 2>/dev/null)
-IDBIN=$(which identify 2>/dev/null)
 
 
 # Verbose scale info
