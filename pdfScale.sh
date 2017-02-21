@@ -11,7 +11,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="1.2.9"
+VERSION="1.2.10"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -52,7 +52,8 @@ Parameters:
              Use twice for even more information
  -h          Print this help to screen and exits
  -V          Prints version to screen and exits
- -i          Use imagemagick to get page size, defaults false
+ -i          Use imagemagick to get page size, 
+             instead of cat + grep method
  -s <factor> Changes the scaling factor, defaults to 0.95
              MUST be a number bigger than zero. 
              Eg. -s 0.8 for 80% of the original size 
@@ -73,6 +74,7 @@ Examples:
  $BASENAME myPdfFile.pdf myScaledPdf
  $BASENAME -v -v myPdfFile.pdf
  $BASENAME -s 0.85 myPdfFile.pdf myScaledPdf.pdf
+ $BASENAME -i -s 0.80 -v myPdfFile.pdf
  $BASENAME -v -v -s 0.7 myPdfFile.pdf
  $BASENAME -h
 "
