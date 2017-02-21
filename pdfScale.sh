@@ -669,7 +669,7 @@ vprint "  Scale factor: $SCALE"
 [[ $# -lt 1 ]] && { usage; exit 1; }
 INFILEPDF="$1"
 [[ "$INFILEPDF" =~ ^..*\.pdf$ ]] || { usage; exit 2; }
-[[ -f "$INFILEPDF" ]] || { echo "Error! File not found: $INFILEPDF"; usage; exit 2; }
+[[ -f "$INFILEPDF" ]] || { echo "Error! File not found: $INFILEPDF"; exit 3; }
 vprint "    Input file: $INFILEPDF"
 
 
