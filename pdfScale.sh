@@ -88,7 +88,7 @@ Examples:
 # Prints usage info
 usage() { 
         printVersion 2
-        echo >&2 "Usage: $BASENAME [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]"
+        echo >&2 "Usage: $BASENAME [-v] [-s <factor>] [-i|-c] <inFile.pdf> [outfile.pdf]"
         echo >&2 "Try:   $BASENAME -h # for help"
         exit 1
 }
