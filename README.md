@@ -2,11 +2,10 @@
 Bash Script to scale PDFs from the command line.  
 Uses ghostscript to create a scaled version of the pdf input.  
 The "paper" size does not change, just the elements are resized.   
-#####Does not require ImageMagick anymore!  
 
 ## Dependencies  
-The script uses `basename`, `cat`, `grep`, `bc` and `gs` (ghostscript)  
-You probably have everything installed already, except for ghostscript  
+The script uses `basename`, `cat`, `grep`, `bc`, `head` and `gs` (ghostscript).   
+You probably have everything installed already, except for ghostscript.   
 
 ##### apt-get
 ```
@@ -20,13 +19,17 @@ sudo yum install ghostscript bc
 ```
 brew install ghostscript
 ```
+##### ImageMagick
+As of version 1.2.7 ImageMagick was reintroduced as an optional way to get the first page size.   
+You will need to install imagemagick and have `identify` available on your `$PATH` to then use the `-i` parameter.   
+
 
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v1.0.8
+pdfscale v1.2.7
 
-Usage: pdfscale [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]
+Usage: pdfscale [-v] [-s <factor>] [-i] <inFile.pdf> [outfile.pdf]
        pdfscale -h
        pdfscale -V
 
@@ -35,6 +38,7 @@ Parameters:
              Use twice for even more information
  -h          Print this help to screen and exits
  -V          Prints version to screen and exits
+ -i          Use imagemagick to get page size, defaults false
  -s <factor> Changes the scaling factor, defaults to 0.95
              MUST be a number bigger than zero. 
              Eg. -s 0.8 for 80% of the original size 
