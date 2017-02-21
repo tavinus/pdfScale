@@ -11,7 +11,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="1.2.1"
+VERSION="1.2.7"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -23,6 +23,13 @@ LC_ALL="C"                 # Some languages use , as decimal token
 LC_CTYPE="C"
 LC_NUMERIC="C"
 
+TRUE=0                     # Silly stuff
+FALSE=1
+
+USEIMGMGK=$FALSE           # ImageMagick Flag, will use identify if true
+
+
+# Prints version
 printVersion() {
         if [[ $1 -eq 2 ]]; then
                 echo >&2 "$BASENAME v$VERSION"
@@ -31,10 +38,12 @@ printVersion() {
         fi
 }
 
+
+# Prints help info
 printHelp() {
         printVersion
         echo "
-Usage: $BASENAME [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]
+Usage: $BASENAME [-v] [-s <factor>] [-i] <inFile.pdf> [outfile.pdf]
        $BASENAME -h
        $BASENAME -V
 
@@ -43,6 +52,7 @@ Parameters:
              Use twice for even more information
  -h          Print this help to screen and exits
  -V          Prints version to screen and exits
+ -i          Use imagemagick to get page size, defaults false
  -s <factor> Changes the scaling factor, defaults to 0.95
              MUST be a number bigger than zero. 
              Eg. -s 0.8 for 80% of the original size 
@@ -68,6 +78,8 @@ Examples:
 "
 }
 
+
+# Prints usage info
 usage() { 
         printVersion 2
         echo >&2 "Usage: $BASENAME [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]"
@@ -75,6 +87,8 @@ usage() {
         exit 1
 }
 
+
+# Prints Verbose information
 vprint() {
         [[ $VERBOSE -eq 0 ]] && return 0
         timestamp=""
@@ -82,6 +96,8 @@ vprint() {
         echo "$timestamp$1"
 }
 
+
+# Prints dependency information and aborts execution
 printDependency() {
         printVersion 2
         echo >&2 $'\n'"ERROR! You need to install the package '$1'"$'\n'
@@ -92,6 +108,8 @@ printDependency() {
         exit 3
 }
 
+
+# Parses and validates the scaling factor
 parseScale() {
         if ! [[ -n "$1" && "$1" =~ ^-?[0-9]*([.][0-9]+)?$ && (($1 > 0 )) ]] ; then
                 echo >&2 "Invalid factor: $1"
@@ -103,6 +121,19 @@ parseScale() {
 }
 
 
+# Gets page size using imagemagick's identify
+getPageSizeImagemagick() {
+	# get data from image magick
+        local identify="$("$IDBIN" -format '%[fx:w] %[fx:h]BREAKME' "$INFILEPDF" 2>/dev/null)"
+
+	identify="${identify%%BREAKME*}"   # get page size only for 1st page
+	identify=($identify)               # make it an array
+	PGWIDTH=${identify[0]}             # assign
+        PGHEIGHT=${identify[1]}
+}
+
+
+# Gets page size using cat and grep
 getPageSize() {
         # get MediaBox info from PDF file using cat and grep, these are all possible
         # /MediaBox [0 0 595 841]
@@ -110,11 +141,13 @@ getPageSize() {
         # /MediaBox[ 0 0 595.28 841.89 ]
 
         # Get MediaBox data if possible
-        local mediaBox="$(cat "$INFILEPDF" | grep -a '/MediaBox')"
+        local mediaBox="$(cat "$INFILEPDF" | grep -a '/MediaBox' | head -n1)"
+        mediaBox="${mediaBox##*/MediaBox}"
 
         # If no MediaBox, try BBox
         if [[ -z $mediaBox ]]; then
-                mediaBox="$(cat "$INFILEPDF" | grep -a '/BBox')"
+                mediaBox="$(cat "$INFILEPDF" | grep -a '/BBox' | head -n1)"
+                mediaBox="${mediaBox##*/BBox}"
         fi
 
         # No page size data available
@@ -134,22 +167,20 @@ getPageSize() {
         mbCount=${#mediaBox[@]}     # array size
 
         # sanity
-        if [[ $mbCount -lt 5 ]]; then 
+        if [[ $mbCount -lt 4 ]]; then 
             echo "Error when reading the page size!"
             echo "The page size information is invalid!"
             exit 16
         fi
 
         # we are done
-        PGWIDTH=$(printf '%.0f' "${mediaBox[3]}")  # Get Round Width
-        PGHEIGHT=$(printf '%.0f' "${mediaBox[4]}") # Get Round Height
-
-        vprint "         Width: $PGWIDTH postscript-points"
-        vprint "        Height: $PGHEIGHT postscript-points"
+        PGWIDTH=$(printf '%.0f' "${mediaBox[2]}")  # Get Round Width
+        PGHEIGHT=$(printf '%.0f' "${mediaBox[3]}") # Get Round Height
 }
 
+
 # Parse options
-while getopts ":vhVs:" o; do
+while getopts ":vihVs:" o; do
     case "${o}" in
         v)
             ((VERBOSE++))
@@ -165,6 +196,9 @@ while getopts ":vhVs:" o; do
         s)
             parseScale ${OPTARG}
             ;;
+        i)
+            USEIMGMGK=$TRUE
+            ;;
         *)
             usage
             ;;
@@ -179,23 +213,33 @@ shift $((OPTIND-1))
 #Intro message
 vprint "$(basename $0) v$VERSION - Verbose execution"
 
+
 # Dependencies
-vprint "Checking dependencies"
+vprint "Checking for ghostscript and bcmath"
 command -v gs >/dev/null 2>&1 || printDependency 'ghostscript'
 command -v bc >/dev/null 2>&1 || printDependency 'bc'
+if [[ $USEIMGMGK -eq $TRUE ]]; then
+        vprint "Checking for imagemagick's identify"
+        command -v identify >/dev/null 2>&1 || printDependency 'imagemagick'
+fi
+
 
 # Get dependency binaries
 GSBIN=$(which gs 2>/dev/null)
 BCBIN=$(which bc 2>/dev/null)
+IDBIN=$(which identify 2>/dev/null)
+
 
 # Verbose scale info
 vprint "  Scale factor: $SCALE"
+
 
 # Validate args
 [[ $# -lt 1 ]] && { usage; exit 1; }
 INFILEPDF="$1"
 [[ "$INFILEPDF" =~ ^..*\.pdf$ ]] || { usage; exit 2; }
 vprint "    Input file: $INFILEPDF"
+
 
 # Parse output filename
 if [[ -z $2 ]]; then
@@ -205,14 +249,23 @@ else
 fi
 vprint "   Output file: $OUTFILEPDF"
 
+
 # Set PGWIDTH and PGHEIGHT
-getPageSize
+if [[ $USEIMGMGK -eq $TRUE ]]; then
+        getPageSizeImagemagick
+else
+        getPageSize
+fi
+vprint "         Width: $PGWIDTH postscript-points"
+vprint "        Height: $PGHEIGHT postscript-points"
+
 
 # Compute translation factors (to center page.
 XTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGWIDTH" | "$BCBIN")
 YTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGHEIGHT" | "$BCBIN")
 vprint " Translation X: $XTRANS"
 vprint " Translation Y: $YTRANS"
+
 
 # Do it.
 "$GSBIN" \
