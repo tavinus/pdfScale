@@ -4,7 +4,7 @@
 #
 # Scale PDF to specified percentage of original size.
 #
-# Gutavo Arnosti Neves - 2016 / 07 / 10
+# Gustavo Arnosti Neves - 2016 / 07 / 10
 #
 # This script: https://github.com/tavinus/pdfScale
 #    Based on: http://ma.juii.net/blog/scale-page-content-of-pdf-files
