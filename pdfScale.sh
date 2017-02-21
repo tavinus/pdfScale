@@ -11,7 +11,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="1.0.11"
+VERSION="1.1.3"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -109,6 +109,16 @@ getPageSize() {
 	# /MediaBox [ 0 0 595.28 841.89]
 	# /MediaBox[ 0 0 595.28 841.89 ]
 	local mediaBox="$(cat "$INFILEPDF" | grep -a '/MediaBox')" # done with externals
+	if [[ -z $mediaBox ]]; then
+		mediaBox="$(cat "$INFILEPDF" | grep -a '/BBox')"   # if no mediaBox
+	fi
+	if [[ -z $mediaBox ]]; then
+		echo "Error when reading input file!"
+		echo "Could not determine the page size!"
+		echo "There is no MediaBox or BBox in the pdf document!"
+		echo "Aborting..."
+		exit 15
+	fi
 	#mediaBox="/MediaBox [0 0 595 841]"
 	#echo "mediaBox $mediaBox"
 	mediaBox="${mediaBox#*0 0 }"
