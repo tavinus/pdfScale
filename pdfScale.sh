@@ -17,6 +17,7 @@ VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
 GSBIN=""                   # Set with which after we check dependencies
 BCBIN=""                   # Set with which after we check dependencies
+IDBIN=""                   # Set with which after we check dependencies
 
 LC_MEASUREMENT="C"         # To make sure our numbers have .decimals
 LC_ALL="C"                 # Some languages use , as decimal token
