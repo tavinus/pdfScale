@@ -11,7 +11,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="1.3.3"
+VERSION="1.3.5"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -537,7 +537,9 @@ quit
 
 EOF
 	# get data from gs script
-        local identify="$("$GSBIN" -dNODISPLAY -q -sFile=../input-nup.pdf -dDumpMediaSizes -dDumpFontsNeeded=false -c "$PDFINFOGS" 2>/dev/null | grep MediaBox | head -n1)"
+        local identify="$("$GSBIN" -dNODISPLAY -q -sFile="$INFILEPDF" -dDumpMediaSizes -dDumpFontsNeeded=false -c "$PDFINFOGS" 2>/dev/null | grep MediaBox | head -n1)"
+
+	echo "identify: $identify"
 
 	identify="${identify##*MediaBox:}"   # get page size only for 1st page
 
@@ -546,6 +548,8 @@ EOF
         identify="${identify//]}"
 
 	identify=($identify)               # make it an array
+	
+	echo "identify: ${identify[@]}"
 
         # sanity
         if [[ ${#identify[@]} -lt 4 ]]; then 
