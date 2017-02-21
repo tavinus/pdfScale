@@ -20,8 +20,8 @@ sudo yum install ghostscript bc
 brew install ghostscript
 ```
 ##### ImageMagick
-As of version 1.2.7 ImageMagick was reintroduced as an optional way to get the first page size.
-You will need to install imagemagick and have `identify` available on your `$PATH` to then use the `-i` parameter.
+As of version 1.2.7 ImageMagick was reintroduced as an optional way to get the first page size.   
+You will need to install imagemagick and have `identify` available on your `$PATH` to then use the `-i` parameter.   
 
 
 ## Help info
