@@ -27,7 +27,7 @@ You will need to install imagemagick and have `identify` available on your `$PAT
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v1.2.10
+pdfscale v1.3.1
 
 Usage: pdfscale [-v] [-s <factor>] [-i] <inFile.pdf> [outfile.pdf]
        pdfscale -h
@@ -39,7 +39,9 @@ Parameters:
  -h          Print this help to screen and exits
  -V          Prints version to screen and exits
  -i          Use imagemagick to get page size, 
-             instead of cat + grep method
+             instead of postscript method
+ -c          Use cat + grep to get page size, 
+             instead of postscript method
  -s <factor> Changes the scaling factor, defaults to 0.95
              MUST be a number bigger than zero. 
              Eg. -s 0.8 for 80% of the original size 
