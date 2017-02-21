@@ -64,6 +64,22 @@ Examples:
  pdfscale -v -v -s 0.7 myPdfFile.pdf
  pdfscale -h
 ```
+
+## Example run
+```
+$ pdfscale -i -v -s 0.5 ../input.pdf 
+pdfscale v1.2.10 - Verbose execution
+Checking for ghostscript and bcmath
+Checking for imagemagick's identify
+  Scale factor: 0.5
+    Input file: ../input.pdf
+   Output file: ../input.SCALED.pdf
+         Width: 595 postscript-points
+        Height: 842 postscript-points
+ Translation X: 297.500000
+ Translation Y: 421.000000
+```
+
 ## System Install
 Please note that the system installer will name the executable as `pdfscale` with no uppercase chars and without the `.sh` extension.  
   
