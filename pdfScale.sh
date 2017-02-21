@@ -11,7 +11,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="1.3.1"
+VERSION="1.3.3"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -45,7 +45,7 @@ printVersion() {
 printHelp() {
         printVersion
         echo "
-Usage: $BASENAME [-v] [-s <factor>] [-i] <inFile.pdf> [outfile.pdf]
+Usage: $BASENAME [-v] [-s <factor>] [-i|-c] <inFile.pdf> [outfile.pdf]
        $BASENAME -h
        $BASENAME -V
 
@@ -669,6 +669,7 @@ vprint "  Scale factor: $SCALE"
 [[ $# -lt 1 ]] && { usage; exit 1; }
 INFILEPDF="$1"
 [[ "$INFILEPDF" =~ ^..*\.pdf$ ]] || { usage; exit 2; }
+[[ -f "$INFILEPDF" ]] || { echo "Error! File not found: $INFILEPDF"; usage; exit 2; }
 vprint "    Input file: $INFILEPDF"
 
 
