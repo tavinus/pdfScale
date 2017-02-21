@@ -129,21 +129,21 @@ parseScale() {
 
 # Gets page size using imagemagick's identify
 getPageSizeImagemagick() {
-	# get data from image magick
+        # get data from image magick
         local identify="$("$IDBIN" -format '%[fx:w] %[fx:h]BREAKME' "$INFILEPDF" 2>/dev/null)"
 
-	identify="${identify%%BREAKME*}"   # get page size only for 1st page
-	identify=($identify)               # make it an array
-	PGWIDTH=$(printf '%.0f' "${identify[0]}")             # assign
-	PGHEIGHT=$(printf '%.0f' "${identify[1]}")            # assign
+        identify="${identify%%BREAKME*}"   # get page size only for 1st page
+        identify=($identify)               # make it an array
+        PGWIDTH=$(printf '%.0f' "${identify[0]}")             # assign
+        PGHEIGHT=$(printf '%.0f' "${identify[1]}")            # assign
 }
 
 
 
 # Gets page size using toolbin_pdfinfo.ps
 getPageSizeGS() {
-	local PDFINFOGS=''
-	read -r -d '' PDFINFOGS <<'EOF'
+        local PDFINFOGS=''
+        read -r -d '' PDFINFOGS <<'EOF'
 %!PS
 % Copyright (C) 2001-2012 Artifex Software, Inc.
 % All Rights Reserved.
@@ -169,7 +169,7 @@ getPageSizeGS() {
 
 128 dict begin
 
-/QUIET true def		% in case they forgot
+/QUIET true def         % in case they forgot
 
 /showoptions {
   (           where "options" are:) =
@@ -191,9 +191,9 @@ getPageSizeGS() {
       dup 0 get (-) 0 get ne {
         % File specified on the command line using:  -- toolbin/pdf_info.ps infile.pdf
         /File exch def
-        false	% dont show usage
+        false   % dont show usage
       } {
-        true	% show usage and quit
+        true    % show usage and quit
       } ifelse
     } { true } ifelse
     {
@@ -209,22 +209,22 @@ getPageSizeGS() {
   showoptions
   quit
 } if
-cleartomark		% discard the dict from --where--
+cleartomark             % discard the dict from --where--
 
 % ---- No more executable code on the top level after this line -----
 % ---- except 2 lines at the very end                           -----
 
-/printXML {	% <string> printXML -
+/printXML {     % <string> printXML -
   % print non-blank lines without trailing spaces
   dup dup length 1 sub -1 0 {
     1 index 1 index get 32 eq {
       0 exch getinterval exch
     } {
-      exch = exit	% non-blank on this line
+      exch = exit       % non-blank on this line
     }
     ifelse
   } for
-  pop pop		% clean up
+  pop pop               % clean up
 } bind def
 
 /dump-pdf-info {    % (fname) -> -
@@ -236,7 +236,7 @@ cleartomark		% discard the dict from --where--
     Trailer /Root oget /Metadata knownoget {
       //false resolvestream
       { dup 256 string readline exch printXML not { exit } if } loop
-      pop		% done with the stream
+      pop               % done with the stream
       (_____________________________________________________________) =
       flush
     } if
@@ -317,7 +317,7 @@ cleartomark		% discard the dict from --where--
         dup /FontDescriptor knownoget {
           dup /FontFile known 1 index /FontFile2 known or exch /FontFile3 known or
           /ShowEmbeddedFonts where { pop pop //false } if {
-            pop			% skip embedded fonts
+            pop                 % skip embedded fonts
           } {
             /BaseFont knownoget { %  not embedded
               2 index exch //null put
@@ -331,7 +331,7 @@ cleartomark		% discard the dict from --where--
       } {
         pop
       } ifelse
-    } forall	% traverse the dictionary
+    } forall    % traverse the dictionary
   } bind def
 
   /XObject {
@@ -393,7 +393,7 @@ currentdict end readonly def
 
 currentdict /res-type-dict undef
 
-/getPDFfonts {	%	<dict for fonts> <page dict> getPDFfonts -
+/getPDFfonts {  %       <dict for fonts> <page dict> getPDFfonts -
   dup /Resources pget { get-fonts-from-res } if
   /Annots knownoget {
     { oforce
@@ -499,7 +499,7 @@ currentdict /res-type-dict undef
 
 % Choose between collection vs plain file.
 % Enumerate collections and apply the dump procedure.
-/enum-pdfs {		% - -> -
+/enum-pdfs {            % - -> -
   File (r) file runpdfbegin
   pdf_collection_files
   dup mark eq {
@@ -536,20 +536,16 @@ end
 quit
 
 EOF
-	# get data from gs script
+        # get data from gs script
         local identify="$("$GSBIN" -dNODISPLAY -q -sFile="$INFILEPDF" -dDumpMediaSizes -dDumpFontsNeeded=false -c "$PDFINFOGS" 2>/dev/null | grep MediaBox | head -n1)"
 
-	echo "identify: $identify"
-
-	identify="${identify##*MediaBox:}"   # get page size only for 1st page
+        identify="${identify##*MediaBox:}"   # get page size only for 1st page
 
         # remove chars [ and ]
         identify="${identify//[}"
         identify="${identify//]}"
 
-	identify=($identify)               # make it an array
-	
-	echo "identify: ${identify[@]}"
+        identify=($identify)               # make it an array
 
         # sanity
         if [[ ${#identify[@]} -lt 4 ]]; then 
@@ -558,8 +554,8 @@ EOF
             exit 16
         fi
 
-	PGWIDTH=$(printf '%.0f' "${identify[2]}")             # assign
-	PGHEIGHT=$(printf '%.0f' "${identify[3]}")            # assign
+        PGWIDTH=$(printf '%.0f' "${identify[2]}")             # assign
+        PGHEIGHT=$(printf '%.0f' "${identify[3]}")            # assign
 }
 
 
@@ -690,7 +686,7 @@ vprint "   Output file: $OUTFILEPDF"
 if [[ $USEIMGMGK -eq $TRUE ]]; then
         getPageSizeImagemagick
 elif [[ $USECATGREP -eq $TRUE ]]; then
-	getPageSize
+        getPageSize
 else
         getPageSizeGS
 fi
