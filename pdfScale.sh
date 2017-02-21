@@ -11,7 +11,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="1.1.3"
+VERSION="1.2.1"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -24,16 +24,16 @@ LC_CTYPE="C"
 LC_NUMERIC="C"
 
 printVersion() {
-	if [[ $1 -eq 2 ]]; then
-		echo >&2 "$BASENAME v$VERSION"
-	else
-		echo "$BASENAME v$VERSION"
-	fi
+        if [[ $1 -eq 2 ]]; then
+                echo >&2 "$BASENAME v$VERSION"
+        else
+                echo "$BASENAME v$VERSION"
+        fi
 }
 
 printHelp() {
-	printVersion
-	echo "
+        printVersion
+        echo "
 Usage: $BASENAME [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]
        $BASENAME -h
        $BASENAME -V
@@ -69,72 +69,86 @@ Examples:
 }
 
 usage() { 
-	printVersion 2
-	echo >&2 "Usage: $BASENAME [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]"
-	echo >&2 "Try:   $BASENAME -h # for help"
-	exit 1
+        printVersion 2
+        echo >&2 "Usage: $BASENAME [-v] [-s <factor>] <inFile.pdf> [outfile.pdf]"
+        echo >&2 "Try:   $BASENAME -h # for help"
+        exit 1
 }
 
 vprint() {
-	[[ $VERBOSE -eq 0 ]] && return 0
-	timestamp=""
-	[[ $VERBOSE -gt 1 ]] && timestamp="$(date +%Y-%m-%d:%H:%M:%S) | "
-	echo "$timestamp$1"
+        [[ $VERBOSE -eq 0 ]] && return 0
+        timestamp=""
+        [[ $VERBOSE -gt 1 ]] && timestamp="$(date +%Y-%m-%d:%H:%M:%S) | "
+        echo "$timestamp$1"
 }
 
 printDependency() {
-	printVersion 2
-	echo >&2 $'\n'"ERROR! You need to install the package '$1'"$'\n'
-	echo >&2 "Linux apt-get.: sudo apt-get install $1"
-	echo >&2 "Linux yum.....: sudo yum install $1"
-	echo >&2 "MacOS homebrew: brew install $1"
-	echo >&2 $'\n'"Aborting..."
-	exit 3
+        printVersion 2
+        echo >&2 $'\n'"ERROR! You need to install the package '$1'"$'\n'
+        echo >&2 "Linux apt-get.: sudo apt-get install $1"
+        echo >&2 "Linux yum.....: sudo yum install $1"
+        echo >&2 "MacOS homebrew: brew install $1"
+        echo >&2 $'\n'"Aborting..."
+        exit 3
 }
 
 parseScale() {
-	if ! [[ -n "$1" && "$1" =~ ^-?[0-9]*([.][0-9]+)?$ && (($1 > 0 )) ]] ; then
-		echo >&2 "Invalid factor: $1"
-		echo >&2 "The factor must be a floating point number greater than 0"
-		echo >&2 "Example: for 80% use 0.8"
-		exit 2
-	fi
-	SCALE=$1
+        if ! [[ -n "$1" && "$1" =~ ^-?[0-9]*([.][0-9]+)?$ && (($1 > 0 )) ]] ; then
+                echo >&2 "Invalid factor: $1"
+                echo >&2 "The factor must be a floating point number greater than 0"
+                echo >&2 "Example: for 80% use 0.8"
+                exit 2
+        fi
+        SCALE=$1
 }
 
 
 getPageSize() {
-	# get MediaBox info from PDF file using cat and grep, these are all possible
-	# /MediaBox [0 0 595 841]
-	# /MediaBox [ 0 0 595.28 841.89]
-	# /MediaBox[ 0 0 595.28 841.89 ]
-	local mediaBox="$(cat "$INFILEPDF" | grep -a '/MediaBox')" # done with externals
-	if [[ -z $mediaBox ]]; then
-		mediaBox="$(cat "$INFILEPDF" | grep -a '/BBox')"   # if no mediaBox
-	fi
-	if [[ -z $mediaBox ]]; then
-		echo "Error when reading input file!"
-		echo "Could not determine the page size!"
-		echo "There is no MediaBox or BBox in the pdf document!"
-		echo "Aborting..."
-		exit 15
-	fi
-	#mediaBox="/MediaBox [0 0 595 841]"
-	#echo "mediaBox $mediaBox"
-	mediaBox="${mediaBox#*0 0 }"
-	#echo "mediaBox $mediaBox"
-	PGWIDTH=$(printf '%.0f' "${mediaBox%% *}")  # Get Round Width
-	#echo "PGWIDTH $PGWIDTH"
-	mediaBox="${mediaBox#* }"
-	#echo "mediaBox $mediaBox"
-	PGHEIGHT="${mediaBox%%]*}"              # Get value, may have spaces
-	#echo "PGHEIGHT $PGHEIGHT"
-	PGHEIGHT=$(printf '%.0f' "${PGHEIGHT%% *}") # Get Round Height
-	#echo "PGHEIGHT $PGHEIGHT"
-	vprint "         Width: $PGWIDTH postscript-points"
-	vprint "        Height: $PGHEIGHT postscript-points"
+        # get MediaBox info from PDF file using cat and grep, these are all possible
+        # /MediaBox [0 0 595 841]
+        # /MediaBox [ 0 0 595.28 841.89]
+        # /MediaBox[ 0 0 595.28 841.89 ]
+
+        # Get MediaBox data if possible
+        local mediaBox="$(cat "$INFILEPDF" | grep -a '/MediaBox')"
+
+        # If no MediaBox, try BBox
+        if [[ -z $mediaBox ]]; then
+                mediaBox="$(cat "$INFILEPDF" | grep -a '/BBox')"
+        fi
+
+        # No page size data available
+        if [[ -z $mediaBox ]]; then
+                echo "Error when reading input file!"
+                echo "Could not determine the page size!"
+                echo "There is no MediaBox or BBox in the pdf document!"
+                echo "Aborting..."
+                exit 15
+        fi
+
+        # remove chars [ and ]
+        mediaBox="${mediaBox//[}"
+        mediaBox="${mediaBox//]}"
+
+        mediaBox=($mediaBox)        # make it an array
+        mbCount=${#mediaBox[@]}     # array size
+
+        # sanity
+        if [[ $mbCount -lt 5 ]]; then 
+            echo "Error when reading the page size!"
+            echo "The page size information is invalid!"
+            exit 16
+        fi
+
+        # we are done
+        PGWIDTH=$(printf '%.0f' "${mediaBox[3]}")  # Get Round Width
+        PGHEIGHT=$(printf '%.0f' "${mediaBox[4]}") # Get Round Height
+
+        vprint "         Width: $PGWIDTH postscript-points"
+        vprint "        Height: $PGHEIGHT postscript-points"
 }
 
+# Parse options
 while getopts ":vhVs:" o; do
     case "${o}" in
         v)
@@ -158,6 +172,11 @@ while getopts ":vhVs:" o; do
 done
 shift $((OPTIND-1))
 
+
+
+######### START EXECUTION
+
+#Intro message
 vprint "$(basename $0) v$VERSION - Verbose execution"
 
 # Dependencies
@@ -165,9 +184,11 @@ vprint "Checking dependencies"
 command -v gs >/dev/null 2>&1 || printDependency 'ghostscript'
 command -v bc >/dev/null 2>&1 || printDependency 'bc'
 
+# Get dependency binaries
 GSBIN=$(which gs 2>/dev/null)
 BCBIN=$(which bc 2>/dev/null)
 
+# Verbose scale info
 vprint "  Scale factor: $SCALE"
 
 # Validate args
@@ -178,9 +199,9 @@ vprint "    Input file: $INFILEPDF"
 
 # Parse output filename
 if [[ -z $2 ]]; then
-	OUTFILEPDF="${INFILEPDF%.pdf}.SCALED.pdf"
+        OUTFILEPDF="${INFILEPDF%.pdf}.SCALED.pdf"
 else
-	OUTFILEPDF="${2%.pdf}.pdf"
+        OUTFILEPDF="${2%.pdf}.pdf"
 fi
 vprint "   Output file: $OUTFILEPDF"
 
