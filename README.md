@@ -24,18 +24,20 @@ brew install ghostscript
 From version 1.4.x I decided to create an adaptive method of getting the pagesize. It will try different methods if the previous one fails. People can also force a specific mode of operation with the `-m` parameter.   
  
 The order of operation is as follows:
- 1. Try to get `/MediaBox` with cat + grep
- 2. Failed AND MacOs ? Try mdls
- 3. Failed AND NOT MacOS ? Try pdfinfo
- 4. Failed ? Try ImageMagick's identify
- 5. Failed ? Exit with error message
+ 1. Try to get `/MediaBox` with `cat` + `grep`
+ 2. Failed AND MacOS ? Try `mdls`
+ 3. Failed AND NOT MacOS ? Try `pdfinfo`
+ 4. Failed ? Try ImageMagick's `identify`
+ 5. Failed ? `Exit` with error message
  
-The postscript/ghostscript method was removed until I can write a PS script that gets the page size.   
+The `cat`+`grep` method will fail on PDFs without a `/MediaBox`.   
+ 
+You may install any of the above to be used in that case.   
  
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v1.4.7
+pdfscale v1.4.9
 
 Usage: pdfscale [-v] [-s <factor>] [-m <mode>] <inFile.pdf> [outfile.pdf]
        pdfscale -h
@@ -46,10 +48,10 @@ Parameters:
              Use twice for even more information
  -h          Print this help to screen and exits
  -V          Prints version to screen and exits
- -m <mode>   Force a mode of page size detection. 
-             Will disable the Adaptive Mode.
+ -m <mode>   Force a mode of page size detection 
+             May disable the Adaptive Mode
  -s <factor> Changes the scaling factor, defaults to 0.95
-             MUST be a number bigger than zero. 
+             MUST be a number bigger than zero
              Eg. -s 0.8 for 80% of the original size 
 
 Modes:
@@ -61,14 +63,14 @@ Modes:
 
 Notes:
  - Adaptive Page size detection will try different modes until
-   it gets a page size. You can force a mode with -m 'mode'
- - Options must be passed before the file names to be parsed
+   it gets a page size. You can force a mode with -m 'mode'.
+ - Options must be passed before the file names to be parsed.
  - The output filename is optional. If no file name is passed
    the output file will have the same name/destination of the
-   input file, with .SCALED.pdf at the end (instead of just .pdf)
+   input file, with .SCALED.pdf at the end (instead of just .pdf).
  - Having the extension .pdf on the output file name is optional,
-   it will be added if not present
- - Should handle file names with spaces without problems
+   it will be added if not present.
+ - Should handle file names with spaces without problems.
  - The scaling is centered and using a scale bigger than 1 may
    result on cropping parts of the pdf.
 
@@ -84,35 +86,35 @@ Examples:
 
 ## Example runs
 ```
-$ ./pdfScale.sh -v -m i ../00-test-xml2dacte.pdf 
-pdfScale.sh v1.4.5 - Verbose execution
+$ pdfscale -m i -v -s 0.9 ../input.pdf 
+pdfscale v1.4.9 - Verbose execution
 Checking for ghostscript and bcmath
 Checking for imagemagick's identify
-  Scale factor: 0.95
-    Input file: ../00-test-xml2dacte.pdf
-   Output file: ../00-test-xml2dacte.SCALED.pdf
+  Scale factor: 0.9
+    Input file: ../input.pdf
+   Output file: ../input.SCALED.pdf
  Adaptive mode: Disabled
         Method: ImageMagick's Identify
          Width: 595 postscript-points
         Height: 842 postscript-points
- Translation X: 15.657425
- Translation Y: 22.157230
+ Translation X: 33.055225
+ Translation Y: 46.777310
 ```
 ```
-$ ./pdfScale.sh -v -v ../input-nup.pdf 
-2017-02-22:03:09:59 | pdfScale.sh v1.4.5 - Verbose execution
-2017-02-22:03:09:59 | Checking for ghostscript and bcmath
-2017-02-22:03:09:59 |   Scale factor: 0.95
-2017-02-22:03:09:59 |     Input file: ../input-nup.pdf
-2017-02-22:03:09:59 |    Output file: ../input-nup.SCALED.pdf
-2017-02-22:03:09:59 |  Adaptive mode: Enabled
-2017-02-22:03:09:59 |         Method: Cat + Grep
-2017-02-22:03:09:59 |                 Failed
-2017-02-22:03:09:59 |         Method: Mac Quartz mdls
-2017-02-22:03:09:59 |          Width: 595 postscript-points
-2017-02-22:03:09:59 |         Height: 842 postscript-points
-2017-02-22:03:09:59 |  Translation X: 15.657425
-2017-02-22:03:09:59 |  Translation Y: 22.157230
+$ pdfscale -v -v -s 0.5 ../input-nup.pdf ../nuptest 
+2017-02-22:07:56:38 | pdfscale v1.4.9 - Verbose execution
+2017-02-22:07:56:38 | Checking for ghostscript and bcmath
+2017-02-22:07:56:38 |   Scale factor: 0.5
+2017-02-22:07:56:38 |     Input file: ../input-nup.pdf
+2017-02-22:07:56:39 |    Output file: ../nuptest.pdf
+2017-02-22:07:56:39 |  Adaptive mode: Enabled
+2017-02-22:07:56:39 |         Method: Cat + Grep
+2017-02-22:07:56:39 |                 Failed
+2017-02-22:07:56:39 |         Method: Mac Quartz mdls
+2017-02-22:07:56:39 |          Width: 842 postscript-points
+2017-02-22:07:56:39 |         Height: 595 postscript-points
+2017-02-22:07:56:39 |  Translation X: 421.000000
+2017-02-22:07:56:39 |  Translation Y: 297.500000
 ```
 
 ## System Install

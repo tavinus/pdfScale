@@ -24,7 +24,7 @@
 ###################################################
 
 
-VERSION="1.4.8"
+VERSION="1.4.9"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -257,8 +257,8 @@ getPageSizeMdls() {
         identify=${identify//$'\t'/ }      # change tab to space
         identify=($identify)               # make it an array
         
-        PGWIDTH=$(printf '%.0f' "${identify[2]}")             # assign
-        PGHEIGHT=$(printf '%.0f' "${identify[5]}")            # assign
+        PGWIDTH=$(printf '%.0f' "${identify[5]}")             # assign
+        PGHEIGHT=$(printf '%.0f' "${identify[2]}")            # assign
 }
 
 
