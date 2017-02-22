@@ -401,9 +401,6 @@ getPageSize() {
 }
 
 
- Input file: ../input-nup.pdf
-Output file: ../input-nup.SCALED.pdf
-
 # Parse options
 while getopts ":vhVs:m:" o; do
     case "${o}" in
