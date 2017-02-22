@@ -116,9 +116,9 @@ $ ./pdfScale.sh -v -v ../input-nup.pdf
 ```
 
 ## System Install
-Please note that the system installer will name the executable as `pdfscale` with no uppercase chars and without the `.sh` extension.  
+The installer will name the executable as `pdfscale` with no uppercase chars and without the `.sh` extension.  
   
-If you have `make` installed you can use it to install to `usr/local/bin/pdfscale` with:  
+If you have `make` installed you can use it to install to `/usr/local/bin/pdfscale` with:  
 ```
 sudo make install
 ```  
