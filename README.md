@@ -35,11 +35,7 @@ The postscript/ghostscript method was removed until I can write a PS script that
 ## Help info
 ```
 $ pdfscale -h
-<<<<<<< HEAD
 pdfscale v1.4.6
-=======
-pdfscale v1.4.5
->>>>>>> dc84917b90c17e1f3ab0bc39b4c7b10933bf935f
 
 Usage: pdfscale [-v] [-s <factor>] [-i|-c] <inFile.pdf> [outfile.pdf]
        pdfscale -h
@@ -52,11 +48,6 @@ Parameters:
  -V          Prints version to screen and exits
  -m <mode>   Force a mode of page size detection. 
              Will disable the Adaptive Mode.
-<<<<<<< HEAD
-=======
- -c          Use cat + grep to get page size, 
-             instead of postscript method
->>>>>>> dc84917b90c17e1f3ab0bc39b4c7b10933bf935f
  -s <factor> Changes the scaling factor, defaults to 0.95
              MUST be a number bigger than zero. 
              Eg. -s 0.8 for 80% of the original size 
@@ -87,11 +78,7 @@ Examples:
  pdfscale -v -v myPdfFile.pdf
  pdfscale -s 0.85 myPdfFile.pdf myScaledPdf.pdf
  pdfscale -m pdfinfo -s 0.80 -v myPdfFile.pdf
-<<<<<<< HEAD
  pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
-=======
- pdfscale -v -v -s 0.7 myPdfFile.pdf
->>>>>>> dc84917b90c17e1f3ab0bc39b4c7b10933bf935f
  pdfscale -h
 ```
 
