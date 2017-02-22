@@ -24,7 +24,7 @@
 ###################################################
 
 
-VERSION="1.4.6"
+VERSION="1.4.7"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -64,7 +64,7 @@ printVersion() {
 printHelp() {
         printVersion
         echo "
-Usage: $BASENAME [-v] [-s <factor>] [-i|-c] <inFile.pdf> [outfile.pdf]
+Usage: $BASENAME [-v] [-s <factor>] [-m <mode>] <inFile.pdf> [outfile.pdf]
        $BASENAME -h
        $BASENAME -V
 
@@ -87,8 +87,8 @@ Modes:
  i, identify  Forces the use of ImageMagick's Identify
 
 Notes:
- - Page size detection will try different modes until it gets
-   a page size, or you can force a mode with -m 'mode'
+ - Adaptive Page size detection will try different modes until
+   it gets a page size. You can force a mode with -m 'mode'
  - Options must be passed before the file names to be parsed
  - The output filename is optional. If no file name is passed
    the output file will have the same name/destination of the
@@ -114,7 +114,7 @@ Examples:
 # Prints usage info
 usage() { 
         printVersion 2
-        echo >&2 "Usage: $BASENAME [-v] [-s <factor>] [-i|-c] <inFile.pdf> [outfile.pdf]"
+        echo >&2 "Usage: $BASENAME [-v] [-s <factor>] [-m <mode>] <inFile.pdf> [outfile.pdf]"
         echo >&2 "Try:   $BASENAME -h # for help"
         exit 1
 }
