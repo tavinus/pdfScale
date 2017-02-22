@@ -73,10 +73,10 @@ Parameters:
              Use twice for even more information
  -h          Print this help to screen and exits
  -V          Prints version to screen and exits
- -m <mode>   Force a mode of page size detection. 
-             May disable the Adaptive Mode.
+ -m <mode>   Force a mode of page size detection 
+             May disable the Adaptive Mode
  -s <factor> Changes the scaling factor, defaults to 0.95
-             MUST be a number bigger than zero. 
+             MUST be a number bigger than zero
              Eg. -s 0.8 for 80% of the original size 
 
 Modes:
@@ -88,14 +88,14 @@ Modes:
 
 Notes:
  - Adaptive Page size detection will try different modes until
-   it gets a page size. You can force a mode with -m 'mode'
- - Options must be passed before the file names to be parsed
+   it gets a page size. You can force a mode with -m 'mode'.
+ - Options must be passed before the file names to be parsed.
  - The output filename is optional. If no file name is passed
    the output file will have the same name/destination of the
-   input file, with .SCALED.pdf at the end (instead of just .pdf)
+   input file, with .SCALED.pdf at the end (instead of just .pdf).
  - Having the extension .pdf on the output file name is optional,
-   it will be added if not present
- - Should handle file names with spaces without problems
+   it will be added if not present.
+ - Should handle file names with spaces without problems.
  - The scaling is centered and using a scale bigger than 1 may
    result on cropping parts of the pdf.
 
