@@ -35,9 +35,9 @@ The postscript/ghostscript method was removed until I can write a PS script that
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v1.4.6
+pdfscale v1.4.7
 
-Usage: pdfscale [-v] [-s <factor>] [-i|-c] <inFile.pdf> [outfile.pdf]
+Usage: pdfscale [-v] [-s <factor>] [-m <mode>] <inFile.pdf> [outfile.pdf]
        pdfscale -h
        pdfscale -V
 
@@ -60,8 +60,8 @@ Modes:
  i, identify  Forces the use of ImageMagick's Identify
 
 Notes:
- - Page size detection will try different modes until it gets
-   a page size, or you can force a mode with -m 'mode'
+ - Adaptive Page size detection will try different modes until
+   it gets a page size. You can force a mode with -m 'mode'
  - Options must be passed before the file names to be parsed
  - The output filename is optional. If no file name is passed
    the output file will have the same name/destination of the
