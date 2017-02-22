@@ -6,6 +6,7 @@ The "paper" size does not change, just the elements are resized.
 ## Dependencies  
 The script uses `basename`, `cat`, `grep`, `bc`, `head` and `gs` (ghostscript).   
 You probably have everything installed already, except for ghostscript.   
+Optional dependencies are `imagemagick`, `pdfinfo` and `mdls` (Mac).
 
 ##### apt-get
 ```
@@ -19,15 +20,26 @@ sudo yum install ghostscript bc
 ```
 brew install ghostscript
 ```
-##### ImageMagick
-As of version 1.2.7 ImageMagick was reintroduced as an optional way to get the first page size.   
-You will need to install imagemagick and have `identify` available on your `$PATH` to then use the `-i` parameter.   
-
-
+##### Optionals
+From version 1.4.x I decided to create an adaptive method of getting the pagesize. It will try different methods if the previous one fails. People can also force a specific mode of operation with the `-m` parameter.   
+ 
+The order of operation is as follows:
+ 1. Try to get `/MediaBox` with cat + grep
+ 2. Failed AND MacOs ? Try mdls
+ 3. Failed AND NOT MacOS ? Try pdfinfo
+ 4. Failed ? Try ImageMagick's identify
+ 5. Failed ? Exit with error message
+ 
+The postscript/ghostscript method was removed until I can write a PS script that gets the page size.   
+ 
 ## Help info
 ```
 $ pdfscale -h
+<<<<<<< HEAD
 pdfscale v1.4.6
+=======
+pdfscale v1.4.5
+>>>>>>> dc84917b90c17e1f3ab0bc39b4c7b10933bf935f
 
 Usage: pdfscale [-v] [-s <factor>] [-i|-c] <inFile.pdf> [outfile.pdf]
        pdfscale -h
@@ -40,6 +52,11 @@ Parameters:
  -V          Prints version to screen and exits
  -m <mode>   Force a mode of page size detection. 
              Will disable the Adaptive Mode.
+<<<<<<< HEAD
+=======
+ -c          Use cat + grep to get page size, 
+             instead of postscript method
+>>>>>>> dc84917b90c17e1f3ab0bc39b4c7b10933bf935f
  -s <factor> Changes the scaling factor, defaults to 0.95
              MUST be a number bigger than zero. 
              Eg. -s 0.8 for 80% of the original size 
@@ -70,23 +87,45 @@ Examples:
  pdfscale -v -v myPdfFile.pdf
  pdfscale -s 0.85 myPdfFile.pdf myScaledPdf.pdf
  pdfscale -m pdfinfo -s 0.80 -v myPdfFile.pdf
+<<<<<<< HEAD
  pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
+=======
+ pdfscale -v -v -s 0.7 myPdfFile.pdf
+>>>>>>> dc84917b90c17e1f3ab0bc39b4c7b10933bf935f
  pdfscale -h
 ```
 
-## Example run
+## Example runs
 ```
-$ pdfscale -i -v -s 0.5 ../input.pdf 
-pdfscale v1.2.10 - Verbose execution
+$ ./pdfScale.sh -v -m i ../00-test-xml2dacte.pdf 
+pdfScale.sh v1.4.5 - Verbose execution
 Checking for ghostscript and bcmath
 Checking for imagemagick's identify
-  Scale factor: 0.5
-    Input file: ../input.pdf
-   Output file: ../input.SCALED.pdf
+  Scale factor: 0.95
+    Input file: ../00-test-xml2dacte.pdf
+   Output file: ../00-test-xml2dacte.SCALED.pdf
+ Adaptive mode: Disabled
+        Method: ImageMagick's Identify
          Width: 595 postscript-points
         Height: 842 postscript-points
- Translation X: 297.500000
- Translation Y: 421.000000
+ Translation X: 15.657425
+ Translation Y: 22.157230
+```
+```
+$ ./pdfScale.sh -v -v ../input-nup.pdf 
+2017-02-22:03:09:59 | pdfScale.sh v1.4.5 - Verbose execution
+2017-02-22:03:09:59 | Checking for ghostscript and bcmath
+2017-02-22:03:09:59 |   Scale factor: 0.95
+2017-02-22:03:09:59 |     Input file: ../input-nup.pdf
+2017-02-22:03:09:59 |    Output file: ../input-nup.SCALED.pdf
+2017-02-22:03:09:59 |  Adaptive mode: Enabled
+2017-02-22:03:09:59 |         Method: Cat + Grep
+2017-02-22:03:09:59 |                 Failed
+2017-02-22:03:09:59 |         Method: Mac Quartz mdls
+2017-02-22:03:09:59 |          Width: 595 postscript-points
+2017-02-22:03:09:59 |         Height: 842 postscript-points
+2017-02-22:03:09:59 |  Translation X: 15.657425
+2017-02-22:03:09:59 |  Translation Y: 22.157230
 ```
 
 ## System Install

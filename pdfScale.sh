@@ -49,11 +49,6 @@ FALSE=1
 ADAPTIVEMODE=$TRUE         # Automatically try to guess best mode
 MODE=""
 
-USEIMGMGK=$FALSE           # ImageMagick Flag, will use identify if true
-USECATGREP=$FALSE          # Use old cat + grep method
-
-
-
 
 # Prints version
 printVersion() {
