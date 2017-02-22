@@ -24,7 +24,7 @@
 ###################################################
 
 
-VERSION="1.4.3"
+VERSION="1.4.5"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -87,6 +87,7 @@ Parameters:
              Eg. -s 0.8 for 80% of the original size 
 
 Modes:
+ a, adaptive  Default mode, tries all the methods below
  c, cat+grep  Forces the use of the cat + grep method
  m, mdls      Forces the use of MacOS Quartz mdls
  p, pdfinfo   Forces the use of Linux PdfInfo
@@ -161,66 +162,70 @@ parseScale() {
 
 # Parse a forced mode of operation
 parseMode() {
-	if [[ -z $1 ]]; then
-		echo "Mode is empty, please specify the desired mode"
-		echo "Falling back to adaptive mode!"
-		ADAPTIVEMODE=$TRUE
-		MODE=""
-		return $FALSE
-	fi
-	
-	if [[ $1 = 'c' || $1 = 'catgrep' || $1 = 'cat+grep' || $1 = 'CatGrep' || $1 = 'C' ]]; then
-		ADAPTIVEMODE=$FALSE
-		MODE="CATGREP"
-		return $TRUE
-	elif [[ $1 = 'i' || $1 = 'imagemagick' || $1 = 'identify' || $1 = 'ImageMagick' || $1 = 'Identify' || $1 = 'I' ]]; then
-		ADAPTIVEMODE=$FALSE
-		MODE="IDENTIFY"
-		return $TRUE
-	elif [[ $1 = 'm' || $1 = 'mdls' || $1 = 'MDLS' || $1 = 'quartz' || $1 = 'mac' || $1 = 'M' ]]; then
-		ADAPTIVEMODE=$FALSE
-		MODE="MDLS"
-		return $TRUE
-	elif [[ $1 = 'p' || $1 = 'pdfinfo' || $1 = 'PDFINFO' || $1 = 'PdfInfo' || $1 = 'P' ]]; then
-		ADAPTIVEMODE=$FALSE
-		MODE="PDFINFO"
-		return $TRUE
-	else
-		echo "Invalid mode: $1"
-		echo "Falling back to adaptive mode!"
-		ADAPTIVEMODE=$TRUE
-		MODE=""
-		return $FALSE
-	fi
-	
-	return $FALSE
+        if [[ -z $1 ]]; then
+                echo "Mode is empty, please specify the desired mode"
+                echo "Falling back to adaptive mode!"
+                ADAPTIVEMODE=$TRUE
+                MODE=""
+                return $FALSE
+        fi
+        
+        if [[ $1 = 'c' || $1 = 'catgrep' || $1 = 'cat+grep' || $1 = 'CatGrep' || $1 = 'C' || $1 = 'CATGREP' ]]; then
+                ADAPTIVEMODE=$FALSE
+                MODE="CATGREP"
+                return $TRUE
+        elif [[ $1 = 'i' || $1 = 'imagemagick' || $1 = 'identify' || $1 = 'ImageMagick' || $1 = 'Identify' || $1 = 'I' || $1 = 'IDENTIFY' ]]; then
+                ADAPTIVEMODE=$FALSE
+                MODE="IDENTIFY"
+                return $TRUE
+        elif [[ $1 = 'm' || $1 = 'mdls' || $1 = 'MDLS' || $1 = 'quartz' || $1 = 'mac' || $1 = 'M' ]]; then
+                ADAPTIVEMODE=$FALSE
+                MODE="MDLS"
+                return $TRUE
+        elif [[ $1 = 'p' || $1 = 'pdfinfo' || $1 = 'PDFINFO' || $1 = 'PdfInfo' || $1 = 'P' ]]; then
+                ADAPTIVEMODE=$FALSE
+                MODE="PDFINFO"
+                return $TRUE
+        elif [[ $1 = 'a' || $1 = 'adaptive' || $1 = 'automatic' || $1 = 'A' || $1 = 'ADAPTIVE' || $1 = 'AUTOMATIC' ]]; then
+                ADAPTIVEMODE=$TRUE
+                MODE=""
+                return $TRUE
+        else
+                echo "Invalid mode: $1"
+                echo "Falling back to adaptive mode!"
+                ADAPTIVEMODE=$TRUE
+                MODE=""
+                return $FALSE
+        fi
+        
+        return $FALSE
 }
 
 
 # Gets page size using imagemagick's identify
 getPageSizeImagemagick() {
-	# Sanity
-	if [[ ! -f $IDBIN && $ADAPTIVEMODE = $FALSE ]]; then
+        # Sanity
+        if [[ ! -f $IDBIN && $ADAPTIVEMODE = $FALSE ]]; then
                 echo "Error! ImageMagick's Identify was not found!"
                 echo "Make sure you installed ImageMagick and have identify on your \$PATH"
                 echo "Aborting! You may want to try the adaptive mode."
                 exit 15
-	elif [[ ! -f $IDBIN && $ADAPTIVEMODE = $TRUE ]]; then
-		return $FALSE
+        elif [[ ! -f $IDBIN && $ADAPTIVEMODE = $TRUE ]]; then
+                return $FALSE
         fi
         
         # get data from image magick
         local identify="$("$IDBIN" -format '%[fx:w] %[fx:h]BREAKME' "$INFILEPDF" 2>/dev/null)"
-	# No page size data available
-	
+        # No page size data available
+        
         if [[ -z $identify && $ADAPTIVEMODE = $FALSE ]]; then
                 echo "Error when reading input file!"
                 echo "Could not determine the page size!"
                 echo "ImageMagicks's Identify returned an empty string!"
                 echo "Aborting! You may want to try the adaptive mode."
                 exit 15
-	elif [[ -z $identify && $ADAPTIVEMODE = $TRUE ]]; then
-		return $FALSE
+        elif [[ -z $identify && $ADAPTIVEMODE = $TRUE ]]; then
+                return $FALSE
         fi
 
         identify="${identify%%BREAKME*}"   # get page size only for 1st page
@@ -232,33 +237,33 @@ getPageSizeImagemagick() {
 
 # Gets page size using Mac Quarts mdls
 getPageSizeMdls() {
-	# Sanity
-	if [[ ! -f $MDLSBIN && $ADAPTIVEMODE = $FALSE ]]; then
+        # Sanity
+        if [[ ! -f $MDLSBIN && $ADAPTIVEMODE = $FALSE ]]; then
                 echo "Error! Mac Quartz mdls was not found!"
                 echo "Are you even trying this on a Mac?"
                 echo "Aborting! You may want to try the adaptive mode."
                 exit 15
-	elif [[ ! -f $MDLSBIN && $ADAPTIVEMODE = $TRUE ]]; then
-		return $FALSE
+        elif [[ ! -f $MDLSBIN && $ADAPTIVEMODE = $TRUE ]]; then
+                return $FALSE
         fi
-	
+        
         # get data from mdls
         local identify="$("$MDLSBIN" -mdls -name kMDItemPageHeight -name kMDItemPageWidth "$INFILEPDF" 2>/dev/null)"
-	
-	if [[ -z $identify && $ADAPTIVEMODE = $FALSE ]]; then
+        
+        if [[ -z $identify && $ADAPTIVEMODE = $FALSE ]]; then
                 echo "Error when reading input file!"
                 echo "Could not determine the page size!"
                 echo "Mac Quartz mdls returned an empty string!"
                 echo "Aborting! You may want to try the adaptive mode."
                 exit 15
-	elif [[ -z $identify && $ADAPTIVEMODE = $TRUE ]]; then
-		return $FALSE
+        elif [[ -z $identify && $ADAPTIVEMODE = $TRUE ]]; then
+                return $FALSE
         fi
         
 
         identify=${identify//$'\t'/ }      # change tab to space
         identify=($identify)               # make it an array
-	
+        
         PGWIDTH=$(printf '%.0f' "${identify[2]}")             # assign
         PGHEIGHT=$(printf '%.0f' "${identify[5]}")            # assign
 }
@@ -266,40 +271,32 @@ getPageSizeMdls() {
 
 # Gets page size using Linux PdfInfo
 getPageSizePdfInfo() {
-	# Sanity
-	if [[ ! -f $PDFINFOBIN && $ADAPTIVEMODE = $FALSE ]]; then
+        # Sanity
+        if [[ ! -f $PDFINFOBIN && $ADAPTIVEMODE = $FALSE ]]; then
                 echo "Error! Linux pdfinfo was not found!"
                 echo "Do you have pdfinfo installed and available on your \$PATH?"
                 echo "Aborting! You may want to try the adaptive mode."
                 exit 15
-	elif [[ ! -f $PDFINFOBIN && $ADAPTIVEMODE = $TRUE ]]; then
-		return $FALSE
+        elif [[ ! -f $PDFINFOBIN && $ADAPTIVEMODE = $TRUE ]]; then
+                return $FALSE
         fi
-	
+        
         # get data from image magick
         local identify="$("$PDFINFOBIN" "$INFILEPDF" 2>/dev/null | grep -i 'Page size:' )"
 
-	if [[ -z $identify && $ADAPTIVEMODE = $FALSE ]]; then
+        if [[ -z $identify && $ADAPTIVEMODE = $FALSE ]]; then
                 echo "Error when reading input file!"
                 echo "Could not determine the page size!"
                 echo "Linux PdfInfo returned an empty string!"
                 echo "Aborting! You may want to try the adaptive mode."
                 exit 15
-	elif [[ -z $identify && $ADAPTIVEMODE = $TRUE ]]; then
-		return $FALSE
+        elif [[ -z $identify && $ADAPTIVEMODE = $TRUE ]]; then
+                return $FALSE
         fi
 
-        identify="${identify##*Page size:}"
-
-	echo "-->$identify"
-
-        identify=($identify)               # make it an array
-	echo " - ${identify[0]}"
-	echo " - ${identify[1]}"
-	echo " - ${identify[2]}"
-	echo " - ${identify[3]}"
-	echo " - ${identify[4]}"
-	
+        identify="${identify##*Page size:}"  # remove stuff
+        identify=($identify)                 # make it an array
+        
         PGWIDTH=$(printf '%.0f' "${identify[0]}")             # assign
         PGHEIGHT=$(printf '%.0f' "${identify[2]}")            # assign
 }
@@ -323,8 +320,8 @@ getPageSizeCatGrep() {
                 echo "There is no MediaBox in the pdf document!"
                 echo "Aborting! You may want to try the adaptive mode."
                 exit 15
-	elif [[ -z $mediaBox && $ADAPTIVEMODE = $TRUE ]]; then
-		return $FALSE
+        elif [[ -z $mediaBox && $ADAPTIVEMODE = $TRUE ]]; then
+                return $FALSE
         fi
 
         # remove chars [ and ]
@@ -345,59 +342,61 @@ getPageSizeCatGrep() {
         PGWIDTH=$(printf '%.0f' "${mediaBox[2]}")  # Get Round Width
         PGHEIGHT=$(printf '%.0f' "${mediaBox[3]}") # Get Round Height
 
-	return $TRUE
+        return $TRUE
 }
 
 
+# Detects operation mode and also runs the adaptive mode
 getPageSize() {
-	if [[ $ADAPTIVEMODE = $FALSE ]]; then
-		vprint " Adaptive mode: Disabled"
-		if [[ $MODE = "CATGREP" ]]; then
-			vprint "        Method: Cat + Grep"
-			getPageSizeCatGrep
-		elif [[ $MODE = "MDLS" ]]; then
-			vprint "        Method: Mac Quartz mdls"
-			getPageSizeMdls
-		elif [[ $MODE = "PDFINFO" ]]; then
-			vprint "        Method: Linux PdfInfo"
-			getPageSizePdfInfo
-		elif [[ $MODE = "IDENTIFY" ]]; then
-			vprint "        Method: ImageMagick's Identify"
-			getPageSizeImagemagick
-		else
-			echo "Error! Invalid Mode: $MODE"
-			echo "Aborting execution..."
-			exit 20
-		fi
-		return $TRUE
-	fi
-	
-	vprint " Adaptive mode: Enabled"
-	vprint "        Method: Cat + Grep"
-	getPageSizeCatGrep
-	if [[ -z $PGWIDTH && -z $PGHEIGHT ]]; then
-		vprint "                Failed"
-		if [[ $OSNAME = "Darwin" ]]; then
-			vprint "        Method: Mac Quartz mdls"
-			getPageSizeMdls
-		else
-			vprint "        Method: Linux PdfInfo"
-			getPageSizePdfInfo
-		fi
-	fi
-	
-	if [[ -z $PGWIDTH && -z $PGHEIGHT ]]; then
-		vprint "                Failed"
-		vprint "        Method: ImageMagick's Identify"
-		getPageSizeImagemagick
-	fi
-	
-	if [[ -z $PGWIDTH && -z $PGHEIGHT ]]; then
-		vprint "                Failed"
-		echo "Error when detecting PDF paper size!"
-		echo "All methods of detection failed"
-		exit 17
-	fi
+        if [[ $ADAPTIVEMODE = $FALSE ]]; then
+                vprint " Adaptive mode: Disabled"
+                if [[ $MODE = "CATGREP" ]]; then
+                        vprint "        Method: Cat + Grep"
+                        getPageSizeCatGrep
+                elif [[ $MODE = "MDLS" ]]; then
+                        vprint "        Method: Mac Quartz mdls"
+                        getPageSizeMdls
+                elif [[ $MODE = "PDFINFO" ]]; then
+                        vprint "        Method: Linux PdfInfo"
+                        getPageSizePdfInfo
+                elif [[ $MODE = "IDENTIFY" ]]; then
+                        vprint "        Method: ImageMagick's Identify"
+                        getPageSizeImagemagick
+                else
+                        echo "Error! Invalid Mode: $MODE"
+                        echo "Aborting execution..."
+                        exit 20
+                fi
+                return $TRUE
+        fi
+        
+        vprint " Adaptive mode: Enabled"
+        vprint "        Method: Cat + Grep"
+        getPageSizeCatGrep
+        if [[ -z $PGWIDTH && -z $PGHEIGHT ]]; then
+                vprint "                Failed"
+                if [[ $OSNAME = "Darwin" ]]; then
+                        vprint "        Method: Mac Quartz mdls"
+                        getPageSizeMdls
+                else
+                        vprint "        Method: Linux PdfInfo"
+                        getPageSizePdfInfo
+                fi
+        fi
+        
+        if [[ -z $PGWIDTH && -z $PGHEIGHT ]]; then
+                vprint "                Failed"
+                vprint "        Method: ImageMagick's Identify"
+                getPageSizeImagemagick
+        fi
+        
+        if [[ -z $PGWIDTH && -z $PGHEIGHT ]]; then
+                vprint "                Failed"
+                echo "Error when detecting PDF paper size!"
+                echo "All methods of detection failed"
+                echo "You may want to install pdfinfo or imagemagick"
+                exit 17
+        fi
 }
 
 
@@ -455,10 +454,11 @@ GSBIN="$(which gs 2>/dev/null)"
 BCBIN="$(which bc 2>/dev/null)"
 IDBIN=$(which identify 2>/dev/null)
 if [[ $OSNAME = "Darwin" ]]; then
-	MDLSBIN="$(which mdls 2>/dev/null)"
+        MDLSBIN="$(which mdls 2>/dev/null)"
 else
-	PDFINFOBIN="$(which pdfinfo 2>/dev/null)"
+        PDFINFOBIN="$(which pdfinfo 2>/dev/null)"
 fi
+
 
 # Verbose scale info
 vprint "  Scale factor: $SCALE"
@@ -480,16 +480,8 @@ else
 fi
 vprint "   Output file: $OUTFILEPDF"
 
-getPageSize
 
-# Set PGWIDTH and PGHEIGHT
-#if [[ $USEIMGMGK -eq $TRUE ]]; then
-#        getPageSizeImagemagick
-#elif [[ $USECATGREP -eq $TRUE ]]; then
-#        getPageSize
-#else
-#        getPageSizeGS
-#fi
+getPageSize
 vprint "         Width: $PGWIDTH postscript-points"
 vprint "        Height: $PGHEIGHT postscript-points"
 
