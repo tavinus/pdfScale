@@ -27,9 +27,9 @@ You will need to install imagemagick and have `identify` available on your `$PAT
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v1.3.1
+pdfscale v1.4.6
 
-Usage: pdfscale [-v] [-s <factor>] [-i] <inFile.pdf> [outfile.pdf]
+Usage: pdfscale [-v] [-s <factor>] [-i|-c] <inFile.pdf> [outfile.pdf]
        pdfscale -h
        pdfscale -V
 
@@ -38,15 +38,22 @@ Parameters:
              Use twice for even more information
  -h          Print this help to screen and exits
  -V          Prints version to screen and exits
- -i          Use imagemagick to get page size, 
-             instead of postscript method
- -c          Use cat + grep to get page size, 
-             instead of postscript method
+ -m <mode>   Force a mode of page size detection. 
+             Will disable the Adaptive Mode.
  -s <factor> Changes the scaling factor, defaults to 0.95
              MUST be a number bigger than zero. 
              Eg. -s 0.8 for 80% of the original size 
 
+Modes:
+ a, adaptive  Default mode, tries all the methods below
+ c, cat+grep  Forces the use of the cat + grep method
+ m, mdls      Forces the use of MacOS Quartz mdls
+ p, pdfinfo   Forces the use of Linux PdfInfo
+ i, identify  Forces the use of ImageMagick's Identify
+
 Notes:
+ - Page size detection will try different modes until it gets
+   a page size, or you can force a mode with -m 'mode'
  - Options must be passed before the file names to be parsed
  - The output filename is optional. If no file name is passed
    the output file will have the same name/destination of the
@@ -62,8 +69,8 @@ Examples:
  pdfscale myPdfFile.pdf myScaledPdf
  pdfscale -v -v myPdfFile.pdf
  pdfscale -s 0.85 myPdfFile.pdf myScaledPdf.pdf
- pdfscale -i -s 0.80 -v myPdfFile.pdf
- pdfscale -v -v -s 0.7 myPdfFile.pdf
+ pdfscale -m pdfinfo -s 0.80 -v myPdfFile.pdf
+ pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
  pdfscale -h
 ```
 

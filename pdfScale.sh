@@ -24,7 +24,7 @@
 ###################################################
 
 
-VERSION="1.4.5"
+VERSION="1.4.6"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
@@ -80,8 +80,6 @@ Parameters:
  -V          Prints version to screen and exits
  -m <mode>   Force a mode of page size detection. 
              Will disable the Adaptive Mode.
- -c          Use cat + grep to get page size, 
-             instead of postscript method
  -s <factor> Changes the scaling factor, defaults to 0.95
              MUST be a number bigger than zero. 
              Eg. -s 0.8 for 80% of the original size 
@@ -112,7 +110,7 @@ Examples:
  $BASENAME -v -v myPdfFile.pdf
  $BASENAME -s 0.85 myPdfFile.pdf myScaledPdf.pdf
  $BASENAME -m pdfinfo -s 0.80 -v myPdfFile.pdf
- $BASENAME -v -v -s 0.7 myPdfFile.pdf
+ $BASENAME -v -v -m i -s 0.7 myPdfFile.pdf
  $BASENAME -h
 "
 }
