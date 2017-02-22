@@ -24,17 +24,17 @@
 ###################################################
 
 
-VERSION="1.4.7"
+VERSION="1.4.8"
 SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                  # verbosity Level
 BASENAME="$(basename $0)"  # simplified name of this script
 
 # Set with which after we check dependencies
-GSBIN=""                   # GhostScript Binaries
-BCBIN=""                   # BC Math binary
+GSBIN=""                   # GhostScript Binary
+BCBIN=""                   # BC Math Binary
 IDBIN=""                   # Identify Binary
 PDFINFOBIN=""              # PDF Info Binary
-MDLSBIN=""                 # MacOS mdls binary
+MDLSBIN=""                 # MacOS mdls Binary
 
 OSNAME="$(uname 2>/dev/null)" # Check where we are running
 
@@ -74,7 +74,7 @@ Parameters:
  -h          Print this help to screen and exits
  -V          Prints version to screen and exits
  -m <mode>   Force a mode of page size detection. 
-             Will disable the Adaptive Mode.
+             May disable the Adaptive Mode.
  -s <factor> Changes the scaling factor, defaults to 0.95
              MUST be a number bigger than zero. 
              Eg. -s 0.8 for 80% of the original size 
