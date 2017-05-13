@@ -28,8 +28,6 @@ brew install ghostscript
 ##### Optionals
 Page Size detection is by default in Adaptive Mode.  
 It will try the following methods in sequence:   
- 
-The order of operation is as follows:
  1. Try to get `/MediaBox` with `cat` + `grep`
  2. Failed AND MacOS ? Try `mdls`
  3. Failed ? Try `pdfinfo`
