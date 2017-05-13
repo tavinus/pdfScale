@@ -653,39 +653,6 @@ pageResize() {
 }
 
 
-# Automatic name for SCALED pdf
-getOutputName() {
-	
-	# Parse output filename for scaled files
-	if [[ -z $OUTFILEPDF ]]; then
-	        OUTFILEPDF="${INFILEPDF%.pdf}.SCALED.pdf"
-	else
-	        OUTFILEPDF="${OUTFILEPDF%.pdf}.pdf"
-	fi
-}
-
-# Automatic name for SCALED pdf
-getScaledOutputName() {
-	# Parse output filename for scaled files
-	if [[ -z $OUTFILEPDF ]]; then
-	        OUTFILEPDF="${INFILEPDF%.pdf}.SCALED.pdf"
-	else
-	        OUTFILEPDF="${OUTFILEPDF%.pdf}.pdf"
-	fi
-}
-
-# Automatica name for RESIZED pdf
-getResizedOutputName() {
-	# Parse output filename for scaled files
-	if [[ -z $OUTFILEPDF ]]; then
-	        OUTFILEPDF="${INFILEPDF%.pdf}.$PAPER_RESIZE.pdf"
-	else
-	        OUTFILEPDF="${OUTFILEPDF%.pdf}.pdf"
-	fi
-}
-
-
-
 
 
 getPaperInfo() {
