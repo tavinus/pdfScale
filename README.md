@@ -38,7 +38,7 @@ The `cat`+`grep` method will fail on PDFs without a `/MediaBox`.
 You may install any of the optionals to be used in that case.  
   
 MacOS is fine using `mdls` if the metadata of the file is accurate.  
-The metadata is generated automatically by the OS (SpolLight)
+The metadata is generated automatically by the OS (Spotlight)
   
 ##### apt-get
 ```
