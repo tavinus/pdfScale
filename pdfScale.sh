@@ -5,6 +5,7 @@
 # Scale PDF to specified percentage of original size.
 #
 # Gustavo Arnosti Neves - 2016 / 07 / 10
+#        Latest Version - 2017 / 05 / 14
 #
 # This script: https://github.com/tavinus/pdfScale
 #    Based on: http://ma.juii.net/blog/scale-page-content-of-pdf-files
@@ -22,18 +23,18 @@
 
 
 VERSION="2.0.0"
-SCALE="0.95"               # scaling factor (0.95 = 95%, e.g.)
-VERBOSE=0                  # verbosity Level
+SCALE="0.95"                   # scaling factor (0.95 = 95%, e.g.)
+VERBOSE=0                      # verbosity Level
 PDFSCALE_NAME="$(basename $0)" # simplified name of this script
 
-# Set with which later
-GSBIN=""                   # GhostScript Binary
-BCBIN=""                   # BC Math Binary
-IDBIN=""                   # Identify Binary
-PDFINFOBIN=""              # PDF Info Binary
-MDLSBIN=""                 # MacOS mdls Binary
+# SET AND VALIDATED LATER
+GSBIN=""                       # GhostScript Binary
+BCBIN=""                       # BC Math Binary
+IDBIN=""                       # Identify Binary
+PDFINFOBIN=""                  # PDF Info Binary
+MDLSBIN=""                     # MacOS mdls Binary
 
-OSNAME="$(uname 2>/dev/null)" # Check where we are running
+OSNAME="$(uname 2>/dev/null)"  # Check where we are running
 
 LC_MEASUREMENT="C"         # To make sure our numbers have .decimals
 LC_ALL="C"                 # Some languages use , as decimal token
@@ -52,8 +53,7 @@ PGHEIGHT=""
 RESIZE_WIDTH=""
 RESIZE_HEIGHT=""
 
-
-# Exit flags
+### EXIT FLAGS
 EXIT_SUCCESS=0
 EXIT_ERROR=1
 EXIT_INVALID_PAGE_SIZE_DETECTED=10
@@ -71,11 +71,141 @@ EXIT_INVALID_PAPER_SIZE=50
 
 
 
+############################# MAIN #############################
+
+# Main function called at the end
+main() {
+        printVersion 1 'verbose'
+        loadDeps
+        vprint "    Input file: $INFILEPDF"
+        vprint "   Output file: $OUTFILEPDF"
+        getPageSize
+
+        if isMixedMode; then
+                vprint "   Mixed Tasks: Resize & Scale"
+                vprint "  Scale factor: $SCALE"
+                vPrintSourcePageSizes ' Source'
+                outputFile="$OUTFILEPDF"                    # backup outFile name
+                tempFile="${OUTFILEPDF%.pdf}.__TEMP__.pdf"  # set a temp file name
+                OUTFILEPDF="$tempFile"                      # set output to tmp file
+                pageResize                                  # resize to tmp file
+                INFILEPDF="$tempFile"                       # get tmp file as input
+                OUTFILEPDF="$outputFile"                    # reset final target
+                PGWIDTH=$RESIZE_WIDTH                       # we already know the new page size
+                PGHEIGHT=$RESIZE_HEIGHT                     # from the last command (Resize)
+                vPrintSourcePageSizes '    New'
+                pageScale                                   # scale the resized pdf
+                                                            # remove tmp file
+                rm "$tempFile" >/dev/null 2>&1 || printError "Error when removing temporary file: $tempFile"
+        elif isResizeMode; then
+                vprint "   Single Task: Resize PDF Paper"
+                vprint "  Scale factor: Disabled (resize only)"
+                vPrintSourcePageSizes ' Source'
+                pageResize
+        else
+                local scaleMode=""
+                vprint "   Single Task: Scale PDF Contents"
+                isManualScaledMode && scaleMode='(manual)' || scaleMode='(auto)'
+                vprint "  Scale factor: $SCALE $scaleMode"
+                vPrintSourcePageSizes ' Source'
+                pageScale
+        fi
+
+        return $EXIT_SUCCESS
+}
+
+
+########################## INITIALIZER ##########################
+
+# Loads external dependencies and checks for errors
+loadDeps() {
+        GSBIN="$(which gs 2>/dev/null)"
+        BCBIN="$(which bc 2>/dev/null)"
+        IDBIN=$(which identify 2>/dev/null)
+        MDLSBIN="$(which mdls 2>/dev/null)"
+        PDFINFOBIN="$(which pdfinfo 2>/dev/null)"
+        
+        vprint "Checking for ghostscript and bcmath"
+        if notIsAvailable "$GSBIN"; then printDependency 'ghostscript'; fi
+        if notIsAvailable "$BCBIN"; then printDependency 'bc'; fi
+        
+        if [[ $MODE = "IDENTIFY" ]]; then
+                vprint "Checking for imagemagick's identify"
+                if notIsAvailable "$IDBIN"; then printDependency 'imagemagick'; fi
+        fi
+        if [[ $MODE = "PDFINFO" ]]; then
+                vprint "Checking for pdfinfo"
+                if notIsAvailable "$PDFINFOBIN"; then printDependency 'pdfinfo'; fi
+        fi
+        if [[ $MODE = "MDLS" ]]; then
+                vprint "Checking for MacOS mdls"
+                if notIsAvailable "$MDLSBIN"; then 
+                        initError 'mdls executable was not found! Is this even MacOS?' $EXIT_MAC_MDLS_NOT_FOUND 'nobanner'
+                fi
+        fi
+}
+
+
+######################### CLI OPTIONS ##########################
+
+# Parse options
+getOptions() {
+        while getopts ":vhVs:m:r:p" o; do
+            case "${o}" in
+                v)
+                    ((VERBOSE++))
+                    ;;
+                h)
+                    printHelp
+                    exit $EXIT_SUCCESS
+                    ;;
+                V)
+                    printVersion
+                    exit $EXIT_SUCCESS
+                    ;;
+                s)
+                    parseScale ${OPTARG}
+                    ;;
+                m)
+                    parseMode ${OPTARG}
+                    ;;
+                r)
+                    parsePaperResize ${OPTARG}
+                    ;;
+                p)
+                    printPaperInfo
+                    exit $EXIT_SUCCESS
+                    ;;
+                *)
+                    initError "Invalid Option: -$OPTARG" $EXIT_INVALID_OPTION
+                    ;;
+            esac
+        done
+        shift $((OPTIND-1))
+        
+        # Validate input PDF file
+        INFILEPDF="$1"
+        isEmpty "$INFILEPDF" && initError "Input file is empty!" $EXIT_NO_INPUT_FILE
+        isPDF "$INFILEPDF"   || initError "Input file is not a PDF file: $INFILEPDF" $EXIT_INPUT_NOT_PDF
+        isFile "$INFILEPDF"  || initError "Input file not found: $INFILEPDF" $EXIT_FILE_NOT_FOUND
+        
+        if isEmpty "$2"; then
+                if isMixedMode; then
+                        OUTFILEPDF="${INFILEPDF%.pdf}.$(uppercase $RESIZE_PAPER_TYPE).SCALED.pdf"
+                elif isResizeMode; then
+                        OUTFILEPDF="${INFILEPDF%.pdf}.$(uppercase $RESIZE_PAPER_TYPE).pdf"
+                else
+                        OUTFILEPDF="${INFILEPDF%.pdf}.SCALED.pdf"
+                fi
+        else
+                OUTFILEPDF="${2%.pdf}.pdf"
+        fi
+}
 
 
 # Parses and validates the scaling factor
 parseScale() {
-	AUTOMATIC_SCALING=$FALSE
+        AUTOMATIC_SCALING=$FALSE
         if ! [[ -n "$1" && "$1" =~ ^-?[0-9]*([.][0-9]+)?$ && (($1 > 0 )) ]] ; then
                 printError "Invalid factor: $1"
                 printError "The factor must be a floating point number greater than 0"
@@ -85,6 +215,60 @@ parseScale() {
         SCALE=$1
 }
 
+###################### GHOSTSCRIPT CALLS #######################
+
+# Runs the ghostscript scaling script
+pageScale() {
+        # Compute translation factors (to center page).
+        XTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGWIDTH" | "$BCBIN")
+        YTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGHEIGHT" | "$BCBIN")
+        vprint " Translation X: $XTRANS"
+        vprint " Translation Y: $YTRANS"
+
+        # Do it.
+        "$GSBIN" \
+-q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
+-dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
+-dColorConversionStrategy=/LeaveColorUnchanged \
+-dSubsetFonts=true -dEmbedAllFonts=true \
+-dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
+-sOutputFile="$OUTFILEPDF" \
+-c "<</BeginPage{$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
+-f "$INFILEPDF" &
+        wait ${!}
+}
+
+
+# Runs the ghostscript paper resize script
+pageResize() {
+        getGSPaperSize "$RESIZE_PAPER_TYPE"
+        local tmpInverter=""
+        if [[ $PGWIDTH -gt $PGHEIGHT && $RESIZE_WIDTH -lt $RESIZE_HEIGHT ]]; then
+                vprint "   Flip Detect: Wrong orientation!"
+                vprint "                Inverting Width <-> Height"
+                tmpInverter=$RESIZE_HEIGHT
+                RESIZE_HEIGHT=$RESIZE_WIDTH
+                RESIZE_WIDTH=$tmpInverter
+        fi
+        vprint "   Resizing to: $(uppercase $RESIZE_PAPER_TYPE) ( $RESIZE_WIDTH x $RESIZE_HEIGHT )"
+
+        # Change page size
+        "$GSBIN" \
+-q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
+-dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
+-dColorConversionStrategy=/LeaveColorUnchanged \
+-dSubsetFonts=true -dEmbedAllFonts=true \
+-dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
+-dFIXEDMEDIA -dPDFFitPage \
+-sOutputFile="$OUTFILEPDF" \
+-f "$INFILEPDF" &
+        wait ${!}
+
+}
+
+
+
+################### PDF PAGE SIZE DETECTION ####################
 
 # Parse a forced mode of operation
 parseMode() {
@@ -132,7 +316,7 @@ parseMode() {
 getPageSizeImagemagick() {
         # Sanity and Adaptive together
         if notIsFile "$IDBIN" && isNotAdaptiveMode; then
-		notAdaptiveFailed "Make sure you installed ImageMagick and have identify on your \$PATH" "ImageMagick's Identify"
+                notAdaptiveFailed "Make sure you installed ImageMagick and have identify on your \$PATH" "ImageMagick's Identify"
         elif notIsFile "$IDBIN" && isAdaptiveMode; then
                 return $FALSE
         fi
@@ -141,7 +325,7 @@ getPageSizeImagemagick() {
         local identify="$("$IDBIN" -format '%[fx:w] %[fx:h]BREAKME' "$INFILEPDF" 2>/dev/null)"
         
         if isEmpty "$identify" && isNotAdaptiveMode; then
-		notAdaptiveFailed "ImageMagicks's Identify returned an empty string!"
+                notAdaptiveFailed "ImageMagicks's Identify returned an empty string!"
         elif isEmpty "$identify" && isAdaptiveMode; then
                 return $FALSE
         fi
@@ -151,7 +335,7 @@ getPageSizeImagemagick() {
         PGWIDTH=$(printf '%.0f' "${identify[0]}")             # assign
         PGHEIGHT=$(printf '%.0f' "${identify[1]}")            # assign
 
-	return $TRUE
+        return $TRUE
 }
 
 
@@ -159,7 +343,7 @@ getPageSizeImagemagick() {
 getPageSizeMdls() {
         # Sanity and Adaptive together
         if notIsFile "$MDLSBIN" && isNotAdaptiveMode; then
-		notAdaptiveFailed "Are you even trying this on a Mac?" "Mac Quartz mdls"
+                notAdaptiveFailed "Are you even trying this on a Mac?" "Mac Quartz mdls"
         elif notIsFile "$MDLSBIN" && isAdaptiveMode; then
                 return $FALSE
         fi
@@ -167,7 +351,7 @@ getPageSizeMdls() {
         local identify="$("$MDLSBIN" -mdls -name kMDItemPageHeight -name kMDItemPageWidth "$INFILEPDF" 2>/dev/null)"
 
         if isEmpty "$identify" && isNotAdaptiveMode; then
-		notAdaptiveFailed "Mac Quartz mdls returned an empty string!"
+                notAdaptiveFailed "Mac Quartz mdls returned an empty string!"
         elif isEmpty "$identify" && isAdaptiveMode; then
                 return $FALSE
         fi
@@ -175,8 +359,8 @@ getPageSizeMdls() {
         identify=${identify//$'\t'/ }      # change tab to space
         identify=($identify)               # make it an array
 
-	if [[ "${identify[5]}" = "(null)" || "${identify[2]}" = "(null)" ]] && isNotAdaptiveMode; then
-		notAdaptiveFailed "There was no metadata to read from the file! Is Spotlight OFF?"
+        if [[ "${identify[5]}" = "(null)" || "${identify[2]}" = "(null)" ]] && isNotAdaptiveMode; then
+                notAdaptiveFailed "There was no metadata to read from the file! Is Spotlight OFF?"
         elif [[ "${identify[5]}" = "(null)" || "${identify[2]}" = "(null)" ]] && isAdaptiveMode; then
                 return $FALSE
         fi
@@ -184,7 +368,7 @@ getPageSizeMdls() {
         PGWIDTH=$(printf '%.0f' "${identify[5]}")             # assign
         PGHEIGHT=$(printf '%.0f' "${identify[2]}")            # assign
 
-	return $TRUE
+        return $TRUE
 }
 
 
@@ -192,7 +376,7 @@ getPageSizeMdls() {
 getPageSizePdfInfo() {
         # Sanity and Adaptive together
         if notIsFile "$PDFINFOBIN" && isNotAdaptiveMode; then
-		notAdaptiveFailed "Do you have pdfinfo installed and available on your \$PATH?" "Linux pdfinfo"
+                notAdaptiveFailed "Do you have pdfinfo installed and available on your \$PATH?" "Linux pdfinfo"
         elif notIsFile "$PDFINFOBIN" && isAdaptiveMode; then
                 return $FALSE
         fi
@@ -201,7 +385,7 @@ getPageSizePdfInfo() {
         local identify="$("$PDFINFOBIN" "$INFILEPDF" 2>/dev/null | grep -i 'Page size:' )"
 
         if isEmpty "$identify" && isNotAdaptiveMode; then
-		notAdaptiveFailed "Linux PdfInfo returned an empty string!"
+                notAdaptiveFailed "Linux PdfInfo returned an empty string!"
         elif isEmpty "$identify" && isAdaptiveMode; then
                 return $FALSE
         fi
@@ -212,7 +396,7 @@ getPageSizePdfInfo() {
         PGWIDTH=$(printf '%.0f' "${identify[0]}")             # assign
         PGHEIGHT=$(printf '%.0f' "${identify[2]}")            # assign
 
-	return $TRUE
+        return $TRUE
 }
 
 
@@ -229,7 +413,7 @@ getPageSizeCatGrep() {
 
         # No page size data available
         if isEmpty "$mediaBox" && isNotAdaptiveMode; then
-		notAdaptiveFailed "There is no MediaBox in the pdf document!"
+                notAdaptiveFailed "There is no MediaBox in the pdf document!"
         elif isEmpty "$mediaBox" && isAdaptiveMode; then
                 return $FALSE
         fi
@@ -255,43 +439,6 @@ getPageSizeCatGrep() {
         return $TRUE
 }
 
-# Prints error message and exits execution
-notAdaptiveFailed() {
-	local errProgram="$2"
-	local errStr="$1"
-	if isEmpty "$2"; then
-        	printError "Error when reading input file!"
-	        printError "Could not determine the page size!"
-	else
-                printError "Error! $2 was not found!"
-	fi
-        isNotEmpty "$errStr" && printError "$errStr"
-        printError "Aborting! You may want to try the adaptive mode."
-        exit $EXIT_INVALID_PAGE_SIZE_DETECTED
-}
-
-# Return $TRUE if adaptive mode is enabled, false otherwise
-isAdaptiveMode() {
-	return $ADAPTIVEMODE
-}
-
-# Return $TRUE if adaptive mode is disabled, false otherwise
-isNotAdaptiveMode() {
-	isAdaptiveMode && return $FALSE
-	return $TRUE
-}
-
-# Return $TRUE if $1 is empty, false otherwise
-isEmpty() {
-	[[ -z "$1" ]] && return $TRUE
-	return $FALSE
-}
-
-# Return $TRUE if $1 is NOT empty, false otherwise
-isNotEmpty() {
-	[[ -z "$1" ]] && return $FALSE
-	return $TRUE
-}
 
 # Detects operation mode and also runs the adaptive mode
 getPageSize() {
@@ -304,7 +451,7 @@ getPageSize() {
                         vprint "        Method: Mac Quartz mdls"
                         getPageSizeMdls
                 elif [[ $MODE = "PDFINFO" ]]; then
-	                vprint "        Method: PDFInfo"
+                        vprint "        Method: PDFInfo"
                         getPageSizePdfInfo
                 elif [[ $MODE = "IDENTIFY" ]]; then
                         vprint "        Method: ImageMagick's Identify"
@@ -326,7 +473,7 @@ getPageSize() {
                 getPageSizeMdls
         fi
 
-	if pageSizeIsInvalid; then
+        if pageSizeIsInvalid; then
                 vprint "                Failed"
                 vprint "        Method: PDFInfo"
                 getPageSizePdfInfo
@@ -346,316 +493,37 @@ getPageSize() {
                 exit $EXIT_INVALID_PAGE_SIZE_DETECTED
         fi
 
-	return $TRUE
+        return $TRUE
 }
 
-vPrintSourcePageSizes() {
-	vprint " $1 Width: $PGWIDTH postscript-points"
-	vprint "$1 Height: $PGHEIGHT postscript-points"
-}
-
-# Returns $TRUE if $PGWIDTH OR $PGWIDTH are empty or NOT an Integer, false otherwise
-pageSizeIsInvalid() {
-	if isNotAnInteger "$PGWIDTH" || isNotAnInteger "$PGHEIGHT"; then
-                return $TRUE
+# Prints error message and exits execution
+notAdaptiveFailed() {
+        local errProgram="$2"
+        local errStr="$1"
+        if isEmpty "$2"; then
+                printError "Error when reading input file!"
+                printError "Could not determine the page size!"
+        else
+                printError "Error! $2 was not found!"
         fi
-	return $FALSE
+        isNotEmpty "$errStr" && printError "$errStr"
+        printError "Aborting! You may want to try the adaptive mode."
+        exit $EXIT_INVALID_PAGE_SIZE_DETECTED
 }
 
-isAnInteger() {
-	case $1 in
-	    ''|*[!0-9]*) return $FALSE ;;
-	    *) return $TRUE ;;
-	esac
-}
-
-isNotAnInteger() {
-	case $1 in
-	    ''|*[!0-9]*) return $TRUE ;;
-	    *) return $FALSE ;;
-	esac
+# Verbose print of the Width and Height (Source or New) to screen
+vPrintSourcePageSizes() {
+        vprint " $1 Width: $PGWIDTH postscript-points"
+        vprint "$1 Height: $PGHEIGHT postscript-points"
 }
 
 
-# Prints usage info
-usage() { 
-        [[ "$2" != 'nobanner' ]] && printVersion 2
-	[[ ! -z "$1" ]] && printError "$1"
-        printError "Usage: $PDFSCALE_NAME [-v] [-s <factor>] [-m <mode>] <inFile.pdf> [outfile.pdf]"
-        printError "Try:   $PDFSCALE_NAME -h # for help"
-}
+#################### GHOSTSCRIPT PAPER INFO ####################
 
-
-# Prints Verbose information
-vprint() {
-        [[ $VERBOSE -eq 0 ]] && return 0
-        timestamp=""
-        [[ $VERBOSE -gt 1 ]] && timestamp="$(date +%Y-%m-%d:%H:%M:%S) | "
-        echo "$timestamp$1"
-}
-
-
-# Prints dependency information and aborts execution
-printDependency() {
-        #printVersion 2
-	local brewName="$1"
-	[[ "$1" = 'pdfinfo' && "$OSNAME" = "Darwin" ]] && brewName="xpdf"
-        printError $'\n'"ERROR! You need to install the package '$1'"$'\n'
-        printError "Linux apt-get.: sudo apt-get install $1"
-        printError "Linux yum.....: sudo yum install $1"
-        printError "MacOS homebrew: brew install $brewName"
-        printError $'\n'"Aborting..."
-        exit $EXIT_MISSING_DEPENDENCY
-}
-
-# Prints initialization errors and aborts execution
-initError() {
-	local errStr="$1"
-	local exitStat=$2
-	[[ -z "$exitStat" ]] && exitStat=$EXIT_ERROR
-	usage "ERROR! $errStr" "$3"
-	exit $exitStat
-}
-
-# Prints to stderr
-printError() {
-	echo >&2 "$@"
-}
-
-# Returns $TRUE if $1 has a .pdf extension, false otherwsie
-isPDF() {
-	[[ "$1" =~ ^..*\.pdf$ ]] && return $TRUE
-	return $FALSE
-}
-
-
-# Returns $TRUE if $1 is a file, false otherwsie
-isFile() {
-	[[ -f "$1" ]] && return $TRUE
-	return $FALSE
-}
-
-# Returns $TRUE if $1 is NOT a file, false otherwsie
-notIsFile() {
-	[[ -f "$1" ]] && return $FALSE
-	return $TRUE
-}
-
-# Returns $TRUE if $1 is executable, false otherwsie
-isExecutable() {
-	[[ -x "$1" ]] && return $TRUE
-	return $FALSE
-}
-
-# Returns $TRUE if $1 is NOT executable, false otherwsie
-notIsExecutable() {
-	[[ -x "$1" ]] && return $FALSE
-	return $TRUE
-}
-
-# Returns $TRUE if $1 is a file and executable, false otherwsie
-isAvailable() {
-	if isFile "$1" && isExecutable "$1"; then 
-		return $TRUE
-	fi
-	return $FALSE
-}
-
-# Returns $TRUE if $1 is NOT a file or NOT executable, false otherwsie
-notIsAvailable() {
-	if notIsFile "$1" || notIsExecutable "$1"; then 
-		return $TRUE
-	fi
-	return $FALSE
-}
-
-# Loads external dependencies and checks for errors
-loadDeps() {
-	GSBIN="$(which gs 2>/dev/null)"
-	BCBIN="$(which bc 2>/dev/null)"
-	IDBIN=$(which identify 2>/dev/null)
-	MDLSBIN="$(which mdls 2>/dev/null)"
-	PDFINFOBIN="$(which pdfinfo 2>/dev/null)"
-	
-	vprint "Checking for ghostscript and bcmath"
-	if notIsAvailable "$GSBIN"; then printDependency 'ghostscript'; fi
-	if notIsAvailable "$BCBIN"; then printDependency 'bc'; fi
-	
-	if [[ $MODE = "IDENTIFY" ]]; then
-	        vprint "Checking for imagemagick's identify"
-	        if notIsAvailable "$IDBIN"; then printDependency 'imagemagick'; fi
-	fi
-	if [[ $MODE = "PDFINFO" ]]; then
-	        vprint "Checking for pdfinfo"
-	        if notIsAvailable "$PDFINFOBIN"; then printDependency 'pdfinfo'; fi
-	fi
-	if [[ $MODE = "MDLS" ]]; then
-	        vprint "Checking for MacOS mdls"
-	        if notIsAvailable "$MDLSBIN"; then 
-			initError 'mdls executable was not found! Is this even MacOS?' $EXIT_MAC_MDLS_NOT_FOUND 'nobanner'
-		fi
-	fi
-}
-
-# Main execution
-main() {
-	printVersion 1 'verbose'
-	
-	#getScaledOutputName
-
-	#Intro message
-	#vprint "$(basename $0) v$VERSION - Verbose execution"
-
-	loadDeps
-	vprint "    Input file: $INFILEPDF"
-	vprint "   Output file: $OUTFILEPDF"
-	getPageSize
-	
-
-	if isMixedMode; then
-		vprint "   Mixed Tasks: Resize & Scale"
-		vprint "  Scale factor: $SCALE"
-		vPrintSourcePageSizes ' Source'
-		outputFile="$OUTFILEPDF"                    # backup outFile name
-		tempFile="${OUTFILEPDF%.pdf}.__TEMP__.pdf"  # set a temp file name
-		OUTFILEPDF="$tempFile"                      # set output to tmp file
-		pageResize                                  # resize to tmp file
-		INFILEPDF="$tempFile"                       # get tmp file as input
-		OUTFILEPDF="$outputFile"                    # reset final target
-		PGWIDTH=$RESIZE_WIDTH                       # we already know the new page size
-	        PGHEIGHT=$RESIZE_HEIGHT                     # from the last command (Resize)
-		vPrintSourcePageSizes '    New'
-		pageScale                                   # scale the resized pdf
-		                                            # remove tmp file
-		rm "$tempFile" >/dev/null 2>&1 || printError "Error when removing temporary file: $tempFile"
-	elif isResizeMode; then
-		vprint "   Single Task: Resize PDF Paper"
-		vprint "  Scale factor: Disabled (resize only)"
-		vPrintSourcePageSizes ' Source'
-		pageResize
-	else
-		local scaleMode=""
-		vprint "   Single Task: Scale PDF Contents"
-		isManualScaledMode && scaleMode='(manual)' || scaleMode='(auto)'
-		vprint "  Scale factor: $SCALE $scaleMode"
-		vPrintSourcePageSizes ' Source'
-		pageScale
-	fi
-
-	#pageScale
-	#pageResize
-}
-
-
-# Parse options
-getOptions() {
-	while getopts ":vhVs:m:r:p" o; do
-	    case "${o}" in
-	        v)
-	            ((VERBOSE++))
-	            ;;
-	        h)
-	            printHelp
-	            exit $EXIT_SUCCESS
-	            ;;
-	        V)
-	            printVersion
-	            exit $EXIT_SUCCESS
-	            ;;
-	        s)
-	            parseScale ${OPTARG}
-	            ;;
-	        m)
-	            parseMode ${OPTARG}
-	            ;;
-	        r)
-	            parsePaperResize ${OPTARG}
-	            ;;
-	        p)
-	            printPaperInfo
-	            exit $EXIT_SUCCESS
-	            ;;
-	        *)
-	            initError "Invalid Option: -$OPTARG" $EXIT_INVALID_OPTION
-	            ;;
-	    esac
-	done
-	shift $((OPTIND-1))
-	
-	# Validate input PDF file
-	INFILEPDF="$1"
-	isEmpty "$INFILEPDF" && initError "Input file is empty!" $EXIT_NO_INPUT_FILE
-	isPDF "$INFILEPDF"   || initError "Input file is not a PDF file: $INFILEPDF" $EXIT_INPUT_NOT_PDF
-	isFile "$INFILEPDF"  || initError "Input file not found: $INFILEPDF" $EXIT_FILE_NOT_FOUND
-	
-	if isEmpty "$2"; then
-		if isMixedMode; then
-		        OUTFILEPDF="${INFILEPDF%.pdf}.$(uppercase $RESIZE_PAPER_TYPE).SCALED.pdf"
-		elif isResizeMode; then
-		        OUTFILEPDF="${INFILEPDF%.pdf}.$(uppercase $RESIZE_PAPER_TYPE).pdf"
-		else
-			OUTFILEPDF="${INFILEPDF%.pdf}.SCALED.pdf"
-		fi
-	else
-	        OUTFILEPDF="${2%.pdf}.pdf"
-	fi
-}
-
-
-# Runs the ghostscript scaling script
-pageScale() {
-	# Compute translation factors (to center page).
-	XTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGWIDTH" | "$BCBIN")
-	YTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGHEIGHT" | "$BCBIN")
-	vprint " Translation X: $XTRANS"
-	vprint " Translation Y: $YTRANS"
-
-	# Do it.
-	"$GSBIN" \
--q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
--dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
--dColorConversionStrategy=/LeaveColorUnchanged \
--dSubsetFonts=true -dEmbedAllFonts=true \
--dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
--sOutputFile="$OUTFILEPDF" \
--c "<</BeginPage{$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
--f "$INFILEPDF" &
-	wait ${!}
-}
-
-
-pageResize() {
-	getGSPaperSize "$RESIZE_PAPER_TYPE"
-	local tmpInverter=""
-	if [[ $PGWIDTH -gt $PGHEIGHT && $RESIZE_WIDTH -lt $RESIZE_HEIGHT ]]; then
-		vprint "   Flip Detect: Wrong orientation!"
-		vprint "                Inverting Width <-> Height"
-		tmpInverter=$RESIZE_HEIGHT
-		RESIZE_HEIGHT=$RESIZE_WIDTH
-		RESIZE_WIDTH=$tmpInverter
-	fi
-	vprint "   Resizing to: $(uppercase $RESIZE_PAPER_TYPE) ( $RESIZE_WIDTH x $RESIZE_HEIGHT )"
-
-	# Change page size
-	"$GSBIN" \
--q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
--dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
--dColorConversionStrategy=/LeaveColorUnchanged \
--dSubsetFonts=true -dEmbedAllFonts=true \
--dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
--dFIXEDMEDIA -dPDFFitPage \
--sOutputFile="$OUTFILEPDF" \
--f "$INFILEPDF" &
-	wait ${!}
-
-}
-
-
-
-
+# Loads GS paper info to memory
 getPaperInfo() {
-	# name inchesW inchesH mmW mmH pointsW pointsH
-	sizesUS="\
+        # name inchesW inchesH mmW mmH pointsW pointsH
+        sizesUS="\
 11x17 11.0 17.0 279 432 792 1224
 ledger 17.0 11.0 432 279 1224 792
 legal 8.5 14.0 216 356 612 1008
@@ -667,7 +535,7 @@ archC 18.0 24.0 457 610 1296 1728
 archB 12.0 18.0 305 457 864 1296
 archA 9.0 12.0 229 305 648 864"
 
-	sizesISO="\
+        sizesISO="\
 a0 33.1 46.8 841 1189 2384 3370
 a1 23.4 33.1 594 841 1684 2384
 a2 16.5 23.4 420 594 1191 1684
@@ -695,7 +563,7 @@ c4 9.0 12.8 229 324 649 918
 c5 6.4 9.0 162 229 459 649
 c6 4.5 6.4 114 162 323 459"
 
-	sizesJIS="\
+        sizesJIS="\
 jisb0 NA NA 1030 1456 2920 4127
 jisb1 NA NA 728 1030 2064 2920
 jisb2 NA NA 515 728 1460 2064
@@ -704,13 +572,13 @@ jisb4 NA NA 257 364 729 1032
 jisb5 NA NA 182 257 516 729
 jisb6 NA NA 128 182 363 516"
 
-	sizesOther="\
+        sizesOther="\
 flsa 8.5 13.0 216 330 612 936
 flse 8.5 13.0 216 330 612 936
 halfletter 5.5 8.5 140 216 396 612
 hagaki 3.9 5.8 100 148 283 420"
-	
-	sizesAll="\
+        
+        sizesAll="\
 $sizesUS
 $sizesISO
 $sizesJIS
@@ -718,174 +586,281 @@ $sizesOther"
 
 }
 
+# Gets a paper size in points and sets it to RESIZE_WIDTH and RESIZE_HEIGHT
 getGSPaperSize() {
-	isEmpty "$sizesall" && getPaperInfo
-	while read l; do 
-		local cols=($l)
-		if [[ "$1" == ${cols[0]} ]]; then
-			RESIZE_WIDTH=${cols[5]}
-			RESIZE_HEIGHT=${cols[6]}
-			return $TRUE
-		fi
-	done <<< "$sizesAll"
+        isEmpty "$sizesall" && getPaperInfo
+        while read l; do 
+                local cols=($l)
+                if [[ "$1" == ${cols[0]} ]]; then
+                        RESIZE_WIDTH=${cols[5]}
+                        RESIZE_HEIGHT=${cols[6]}
+                        return $TRUE
+                fi
+        done <<< "$sizesAll"
 }
 
+# Loads an array with paper names to memory
 getPaperNames() {
-	paperNames=(a0 a1 a2 a3 a4 a4small a5 a6 a7 a8 a9 a10 isob0 isob1 isob2 isob3 isob4 isob5 isob6 c0 c1 c2 c3 c4 c5 c6 \
+        paperNames=(a0 a1 a2 a3 a4 a4small a5 a6 a7 a8 a9 a10 isob0 isob1 isob2 isob3 isob4 isob5 isob6 c0 c1 c2 c3 c4 c5 c6 \
 11x17 ledger legal letter lettersmall archE archD archC archB archA \
 jisb0 jisb1 jisb2 jisb3 jisb4 jisb5 jisb6 \
 flsa flse halfletter hagaki)
 }
 
+# Prints uppercase paper names to screen (used in help)
 printPaperNames() {
-	isEmpty "$paperNames" && getPaperNames
-	for i in "${!paperNames[@]}"; do 
-		[[ $i -ne 0 && $((i % 5)) -eq 0 ]] && echo ""
-		ppN="$(uppercase ${paperNames[i]})"
-		printf "%-14s" "$ppN"
-	done
-	echo ""
+        isEmpty "$paperNames" && getPaperNames
+        for i in "${!paperNames[@]}"; do 
+                [[ $i -ne 0 && $((i % 5)) -eq 0 ]] && echo ""
+                ppN="$(uppercase ${paperNames[i]})"
+                printf "%-14s" "$ppN"
+        done
+        echo ""
 }
 
+# Returns $TRUE if $! is a valid paper name, $FALSE otherwise
 isPaperName() {
-	isEmpty "$1" && return $FALSE
-	isEmpty "$paperNames" && getPaperNames
-	for i in "${paperNames[@]}"; do 
-		[[ "$i" = "$1" ]] && return $TRUE
-	done
-	return $FALSE
+        isEmpty "$1" && return $FALSE
+        isEmpty "$paperNames" && getPaperNames
+        for i in "${paperNames[@]}"; do 
+                [[ "$i" = "$1" ]] && return $TRUE
+        done
+        return $FALSE
 }
 
+# Prints all tables with ghostscript paper information
 printPaperInfo() {
-	printVersion
-	echo $'\n'"Valid Ghostscript Paper Sizes accepted"$'\n'
-	getPaperInfo
-	printPaperTable "ISO STANDARD" "$sizesISO"; echo
-	printPaperTable "US STANDARD" "$sizesUS"; echo
-	printPaperTable "JIS STANDARD *Aproximated Points" "$sizesJIS"; echo
-	printPaperTable "OTHERS" "$sizesOther"; echo
+        printVersion
+        echo $'\n'"Valid Ghostscript Paper Sizes accepted"$'\n'
+        getPaperInfo
+        printPaperTable "ISO STANDARD" "$sizesISO"; echo
+        printPaperTable "US STANDARD" "$sizesUS"; echo
+        printPaperTable "JIS STANDARD *Aproximated Points" "$sizesJIS"; echo
+        printPaperTable "OTHERS" "$sizesOther"; echo
 }
 
+# GS paper table helper, prints a full line
 printTableLine() {
-	echo '+-----------------------------------------------------------------+'
+        echo '+-----------------------------------------------------------------+'
 }
 
+# GS paper table helper, prints a line with dividers
 printTableDivider() {
-	echo '+-----------------+-------+-------+-------+-------+-------+-------+'
+        echo '+-----------------+-------+-------+-------+-------+-------+-------+'
 }
 
+# GS paper table helper, prints a table header
 printTableHeader() {
-	echo '| Name            | inchW | inchH |  mm W |  mm H | pts W | pts H |'
+        echo '| Name            | inchW | inchH |  mm W |  mm H | pts W | pts H |'
 }
 
+# GS paper table helper, prints a table title
 printTableTitle() {
-	printf "| %-64s%s\n" "$1" '|'
+        printf "| %-64s%s\n" "$1" '|'
 }
 
+# GS paper table printer, prints a table for a paper variable
 printPaperTable() {
-	printTableLine
-	printTableTitle "$1"
-	printTableLine
-	printTableHeader
-	printTableDivider
-	while read l; do 
-		local cols=($l)
-		printf "| %-15s | %+5s | %+5s | %+5s | %+5s | %+5s | %+5s |\n" ${cols[*]}; 
-	done <<< "$2"
-	printTableDivider
+        printTableLine
+        printTableTitle "$1"
+        printTableLine
+        printTableHeader
+        printTableDivider
+        while read l; do 
+                local cols=($l)
+                printf "| %-15s | %+5s | %+5s | %+5s | %+5s | %+5s | %+5s |\n" ${cols[*]}; 
+        done <<< "$2"
+        printTableDivider
 }
 
+# Validades the a paper resize CLI option and sets the paper to $RESIZE_PAPER_TYPE
 parsePaperResize() {
-	isEmpty "$1" && initError 'Invalid Paper Type: (empty)' $EXIT_INVALID_PAPER_SIZE
-	local lowercasePaper="$(lowercase $1)"
-	! isPaperName "$lowercasePaper" && initError "Invalid Paper Type: $1" $EXIT_INVALID_PAPER_SIZE
-	RESIZE_PAPER_TYPE="$lowercasePaper"
+        isEmpty "$1" && initError 'Invalid Paper Type: (empty)' $EXIT_INVALID_PAPER_SIZE
+        local lowercasePaper="$(lowercase $1)"
+        isPaperName "$lowercasePaper" || initError "Invalid Paper Type: $1" $EXIT_INVALID_PAPER_SIZE
+        RESIZE_PAPER_TYPE="$lowercasePaper"
 }
 
+# Returns $TRUE if the scale was set manually, $FALSE if we are using automatic scaling
 isManualScaledMode() {
-	[[ $AUTOMATIC_SCALING -eq $TRUE ]] && return $FALSE
-	return $TRUE
+        [[ $AUTOMATIC_SCALING -eq $TRUE ]] && return $FALSE
+        return $TRUE
 }
 
+# Returns true if we are resizing a paper (ignores scaling), false otherwise
 isResizeMode() {
-	isEmpty $RESIZE_PAPER_TYPE && return $FALSE
-	return $TRUE
+        isEmpty $RESIZE_PAPER_TYPE && return $FALSE
+        return $TRUE
 }
 
+# Returns true if we are resizing a paper and the scale was manually set
 isMixedMode() {
-	isResizeMode && isManualScaledMode && return $TRUE
-	return $FALSE
+        isResizeMode && isManualScaledMode && return $TRUE
+        return $FALSE
 }
 
-mmToPoints() {
-	local calc=$(($1))
-}
-
-
+# Prints the lowercase char value for $1
 lowercaseChar() {
     case "$1" in
         [A-Z])
         n=$(printf "%d" "'$1")
         n=$((n+32))
         printf \\$(printf "%o" "$n")
-	;;
+        ;;
            *)
-	printf "%s" "$1"
-	;;
+        printf "%s" "$1"
+        ;;
     esac
 }
 
+# Prints the lowercase version of a string
 lowercase() {
-	word="$@"
-	for((i=0;i<${#word};i++))
-	do
-	    ch="${word:$i:1}"
-	    lowercaseChar "$ch"
-	done
+        word="$@"
+        for((i=0;i<${#word};i++))
+        do
+            ch="${word:$i:1}"
+            lowercaseChar "$ch"
+        done
 }
 
-
-
+# Prints the uppercase char value for $1
 uppercaseChar(){
     case "$1" in
         [a-z])
         n=$(printf "%d" "'$1")
         n=$((n-32))
         printf \\$(printf "%o" "$n")
-	;;
+        ;;
            *)
-	printf "%s" "$1"
-	;;
+        printf "%s" "$1"
+        ;;
     esac
 }
 
+# Prints the uppercase version of a string
 uppercase() {
-	word="$@"
-	for((i=0;i<${#word};i++))
-	do
-	    ch="${word:$i:1}"
-	    uppercaseChar "$ch"
-	done
+        word="$@"
+        for((i=0;i<${#word};i++))
+        do
+            ch="${word:$i:1}"
+            uppercaseChar "$ch"
+        done
 }
 
 
+########################## VALIDATORS ##########################
 
-#printPaperInfo
-#printPaperNames
+# Returns $TRUE if $PGWIDTH OR $PGWIDTH are empty or NOT an Integer, false otherwise
+pageSizeIsInvalid() {
+        if isNotAnInteger "$PGWIDTH" || isNotAnInteger "$PGHEIGHT"; then
+                return $TRUE
+        fi
+        return $FALSE
+}
 
-#echo "----"
-#isPaperName a4s; echo $?
+
+# Return $TRUE if adaptive mode is enabled, false otherwise
+isAdaptiveMode() {
+        return $ADAPTIVEMODE
+}
 
 
+# Return $TRUE if adaptive mode is disabled, false otherwise
+isNotAdaptiveMode() {
+        isAdaptiveMode && return $FALSE
+        return $TRUE
+}
 
 
+# Return $TRUE if $1 is empty, false otherwise
+isEmpty() {
+        [[ -z "$1" ]] && return $TRUE
+        return $FALSE
+}
 
-####----------Print-Program-Information----------####
+
+# Return $TRUE if $1 is NOT empty, false otherwise
+isNotEmpty() {
+        [[ -z "$1" ]] && return $FALSE
+        return $TRUE
+}
+
+
+isAnInteger() {
+        case $1 in
+            ''|*[!0-9]*) return $FALSE ;;
+            *) return $TRUE ;;
+        esac
+}
+
+
+isNotAnInteger() {
+        case $1 in
+            ''|*[!0-9]*) return $TRUE ;;
+            *) return $FALSE ;;
+        esac
+}
+
+
+# Returns $TRUE if $1 has a .pdf extension, false otherwsie
+isPDF() {
+        [[ "$1" =~ ^..*\.pdf$ ]] && return $TRUE
+        return $FALSE
+}
+
+
+# Returns $TRUE if $1 is a file, false otherwsie
+isFile() {
+        [[ -f "$1" ]] && return $TRUE
+        return $FALSE
+}
+
+
+# Returns $TRUE if $1 is NOT a file, false otherwsie
+notIsFile() {
+        [[ -f "$1" ]] && return $FALSE
+        return $TRUE
+}
+
+
+# Returns $TRUE if $1 is executable, false otherwsie
+isExecutable() {
+        [[ -x "$1" ]] && return $TRUE
+        return $FALSE
+}
+
+
+# Returns $TRUE if $1 is NOT executable, false otherwsie
+notIsExecutable() {
+        [[ -x "$1" ]] && return $FALSE
+        return $TRUE
+}
+
+
+# Returns $TRUE if $1 is a file and executable, false otherwsie
+isAvailable() {
+        if isFile "$1" && isExecutable "$1"; then 
+                return $TRUE
+        fi
+        return $FALSE
+}
+
+
+# Returns $TRUE if $1 is NOT a file or NOT executable, false otherwsie
+notIsAvailable() {
+        if notIsFile "$1" || notIsExecutable "$1"; then 
+                return $TRUE
+        fi
+        return $FALSE
+}
+
+
+###################### PRINTING TO SCREEN ######################
 
 # Prints version
 printVersion() {
-	local vStr=""
-	[[ "$2" = 'verbose' ]] && vStr=" - Verbose Execution"
+        local vStr=""
+        [[ "$2" = 'verbose' ]] && vStr=" - Verbose Execution"
         if [[ $1 -eq 2 ]]; then
                 printError "$PDFSCALE_NAME v$VERSION$vStr"
         else
@@ -897,7 +872,7 @@ printVersion() {
 # Prints help info
 printHelp() {
         printVersion
-	local paperList="$(printPaperNames)"
+        local paperList="$(printPaperNames)"
         echo "
 Usage: $PDFSCALE_NAME [-v] [-s <factor>] [-m <mode>] [-r <paper>] <inFile.pdf> [outfile.pdf]
        $PDFSCALE_NAME -p
@@ -974,15 +949,57 @@ Examples:
 }
 
 
+# Prints usage info
+usage() { 
+        [[ "$2" != 'nobanner' ]] && printVersion 2
+        [[ ! -z "$1" ]] && printError "$1"
+        printError "Usage: $PDFSCALE_NAME [-v] [-s <factor>] [-m <mode>] <inFile.pdf> [outfile.pdf]"
+        printError "Try:   $PDFSCALE_NAME -h # for help"
+}
+
+
+# Prints Verbose information
+vprint() {
+        [[ $VERBOSE -eq 0 ]] && return 0
+        timestamp=""
+        [[ $VERBOSE -gt 1 ]] && timestamp="$(date +%Y-%m-%d:%H:%M:%S) | "
+        echo "$timestamp$1"
+}
+
+
+# Prints dependency information and aborts execution
+printDependency() {
+        #printVersion 2
+        local brewName="$1"
+        [[ "$1" = 'pdfinfo' && "$OSNAME" = "Darwin" ]] && brewName="xpdf"
+        printError $'\n'"ERROR! You need to install the package '$1'"$'\n'
+        printError "Linux apt-get.: sudo apt-get install $1"
+        printError "Linux yum.....: sudo yum install $1"
+        printError "MacOS homebrew: brew install $brewName"
+        printError $'\n'"Aborting..."
+        exit $EXIT_MISSING_DEPENDENCY
+}
+
+
+# Prints initialization errors and aborts execution
+initError() {
+        local errStr="$1"
+        local exitStat=$2
+        [[ -z "$exitStat" ]] && exitStat=$EXIT_ERROR
+        usage "ERROR! $errStr" "$3"
+        exit $exitStat
+}
+
+
+# Prints to stderr
+printError() {
+        echo >&2 "$@"
+}
 
 
 
 
-
-
-
-
-######### START EXECUTION
+########################## EXECUTION ###########################
 
 getOptions "${@}"
 main
