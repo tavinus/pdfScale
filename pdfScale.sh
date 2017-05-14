@@ -698,13 +698,13 @@ c5 6.4 9.0 162 229 459 649
 c6 4.5 6.4 114 162 323 459"
 
 	sizesJIS="\
-jisb0 NA NA 1030 1456 NA NA
-jisb1 NA NA 728 1030 NA NA
-jisb2 NA NA 515 728 NA NA
-jisb3 NA NA 364 515 NA NA
-jisb4 NA NA 257 364 NA NA
-jisb5 NA NA 182 257 NA NA
-jisb6 NA NA 128 182 NA NA"
+jisb0 NA NA 1030 1456 2920 4127
+jisb1 NA NA 728 1030 2064 2920
+jisb2 NA NA 515 728 1460 2064
+jisb3 NA NA 364 515 1032 1460
+jisb4 NA NA 257 364 729 1032
+jisb5 NA NA 182 257 516 729
+jisb6 NA NA 128 182 363 516"
 
 	sizesOther="\
 flsa 8.5 13.0 216 330 612 936
@@ -764,7 +764,7 @@ printPaperInfo() {
 	getPaperInfo
 	printPaperTable "ISO STANDARD" "$sizesISO"; echo
 	printPaperTable "US STANDARD" "$sizesUS"; echo
-	printPaperTable "JIS STANDARD" "$sizesJIS"; echo
+	printPaperTable "JIS STANDARD *Aproximated Points" "$sizesJIS"; echo
 	printPaperTable "OTHERS" "$sizesOther"; echo
 }
 
@@ -819,6 +819,9 @@ isMixedMode() {
 	return $FALSE
 }
 
+mmToPoints() {
+	local calc=$(($1))
+}
 
 
 lowercaseChar() {
