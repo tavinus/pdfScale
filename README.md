@@ -197,8 +197,8 @@ Checking for ghostscript and bcmath
 ```
 ## GhostScript Paper Tables
 ```
-$ pdfscale -p
-pdfscale v2.0.0
+$ ./pdfScale.sh -p
+pdfScale.sh v2.0.0
 
 Valid Ghostscript Paper Sizes accepted
 
@@ -253,17 +253,17 @@ Valid Ghostscript Paper Sizes accepted
 +-----------------+-------+-------+-------+-------+-------+-------+
 
 +-----------------------------------------------------------------+
-| JIS STANDARD                                                    |
+| JIS STANDARD *Aproximated Points                                |
 +-----------------------------------------------------------------+
 | Name            | inchW | inchH |  mm W |  mm H | pts W | pts H |
 +-----------------+-------+-------+-------+-------+-------+-------+
-| jisb0           |    NA |    NA |  1030 |  1456 |    NA |    NA |
-| jisb1           |    NA |    NA |   728 |  1030 |    NA |    NA |
-| jisb2           |    NA |    NA |   515 |   728 |    NA |    NA |
-| jisb3           |    NA |    NA |   364 |   515 |    NA |    NA |
-| jisb4           |    NA |    NA |   257 |   364 |    NA |    NA |
-| jisb5           |    NA |    NA |   182 |   257 |    NA |    NA |
-| jisb6           |    NA |    NA |   128 |   182 |    NA |    NA |
+| jisb0           |    NA |    NA |  1030 |  1456 |  2920 |  4127 |
+| jisb1           |    NA |    NA |   728 |  1030 |  2064 |  2920 |
+| jisb2           |    NA |    NA |   515 |   728 |  1460 |  2064 |
+| jisb3           |    NA |    NA |   364 |   515 |  1032 |  1460 |
+| jisb4           |    NA |    NA |   257 |   364 |   729 |  1032 |
+| jisb5           |    NA |    NA |   182 |   257 |   516 |   729 |
+| jisb6           |    NA |    NA |   128 |   182 |   363 |   516 |
 +-----------------+-------+-------+-------+-------+-------+-------+
 
 +-----------------------------------------------------------------+
