@@ -864,7 +864,7 @@ printVersion() {
         if [[ $1 -eq 2 ]]; then
                 printError "$PDFSCALE_NAME v$VERSION$vStr"
         else
-                echo "$PDFSCALE_NAME v$VERSION$vStr"
+                vprint "$PDFSCALE_NAME v$VERSION$vStr"
         fi
 }
 
