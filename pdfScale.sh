@@ -15,11 +15,9 @@
 # PAGESIZE LOGIC
 # 1- Try to get Mediabox with CAT/GREP
 # 2- MacOS => try to use mdls
-#    Linux => try to use pdfinfo
-# 3- Try to use identify (imagemagick)
-# 4- Fail
-#    Remove postscript method, 
-#    may have licensing problems
+# 3- Try to use pdfinfo
+# 4- Try to use identify (imagemagick)
+# 5- Fail
 ###################################################
 
 
