@@ -272,7 +272,7 @@ pageResize() {
 
 # Parse a forced mode of operation
 parseMode() {
-        if [[ -z $1 ]]; then
+        if isEmpty "$1"; then
                 printError "Mode is empty, please specify the desired mode"
                 printError "Falling back to adaptive mode!"
                 ADAPTIVEMODE=$TRUE
@@ -952,7 +952,7 @@ Examples:
 # Prints usage info
 usage() { 
         [[ "$2" != 'nobanner' ]] && printVersion 2
-        [[ ! -z "$1" ]] && printError "$1"
+        isNotEmpty "$1" && printError "$1"
         printError "Usage: $PDFSCALE_NAME [-v] [-s <factor>] [-m <mode>] <inFile.pdf> [outfile.pdf]"
         printError "Try:   $PDFSCALE_NAME -h # for help"
 }
@@ -960,7 +960,7 @@ usage() {
 
 # Prints Verbose information
 vprint() {
-        [[ $VERBOSE -eq 0 ]] && return 0
+        [[ $VERBOSE -eq 0 ]] && return $TRUE
         timestamp=""
         [[ $VERBOSE -gt 1 ]] && timestamp="$(date +%Y-%m-%d:%H:%M:%S) | "
         echo "$timestamp$1"
@@ -985,7 +985,7 @@ printDependency() {
 initError() {
         local errStr="$1"
         local exitStat=$2
-        [[ -z "$exitStat" ]] && exitStat=$EXIT_ERROR
+        isEmpty "$exitStat" && exitStat=$EXIT_ERROR
         usage "ERROR! $errStr" "$3"
         exit $exitStat
 }
