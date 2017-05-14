@@ -175,9 +175,9 @@ getPageSizeMdls() {
         identify=${identify//$'\t'/ }      # change tab to space
         identify=($identify)               # make it an array
 
-	if [[ "${identify[5]}" = "(null)" || "${identify[5]}" = "(null)" ]] && isNotAdaptiveMode; then
+	if [[ "${identify[5]}" = "(null)" || "${identify[2]}" = "(null)" ]] && isNotAdaptiveMode; then
 		notAdaptiveFailed "There was no metadata to read from the file! Is Spotlight OFF?"
-        elif [[ "${identify[5]}" = "(null)" || "${identify[5]}" = "(null)" ]] && isAdaptiveMode; then
+        elif [[ "${identify[5]}" = "(null)" || "${identify[2]}" = "(null)" ]] && isAdaptiveMode; then
                 return $FALSE
         fi
 
