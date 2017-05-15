@@ -20,7 +20,7 @@ pdfScale.sh v2.0.0 - Paper Sizes
             |    WIDTH x HEIGHT
      Points |      842 x 595     
  Milimeters |      297 x 210     
-     Inches |    11.69 x 8.26
+     Inches |     11.7 x 8.3
 ```
 #### Resize to A0 and Scale by 1.05 (+5%)
 ```
