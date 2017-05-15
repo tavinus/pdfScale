@@ -221,18 +221,19 @@ pageResize() {
 
 # Loads external dependencies and checks for errors
 initDeps() {
-	GREPBIN="$(which grep 2>/dev/null)"
+        GREPBIN="$(which grep 2>/dev/null)"
         GSBIN="$(which gs 2>/dev/null)"
         BCBIN="$(which bc 2>/dev/null)"
         IDBIN=$(which identify 2>/dev/null)
         MDLSBIN="$(which mdls 2>/dev/null)"
         PDFINFOBIN="$(which pdfinfo 2>/dev/null)"
         
-        vprint "Checking for grep, ghostscript and bcmath"
+        vprint "Checking for basename, grep, ghostscript and bcmath"
+        basename "" >/dev/null 2>&1 || printDependency 'basename'
+        notIsAvailable "$GREPBIN" && printDependency 'grep'
         notIsAvailable "$GSBIN" && printDependency 'ghostscript'
         notIsAvailable "$BCBIN" && printDependency 'bc'
-        notIsAvailable "$GREPBIN" && printDependency 'grep'
-	return $TRUE
+        return $TRUE
 }
 
 # Checks for dependencies errors, run after getting options
@@ -251,7 +252,7 @@ checkDeps() {
                         initError 'mdls executable was not found! Is this even MacOS?' $EXIT_MAC_MDLS_NOT_FOUND 'nobanner'
                 fi
         fi
-	return $TRUE
+        return $TRUE
 }
 
 
@@ -582,8 +583,8 @@ getPageSizeCatGrep() {
         #local mediaBox="$("$GREPBIN" -a -e '/MediaBox' "$INFILEPDF" | "$HEADBIN" -n1)"
         local mediaBox="$("$GREPBIN" -a -e '/MediaBox' "$INFILEPDF" 2>/dev/null)"$'\n\n'
         while read l; do 
-		mediaBox="$l"
-		break
+                mediaBox="$l"
+                break
         done <<< "$mediaBox"
 
         mediaBox="${mediaBox##*/MediaBox}"
