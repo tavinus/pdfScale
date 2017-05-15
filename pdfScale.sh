@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.0.0"
+VERSION="2.0.1"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -78,7 +78,6 @@ EXIT_INVALID_PAPER_SIZE=50
 
 # Main function called at the end
 main() {
-        checkDeps
         printPDFSizes
         vprint "    Input File: $INFILEPDF"
         vprint "   Output File: $OUTFILEPDF"
@@ -315,6 +314,7 @@ getOptions() {
         isFile "$INFILEPDF"  || initError "Input file not found: $INFILEPDF" $EXIT_FILE_NOT_FOUND
         
         printVersion 1 'verbose'
+        checkDeps
         if isMixedMode; then
                 vprint "   Mixed Tasks: Resize & Scale"
                 isEmpty "$2" && OUTFILEPDF="${INFILEPDF%.pdf}.$(uppercase $RESIZE_PAPER_TYPE).SCALED.pdf"
