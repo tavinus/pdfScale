@@ -8,7 +8,7 @@ In `mixed mode`, the PDF will first be `resized` then `scaled` with two Ghostscr
 A temporary file is used in `mixed mode`, at the target location.  
 
 ## Example Runs
-### Better than explaining is showing it:
+Better than explaining is showing it:  
 #### Checking File Information
 ```
 $ ./pdfScale.sh -i ../input-nup.pdf 
