@@ -973,7 +973,7 @@ pointsToMilimeters() {
 # Prints the inches equivalent from $1 postscript points
 pointsToInches() {
         local pts=$(echo "scale=8; $1 / 72" | "$BCBIN")
-        printf '%.2f' "$pts"    # Print rounded conversion
+        printf '%.1f' "$pts"    # Print rounded conversion
 }
 
 
