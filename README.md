@@ -114,27 +114,27 @@ pdfscale v2.0.0 - Verbose Execution
   Run Resizing: A2 ( 1191 x 1684 ) pts
   Final Status: File created successfully
 ```
-#### Resize to custom 200x200 mm and Scale by 0.95 (-5%)
+#### Resize to custom 200x200 mm, disable Flip-Detection and Scale by 0.95 (-5%)
 ```
-$ pdfscale -v -v -r 'custom mm 200 200' -s 0.9 ../mixsync\ manual\ v1-2-3.pdf
-2017-05-15:03:00:53 | pdfscale v2.0.0 - Verbose Execution
-2017-05-15:03:00:53 |    Mixed Tasks: Resize & Scale
-2017-05-15:03:00:53 |     Input File: ../mixsync manual v1-2-3.pdf
-2017-05-15:03:00:53 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
-2017-05-15:03:00:53 |  Get Page Size: Adaptive Enabled
-2017-05-15:03:00:53 |         Method: Cat + Grep
-2017-05-15:03:00:53 |   Source Width: 842 postscript-points
-2017-05-15:03:00:53 |  Source Height: 595 postscript-points
-2017-05-15:03:00:53 |    Auto Rotate: PageByPage
-2017-05-15:03:00:53 |    Flip Detect: No change needed
-2017-05-15:03:00:53 |   Run Resizing: CUSTOM ( 567 x 567 ) pts
-2017-05-15:03:00:53 |      New Width: 567 postscript-points
-2017-05-15:03:00:53 |     New Height: 567 postscript-points
-2017-05-15:03:00:53 |   Scale Factor: 0.9
-2017-05-15:03:00:53 |  Translation X: 31.499685
-2017-05-15:03:00:53 |  Translation Y: 31.499685
-2017-05-15:03:00:53 |    Run Scaling: -10 %
-2017-05-15:03:00:54 |   Final Status: File created successfully
+$ pdfscale -v -v -r 'custom mm 200 200' -f disable -s 0.9 ../mixsync\ manual\ v1-2-3.pdf
+2017-05-15:03:06:23 | pdfscale v2.0.0 - Verbose Execution
+2017-05-15:03:06:23 |    Mixed Tasks: Resize & Scale
+2017-05-15:03:06:23 |     Input File: ../mixsync manual v1-2-3.pdf
+2017-05-15:03:06:23 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
+2017-05-15:03:06:23 |  Get Page Size: Adaptive Enabled
+2017-05-15:03:06:23 |         Method: Cat + Grep
+2017-05-15:03:06:23 |   Source Width: 842 postscript-points
+2017-05-15:03:06:23 |  Source Height: 595 postscript-points
+2017-05-15:03:06:23 |    Auto Rotate: PageByPage
+2017-05-15:03:06:23 |    Flip Detect: Disabled
+2017-05-15:03:06:23 |   Run Resizing: CUSTOM ( 567 x 567 ) pts
+2017-05-15:03:06:23 |      New Width: 567 postscript-points
+2017-05-15:03:06:23 |     New Height: 567 postscript-points
+2017-05-15:03:06:23 |   Scale Factor: 0.9
+2017-05-15:03:06:23 |  Translation X: 31.499685
+2017-05-15:03:06:23 |  Translation Y: 31.499685
+2017-05-15:03:06:23 |    Run Scaling: -10 %
+2017-05-15:03:06:23 |   Final Status: File created successfully
 ```
 
 ## Help info
