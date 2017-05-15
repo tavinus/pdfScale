@@ -154,55 +154,54 @@ Examples:
 
 ## Example Runs
 ```
-pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
+$ pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
 pdfscale v2.0.0 - Verbose Execution
-    Input file: ../mixsync manual v1-2-3.pdf
-   Output file: ../mixsync manual v1-2-3.A0.SCALED.pdf
+   Mixed Tasks: Resize & Scale
+    Input File: ../mixsync manual v1-2-3.pdf
+   Output File: ../mixsync manual v1-2-3.A0.SCALED.pdf
  Get Page Size: Adaptive Enabled
         Method: Cat + Grep
   Source Width: 842 postscript-points
  Source Height: 595 postscript-points
-   Mixed Tasks: Resize & Scale
-  Scale factor: 1.05
    Flip Detect: Wrong orientation!
                 Inverting Width <-> Height
   Run Resizing: A0 ( 3370 x 2384 ) pts
      New Width: 3370 postscript-points
     New Height: 2384 postscript-points
+  Scale Factor: 1.05
  Translation X: -80.236330
  Translation Y: -56.760656
    Run Scaling: 5 %
   Final Status: File created successfully
 ```
 ```
-$ pdfscale -v -v -s 0.9 ../input-nup.pdf "../my glorius PDF"
-2017-05-14:23:16:05 | pdfscale v2.0.0 - Verbose Execution
-2017-05-14:23:16:05 |     Input file: ../input-nup.pdf
-2017-05-14:23:16:05 |    Output file: ../my glorius PDF.pdf
-2017-05-14:23:16:05 |  Get Page Size: Adaptive Enabled
-2017-05-14:23:16:05 |         Method: Cat + Grep
-2017-05-14:23:16:05 |                 Failed
-2017-05-14:23:16:05 |         Method: Mac Quartz mdls
-2017-05-14:23:16:05 |   Source Width: 842 postscript-points
-2017-05-14:23:16:05 |  Source Height: 595 postscript-points
-2017-05-14:23:16:05 |    Single Task: Scale PDF Contents
-2017-05-14:23:16:05 |   Scale factor: 0.9 (manual)
-2017-05-14:23:16:05 |  Translation X: 46.777310
-2017-05-14:23:16:05 |  Translation Y: 33.055225
-2017-05-14:23:16:05 |    Run Scaling: -10 %
-2017-05-14:23:16:05 |   Final Status: File created successfully
+$ pdfscale -v -v -s 0.9 ../input-nup.pdf "../My Glorius PDF"
+2017-05-14:23:43:46 | pdfscale v2.0.0 - Verbose Execution
+2017-05-14:23:43:46 |     Input File: ../input-nup.pdf
+2017-05-14:23:43:46 |    Output File: ../My Glorius PDF.pdf
+2017-05-14:23:43:46 |  Get Page Size: Adaptive Enabled
+2017-05-14:23:43:46 |         Method: Cat + Grep
+2017-05-14:23:43:46 |                 Failed
+2017-05-14:23:43:46 |         Method: Mac Quartz mdls
+2017-05-14:23:43:46 |   Source Width: 842 postscript-points
+2017-05-14:23:43:46 |  Source Height: 595 postscript-points
+2017-05-14:23:43:46 |   Scale Factor: 0.9 (manual)
+2017-05-14:23:43:46 |  Translation X: 46.777310
+2017-05-14:23:43:46 |  Translation Y: 33.055225
+2017-05-14:23:43:46 |    Run Scaling: -10 %
+2017-05-14:23:43:47 |   Final Status: File created successfully
 ```
 ```
-pdfscale -v -r a2 ../input.pdf
+$ pdfscale -v -r a2 ../input.pdf
 pdfscale v2.0.0 - Verbose Execution
-    Input file: ../input.pdf
-   Output file: ../input.A2.pdf
+   Single Task: Resize PDF Paper
+    Input File: ../input.pdf
+   Output File: ../input.A2.pdf
  Get Page Size: Adaptive Enabled
         Method: Cat + Grep
   Source Width: 595 postscript-points
  Source Height: 842 postscript-points
-   Single Task: Resize PDF Paper
-  Scale factor: Disabled (resize only)
+  Scale Factor: Disabled (resize only)
    Flip Detect: No change needed
   Run Resizing: A2 ( 1191 x 1684 ) pts
   Final Status: File created successfully

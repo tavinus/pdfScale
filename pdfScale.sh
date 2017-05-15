@@ -77,17 +77,14 @@ EXIT_INVALID_PAPER_SIZE=50
 
 # Main function called at the end
 main() {
-        printVersion 1 'verbose'
         checkDeps
-        vprint "    Input file: $INFILEPDF"
-        vprint "   Output file: $OUTFILEPDF"
+        vprint "    Input File: $INFILEPDF"
+        vprint "   Output File: $OUTFILEPDF"
         getPageSize
         vPrintSourcePageSizes ' Source'
         local finalRet=$EXIT_ERROR
 
         if isMixedMode; then
-                vprint "   Mixed Tasks: Resize & Scale"
-                vprint "  Scale factor: $SCALE"
                 outputFile="$OUTFILEPDF"                    # backup outFile name
                 tempFile="${OUTFILEPDF%.pdf}.__TEMP__.pdf"  # set a temp file name
                 OUTFILEPDF="$tempFile"                      # set output to tmp file
@@ -98,20 +95,19 @@ main() {
                 PGWIDTH=$RESIZE_WIDTH                       # we already know the new page size
                 PGHEIGHT=$RESIZE_HEIGHT                     # from the last command (Resize)
                 vPrintSourcePageSizes '    New'
+                vPrintScaleFactor
                 pageScale                                   # scale the resized pdf
                 finalRet=$(($finalRet+$?))
                                                             # remove tmp file
                 rm "$tempFile" >/dev/null 2>&1 || printError "Error when removing temporary file: $tempFile"
         elif isResizeMode; then
-                vprint "   Single Task: Resize PDF Paper"
-                vprint "  Scale factor: Disabled (resize only)"
+                vPrintScaleFactor "Disabled (resize only)"
                 pageResize
                 finalRet=$?
         else
                 local scaleMode=""
-                vprint "   Single Task: Scale PDF Contents"
                 isManualScaledMode && scaleMode='(manual)' || scaleMode='(auto)'
-                vprint "  Scale factor: $SCALE $scaleMode"
+                vPrintScaleFactor "$SCALE $scaleMode"
                 pageScale
                 finalRet=$?
         fi
@@ -206,12 +202,16 @@ getOptions() {
         isPDF "$INFILEPDF"   || initError "Input file is not a PDF file: $INFILEPDF" $EXIT_INPUT_NOT_PDF
         isFile "$INFILEPDF"  || initError "Input file not found: $INFILEPDF" $EXIT_FILE_NOT_FOUND
         
+        printVersion 1 'verbose'
         if isEmpty "$2"; then
                 if isMixedMode; then
+                        vprint "   Mixed Tasks: Resize & Scale"
                         OUTFILEPDF="${INFILEPDF%.pdf}.$(uppercase $RESIZE_PAPER_TYPE).SCALED.pdf"
                 elif isResizeMode; then
+                        vprint "   Single Task: Resize PDF Paper"
                         OUTFILEPDF="${INFILEPDF%.pdf}.$(uppercase $RESIZE_PAPER_TYPE).pdf"
                 else
+                        vprint "   Single Task: Scale PDF Contents"
                         OUTFILEPDF="${INFILEPDF%.pdf}.SCALED.pdf"
                 fi
         else
@@ -975,6 +975,13 @@ printVersion() {
         else
                 vprint "$PDFSCALE_NAME v$VERSION$vStr"
         fi
+}
+
+# Prints the scale factor to screen, or custom message
+vPrintScaleFactor() {
+        local scaleMsg="$SCALE"
+        isNotEmpty "$1" && scaleMsg="$1"
+        vprint "  Scale Factor: $scaleMsg"
 }
 
 
