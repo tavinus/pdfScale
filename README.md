@@ -7,52 +7,6 @@ In `resize mode`, the PDF paper will be changed and fit-to-page will be applied.
 In `mixed mode`, the PDF will first be `resized` then `scaled` with two Ghostscript calls.  
 A temporary file is used in `mixed mode`, at the target location.  
 
-## Dependencies  
-The script uses `basename`, `cat`, `grep`, `bc`, `head` and `gs` (ghostscript).   
-You probably have everything installed already, except for ghostscript.   
-Optional dependencies are `imagemagick`, `pdfinfo` and `mdls` (Mac).  
-This app is focused in `Bash`, so it will probably not run in other shells.  
-
-##### apt-get
-```
-sudo apt-get install ghostscript bc
-```
-##### yum
-```
-sudo yum install ghostscript bc
-```
-##### homebrew MacOS
-```
-brew install ghostscript
-```
-##### Optionals
-Page Size detection is by default in Adaptive Mode.  
-It will try the following methods in sequence:   
- 1. Try to get `/MediaBox` with `cat` + `grep`
- 2. Failed AND MacOS ? Try `mdls`
- 3. Failed ? Try `pdfinfo`
- 4. Failed ? Try ImageMagick's `identify`
- 5. Failed ? `Exit` with error message
- 
-The `cat`+`grep` method will fail on PDFs without a `/MediaBox`.   
-You may install any of the optionals to be used in that case.  
-  
-MacOS is fine using `mdls` if the metadata of the file is accurate.  
-The metadata is generated automatically by the OS (Spotlight)
-  
-##### apt-get
-```
-sudo apt-get install imagemagick pdfinfo
-```
-##### yum
-```
-sudo yum install imagemagick pdfinfo
-```
-##### homebrew MacOS
-```
-brew install imagemagick xpdf
-```
-
 ## Example Runs
 
 #### Checking File Information
@@ -343,6 +297,52 @@ Valid Ghostscript Paper Sizes accepted
 | halfletter      |   5.5 |   8.5 |   140 |   216 |   396 |   612 |
 | hagaki          |   3.9 |   5.8 |   100 |   148 |   283 |   420 |
 +-----------------+-------+-------+-------+-------+-------+-------+
+```
+
+## Dependencies  
+The script uses `basename`, `cat`, `grep`, `bc`, `head` and `gs` (ghostscript).   
+You probably have everything installed already, except for ghostscript.   
+Optional dependencies are `imagemagick`, `pdfinfo` and `mdls` (Mac).  
+This app is focused in `Bash`, so it will probably not run in other shells.  
+
+##### apt-get
+```
+sudo apt-get install ghostscript bc
+```
+##### yum
+```
+sudo yum install ghostscript bc
+```
+##### homebrew MacOS
+```
+brew install ghostscript
+```
+##### Optionals
+Page Size detection is by default in Adaptive Mode.  
+It will try the following methods in sequence:   
+ 1. Try to get `/MediaBox` with `cat` + `grep`
+ 2. Failed AND MacOS ? Try `mdls`
+ 3. Failed ? Try `pdfinfo`
+ 4. Failed ? Try ImageMagick's `identify`
+ 5. Failed ? `Exit` with error message
+ 
+The `cat`+`grep` method will fail on PDFs without a `/MediaBox`.   
+You may install any of the optionals to be used in that case.  
+  
+MacOS is fine using `mdls` if the metadata of the file is accurate.  
+The metadata is generated automatically by the OS (Spotlight)
+  
+##### apt-get
+```
+sudo apt-get install imagemagick pdfinfo
+```
+##### yum
+```
+sudo yum install imagemagick pdfinfo
+```
+##### homebrew MacOS
+```
+brew install imagemagick xpdf
 ```
 
 ## System Install
