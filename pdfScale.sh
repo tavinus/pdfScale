@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.0.2"
+VERSION="2.0.3"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -271,7 +271,7 @@ getOptions() {
                     exit $EXIT_SUCCESS
                     ;;
                 V)
-                    printVersion
+                    printVersion 3
                     exit $EXIT_SUCCESS
                     ;;
                 i)
@@ -575,19 +575,13 @@ getPageSizePdfInfo() {
 
 # Gets page size using cat and grep
 getPageSizeCatGrep() {
-        # get MediaBox info from PDF file using cat and grep, these are all possible
+        # get MediaBox info from PDF file using grep, these are all possible
         # /MediaBox [0 0 595 841]
         # /MediaBox [ 0 0 595.28 841.89]
         # /MediaBox[ 0 0 595.28 841.89 ]
 
         # Get MediaBox data if possible
-        #local mediaBox="$(cat "$INFILEPDF" | "$GREPBIN" -a '/MediaBox' | "$HEADBIN" -n1)"
-        #local mediaBox="$("$GREPBIN" -a -e '/MediaBox' "$INFILEPDF" | "$HEADBIN" -n1)"
-        local mediaBox="$("$GREPBIN" -a -e '/MediaBox' "$INFILEPDF" 2>/dev/null)"$'\n\n'
-        while read l; do 
-                mediaBox="$l"
-                break
-        done <<< "$mediaBox"
+        local mediaBox="$("$GREPBIN" -a -e '/MediaBox' -m 1 "$INFILEPDF" 2>/dev/null)"
 
         mediaBox="${mediaBox##*/MediaBox}"
 
