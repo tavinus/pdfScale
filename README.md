@@ -57,12 +57,11 @@ brew install imagemagick xpdf
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v2.0.0
 
-Usage: pdfscale [-v] [-s <factor>] [-m <mode>] [-r <paper>] <inFile.pdf> [outfile.pdf]
-       pdfscale -p
-       pdfscale -h
-       pdfscale -V
+Usage: pdfScale.sh [-v] [-s <factor>] [-m <mode>] [-r <paper>] <inFile.pdf> [outfile.pdf]
+       pdfScale.sh -p
+       pdfScale.sh -h
+       pdfScale.sh -V
 
 Parameters:
  -v          Verbose mode, prints extra information
@@ -77,30 +76,32 @@ Parameters:
              Eg. -s 0.8 for 80% of the original size
  -r <paper>  Triggers the Resize Paper Mode
              Resize PDF paper proportionally
-             Must be a valid Ghostscript paper name
+             A valid paper name or a custom defined paper
+ -f          Disables the flip detection, paper will not be
+             rotated to landscape when needed (resize-only)
  -p          Prints Ghostscript paper info tables to screen
 
 Scaling Mode:
-The default mode of operation is scaling mode with fixed paper
-size and scaling pre-set to 0.95. By not using the resize mode
-you are using scaling mode.
+ The default mode of operation is scaling mode with fixed paper
+ size and scaling pre-set to 0.95. By not using the resize mode
+ you are using scaling mode.
 
 Resize Paper Mode:
-Disables the default scaling factor! (0.95)
-Alternative mode of operation to change the PDF paper
-proportionally. Will fit-to-page.
+ Disables the default scaling factor! (0.95)
+ Alternative mode of operation to change the PDF paper
+ proportionally. Will fit-to-page.
 
 Mixed Mode:
-In mixed mode both the -s option and -r option must be specified.
-The PDF will be both scaled and have the paper type changed.
+ In mixed mode both the -s option and -r option must be specified.
+ The PDF will be first resized then scaled.
 
 Output filename:
-The output filename is optional. If no file name is passed
-the output file will have the same name/destination of the
-input file with added suffixes:
-  .SCALED.pdf             is added to scaled files
-  .<PAPERSIZE>.pdf        is added to resized files
-  .<PAPERSIZE>.SCALED.pdf is added in mixed mode
+ The output filename is optional. If no file name is passed
+ the output file will have the same name/destination of the
+ input file with added suffixes:
+   .SCALED.pdf             is added to scaled files
+   .<PAPERSIZE>.pdf        is added to resized files
+   .<PAPERSIZE>.SCALED.pdf is added in mixed mode
 
 Page Detection Modes:
  a, adaptive  Default mode, tries all the methods below
@@ -110,16 +111,24 @@ Page Detection Modes:
  i, identify  Forces the use of ImageMagick's Identify
 
 Valid Ghostscript Paper Names:
-A0            A1            A2            A3            A4            
-A4SMALL       A5            A6            A7            A8            
-A9            A10           ISOB0         ISOB1         ISOB2         
-ISOB3         ISOB4         ISOB5         ISOB6         C0            
-C1            C2            C3            C4            C5            
-C6            11X17         LEDGER        LEGAL         LETTER        
-LETTERSMALL   ARCHE         ARCHD         ARCHC         ARCHB         
-ARCHA         JISB0         JISB1         JISB2         JISB3         
-JISB4         JISB5         JISB6         FLSA          FLSE          
-HALFLETTER    HAGAKI        
+ A0            A1            A2            A3            A4            
+ A4SMALL       A5            A6            A7            A8            
+ A9            A10           ISOB0         ISOB1         ISOB2         
+ ISOB3         ISOB4         ISOB5         ISOB6         C0            
+ C1            C2            C3            C4            C5            
+ C6            11X17         LEDGER        LEGAL         LETTER        
+ LETTERSMALL   ARCHE         ARCHD         ARCHC         ARCHB         
+ ARCHA         JISB0         JISB1         JISB2         JISB3         
+ JISB4         JISB5         JISB6         FLSA          FLSE          
+ HALFLETTER    HAGAKI        
+
+Custom Paper Size:
+ Paper size can be set manually in Milimeters, Inches or Points.
+ Use: pdfScale.sh -r 'custom <measurement> <width> <height>'
+ Ex:  pdfScale.sh -r 'custom mm 210 297'
+ Measurements can be: mm, inch, pts.
+ Custom paper definition MUST be quoted into a single parameter.
+ Actual size is applied in points (mms and inches are transformed).
 
 Notes:
  - Adaptive Page size detection will try different modes until
@@ -132,13 +141,15 @@ Notes:
    result on cropping parts of the pdf.
 
 Examples:
- pdfscale myPdfFile.pdf
- pdfscale myPdfFile.pdf myScaledPdf
- pdfscale -v -v myPdfFile.pdf
- pdfscale -s 0.85 myPdfFile.pdf myScaledPdf.pdf
- pdfscale -m pdfinfo -s 0.80 -v myPdfFile.pdf
- pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
- pdfscale -h
+ pdfScale.sh myPdfFile.pdf
+ pdfScale.sh myPdfFile.pdf "My Scaled Pdf"
+ pdfScale.sh -v -v myPdfFile.pdf
+ pdfScale.sh -s 0.85 myPdfFile.pdf My\ Scaled\ Pdf.pdf
+ pdfScale.sh -m pdfinfo -s 0.80 -v myPdfFile.pdf
+ pdfScale.sh -v -v -m i -s 0.7 myPdfFile.pdf
+ pdfScale.sh -r A4 myPdfFile.pdf
+ pdfScale.sh -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
+ pdfScale.sh -h
 ```
 
 ## Example runs
