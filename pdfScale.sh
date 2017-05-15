@@ -978,7 +978,7 @@ Parameters:
              Eg. -s 0.8 for 80% of the original size
  -r <paper>  Triggers the Resize Paper Mode
              Resize PDF paper proportionally
-             A valid paper name or a custom defined paper
+             Uses a valid paper name or a custom defined paper
  -f          Disables the flip detection, paper will not be
              rotated when inconsistent sizes are detected.
  -p          Prints Ghostscript paper info tables to screen
