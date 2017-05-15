@@ -55,6 +55,15 @@ brew install imagemagick xpdf
 
 ## Example Runs
 
+#### Checking File Information
+```
+./pdfScale.sh -i ../mixsync\ manual\ v1-2-3.A0.SCALED.pdf 
+pdfScale.sh v2.0.0 - Paper Sizes
+       File: mixsync manual v1-2-3.A0.SCALED.pdf 
+     Points:     3370 x 2384    
+ Milimeters:     1189 x 841     
+     Inches:    46.81 x 33.11
+```
 #### Resize to A0 and Scale by 1.05 (+5%)
 ```
 $ pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
@@ -143,6 +152,7 @@ $ pdfscale -h
 pdfscale v2.0.0
 
 Usage: pdfscale <inFile.pdf>
+       pdfscale -i <inFile.pdf>
        pdfscale [-v] [-s <factor>] [-m <page-detection>] <inFile.pdf> [outfile.pdf]
        pdfscale [-v] [-r <paper>] [-f <flip-detection>] [-a <auto-rotation>] <inFile.pdf> [outfile.pdf]
        pdfscale -p
@@ -156,6 +166,7 @@ Parameters:
  -V          Prints version to screen and exits
  -m <mode>   Page size Detection mode 
              May disable the Adaptive Mode
+ -i <file>   Prints <file> Page Size information to screen and exits
  -s <factor> Changes the scaling factor or forces scaling
              Defaults: 0.95 / no scaling (resize mode)
              MUST be a number bigger than zero
@@ -238,6 +249,7 @@ Additional Notes:
 
 Examples:
  pdfscale myPdfFile.pdf
+ pdfscale -i '/home/My Folder/My PDF File.pdf'
  pdfscale myPdfFile.pdf "My Scaled Pdf"
  pdfscale -v -v myPdfFile.pdf
  pdfscale -s 0.85 myPdfFile.pdf My\ Scaled\ Pdf.pdf

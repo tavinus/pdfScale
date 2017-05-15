@@ -12,29 +12,19 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-###################################################
-# PAGESIZE LOGIC
-# 1- Try to get Mediabox with CAT/GREP
-# 2- MacOS => try to use mdls
-# 3- Try to use pdfinfo
-# 4- Try to use identify (imagemagick)
-# 5- Fail
-###################################################
-
-
 VERSION="2.0.0"
-SCALE="0.95"                   # scaling factor (0.95 = 95%, e.g.)
-VERBOSE=0                      # verbosity Level
-PDFSCALE_NAME="$(basename $0)" # simplified name of this script
 
-# SET AND VALIDATED LATER
+
+###################### EXTERNAL PROGRAMS #######################
+
 GSBIN=""                       # GhostScript Binary
 BCBIN=""                       # BC Math Binary
 IDBIN=""                       # Identify Binary
 PDFINFOBIN=""                  # PDF Info Binary
 MDLSBIN=""                     # MacOS mdls Binary
 
-OSNAME="$(uname 2>/dev/null)"  # Check where we are running
+
+##################### ENVIRONMENT SET-UP #######################
 
 LC_MEASUREMENT="C"         # To make sure our numbers have .decimals
 LC_ALL="C"                 # Some languages use , as decimal token
@@ -44,20 +34,30 @@ LC_NUMERIC="C"
 TRUE=0                     # Silly stuff
 FALSE=1
 
-ADAPTIVEMODE=$TRUE         # Automatically try to guess best mode
-AUTOMATIC_SCALING=$TRUE    # Default scaling in $SCALE, override by resize mode
-MODE=""
-RESIZE_PAPER_TYPE=""
-CUSTOM_RESIZE_PAPER=$FALSE
-FLIP_DETECTION=$TRUE
-FLIP_FORCE=$FALSE
-AUTO_ROTATION='/PageByPage'
-PGWIDTH=""
-PGHEIGHT=""
-RESIZE_WIDTH=""
-RESIZE_HEIGHT=""
+########################### GLOBALS ############################
 
-### EXIT FLAGS
+SCALE="0.95"                   # scaling factor (0.95 = 95%, e.g.)
+VERBOSE=0                      # verbosity Level
+PDFSCALE_NAME="$(basename $0)" # simplified name of this script
+OSNAME="$(uname 2>/dev/null)"  # Check where we are running
+
+JUST_IDENTIFY=$FALSE        # Flag to just show PDF info
+ADAPTIVEMODE=$TRUE          # Automatically try to guess best mode
+AUTOMATIC_SCALING=$TRUE     # Default scaling in $SCALE, override by resize mode
+MODE=""                     # Which page size detection to use
+RESIZE_PAPER_TYPE=""        # Pre-defined paper to use
+CUSTOM_RESIZE_PAPER=$FALSE  # If we are using a custom-defined paper
+FLIP_DETECTION=$TRUE        # If we shoudl run the Flip-detection
+FLIP_FORCE=$FALSE           # If we should force Flipping
+AUTO_ROTATION='/PageByPage' # GS cal auto-rotation setting
+PGWIDTH=""                  # Input PDF Page Width
+PGHEIGHT=""                 # Input PDF Page Height
+RESIZE_WIDTH=""             # Resized PDF Page Width
+RESIZE_HEIGHT=""            # Resized PDF Page Height
+
+
+########################## EXIT FLAGS ##########################
+
 EXIT_SUCCESS=0
 EXIT_ERROR=1
 EXIT_INVALID_PAGE_SIZE_DETECTED=10
@@ -74,13 +74,12 @@ EXIT_TEMP_FILE_EXISTS=40
 EXIT_INVALID_PAPER_SIZE=50
 
 
-
-
 ############################# MAIN #############################
 
 # Main function called at the end
 main() {
         checkDeps
+	printPDFSizes
         vprint "    Input File: $INFILEPDF"
         vprint "   Output File: $OUTFILEPDF"
         getPageSize
@@ -130,6 +129,19 @@ main() {
         return $finalRet
 }
 
+# Prints PDF Info and exits with $EXIT_SUCCESS
+printPDFSizes() {
+	if [[ $JUST_IDENTIFY -eq $TRUE ]]; then
+		VERBOSE=0
+		printVersion 3 " - Paper Sizes"
+		getPageSize || initError "Could not get pagesize!"
+		printf "       File: %+8s \n" "$(basename "$INFILEPDF")"
+		printf "     Points: %+8s x %-8s\n" "$PGWIDTH" "$PGHEIGHT"
+		printf " Milimeters: %+8s x %-8s\n" "$(pointsToMilimeters $PGWIDTH)" "$(pointsToMilimeters $PGHEIGHT)"
+		printf "     Inches: %+8s x %-8s\n" "$(pointsToInches $PGWIDTH)" "$(pointsToInches $PGHEIGHT)"
+		exit $EXIT_SUCCESS
+	fi
+}
 
 ###################### GHOSTSCRIPT CALLS #######################
 
@@ -238,7 +250,7 @@ checkDeps() {
 
 # Parse options
 getOptions() {
-        while getopts ":vhVs:m:r:pf:a:" o; do
+        while getopts ":vhVis:m:r:pf:a:" o; do
             case "${o}" in
                 v)
                     ((VERBOSE++))
@@ -250,6 +262,9 @@ getOptions() {
                 V)
                     printVersion
                     exit $EXIT_SUCCESS
+                    ;;
+                i)
+                    JUST_IDENTIFY=$TRUE
                     ;;
                 s)
                     parseScale ${OPTARG}
@@ -277,6 +292,10 @@ getOptions() {
         done
         shift $((OPTIND-1))
         
+	if [[ $JUST_IDENTIFY -eq $TRUE ]]; then
+		VERBOSE=0
+	fi
+	
         # Validate input PDF file
         INFILEPDF="$1"
         isEmpty "$INFILEPDF" && initError "Input file is empty!" $EXIT_NO_INPUT_FILE
@@ -389,6 +408,70 @@ parseAutoRotationMode() {
 
 
 ################### PDF PAGE SIZE DETECTION ####################
+
+################################################################
+# Detects operation mode and also runs the adaptive mode
+# PAGESIZE LOGIC
+# 1- Try to get Mediabox with CAT/GREP
+# 2- MacOS => try to use mdls
+# 3- Try to use pdfinfo
+# 4- Try to use identify (imagemagick)
+# 5- Fail
+################################################################
+getPageSize() {
+        if isNotAdaptiveMode; then
+                vprint " Get Page Size: Adaptive Disabled"
+                if [[ $MODE = "CATGREP" ]]; then
+                        vprint "        Method: Cat + Grep"
+                        getPageSizeCatGrep
+                elif [[ $MODE = "MDLS" ]]; then
+                        vprint "        Method: Mac Quartz mdls"
+                        getPageSizeMdls
+                elif [[ $MODE = "PDFINFO" ]]; then
+                        vprint "        Method: PDFInfo"
+                        getPageSizePdfInfo
+                elif [[ $MODE = "IDENTIFY" ]]; then
+                        vprint "        Method: ImageMagick's Identify"
+                        getPageSizeImagemagick
+                else
+                        printError "Error! Invalid Mode: $MODE"
+                        printError "Aborting execution..."
+                        exit $EXIT_INVALID_OPTION
+                fi
+                return $TRUE
+        fi
+        
+        vprint " Get Page Size: Adaptive Enabled"
+        vprint "        Method: Cat + Grep"
+        getPageSizeCatGrep
+        if pageSizeIsInvalid && [[ $OSNAME = "Darwin" ]]; then
+                vprint "                Failed"
+                vprint "        Method: Mac Quartz mdls"
+                getPageSizeMdls
+        fi
+
+        if pageSizeIsInvalid; then
+                vprint "                Failed"
+                vprint "        Method: PDFInfo"
+                getPageSizePdfInfo
+        fi
+
+        if pageSizeIsInvalid; then
+                vprint "                Failed"
+                vprint "        Method: ImageMagick's Identify"
+                getPageSizeImagemagick
+        fi
+
+        if pageSizeIsInvalid; then
+                vprint "                Failed"
+                printError "Error when detecting PDF paper size!"
+                printError "All methods of detection failed"
+                printError "You may want to install pdfinfo or imagemagick"
+                exit $EXIT_INVALID_PAGE_SIZE_DETECTED
+        fi
+
+        return $TRUE
+}
 
 # Gets page size using imagemagick's identify
 getPageSizeImagemagick() {
@@ -513,63 +596,6 @@ getPageSizeCatGrep() {
         # we are done
         PGWIDTH=$(printf '%.0f' "${mediaBox[2]}")  # Get Round Width
         PGHEIGHT=$(printf '%.0f' "${mediaBox[3]}") # Get Round Height
-
-        return $TRUE
-}
-
-
-# Detects operation mode and also runs the adaptive mode
-getPageSize() {
-        if isNotAdaptiveMode; then
-                vprint " Get Page Size: Adaptive Disabled"
-                if [[ $MODE = "CATGREP" ]]; then
-                        vprint "        Method: Cat + Grep"
-                        getPageSizeCatGrep
-                elif [[ $MODE = "MDLS" ]]; then
-                        vprint "        Method: Mac Quartz mdls"
-                        getPageSizeMdls
-                elif [[ $MODE = "PDFINFO" ]]; then
-                        vprint "        Method: PDFInfo"
-                        getPageSizePdfInfo
-                elif [[ $MODE = "IDENTIFY" ]]; then
-                        vprint "        Method: ImageMagick's Identify"
-                        getPageSizeImagemagick
-                else
-                        printError "Error! Invalid Mode: $MODE"
-                        printError "Aborting execution..."
-                        exit $EXIT_INVALID_OPTION
-                fi
-                return $TRUE
-        fi
-        
-        vprint " Get Page Size: Adaptive Enabled"
-        vprint "        Method: Cat + Grep"
-        getPageSizeCatGrep
-        if pageSizeIsInvalid && [[ $OSNAME = "Darwin" ]]; then
-                vprint "                Failed"
-                vprint "        Method: Mac Quartz mdls"
-                getPageSizeMdls
-        fi
-
-        if pageSizeIsInvalid; then
-                vprint "                Failed"
-                vprint "        Method: PDFInfo"
-                getPageSizePdfInfo
-        fi
-
-        if pageSizeIsInvalid; then
-                vprint "                Failed"
-                vprint "        Method: ImageMagick's Identify"
-                getPageSizeImagemagick
-        fi
-
-        if pageSizeIsInvalid; then
-                vprint "                Failed"
-                printError "Error when detecting PDF paper size!"
-                printError "All methods of detection failed"
-                printError "You may want to install pdfinfo or imagemagick"
-                exit $EXIT_INVALID_PAGE_SIZE_DETECTED
-        fi
 
         return $TRUE
 }
@@ -882,14 +908,26 @@ uppercase() {
 
 # Prints the postscript points rounded equivalent from $1 mm
 milimetersToPoints() {
-        local pts=$(echo "scale=6; $1 * 72 / 25.4" | "$BCBIN")
+        local pts=$(echo "scale=8; $1 * 72 / 25.4" | "$BCBIN")
         printf '%.0f' "$pts"    # Print rounded conversion
 }
 
-# Prints the postscript points rounded equivalent from $1 mm
+# Prints the postscript points rounded equivalent from $1 inches
 inchesToPoints() {
-        local pts=$(echo "scale=6; $1 * 72" | "$BCBIN")
+        local pts=$(echo "scale=8; $1 * 72" | "$BCBIN")
         printf '%.0f' "$pts"    # Print rounded conversion
+}
+
+# Prints the mm equivalent from $1 postscript points
+pointsToMilimeters() {
+        local pts=$(echo "scale=8; $1 / 72 * 25.4" | "$BCBIN")
+        printf '%.0f' "$pts"    # Print rounded conversion
+}
+
+# Prints the inches equivalent from $1 postscript points
+pointsToInches() {
+        local pts=$(echo "scale=8; $1 / 72" | "$BCBIN")
+        printf '%.2f' "$pts"    # Print rounded conversion
 }
 
 
@@ -1021,7 +1059,8 @@ printVersion() {
         if [[ $1 -eq 2 ]]; then
                 printError "$strBanner"
         elif [[ $1 -eq 3 ]]; then
-                echo "$strBanner"
+		local extra="$(isNotEmpty "$2" && echo "$2")"
+                echo "$strBanner$extra"
         else
                 vprint "$strBanner"
         fi
@@ -1041,6 +1080,7 @@ printHelp() {
         local paperList="$(printPaperNames)"
         echo "
 Usage: $PDFSCALE_NAME <inFile.pdf>
+       $PDFSCALE_NAME -i <inFile.pdf>
        $PDFSCALE_NAME [-v] [-s <factor>] [-m <page-detection>] <inFile.pdf> [outfile.pdf]
        $PDFSCALE_NAME [-v] [-r <paper>] [-f <flip-detection>] [-a <auto-rotation>] <inFile.pdf> [outfile.pdf]
        $PDFSCALE_NAME -p
@@ -1054,6 +1094,7 @@ Parameters:
  -V          Prints version to screen and exits
  -m <mode>   Page size Detection mode 
              May disable the Adaptive Mode
+ -i <file>   Prints <file> Page Size information to screen and exits
  -s <factor> Changes the scaling factor or forces scaling
              Defaults: $SCALE / no scaling (resize mode)
              MUST be a number bigger than zero
@@ -1127,6 +1168,7 @@ Additional Notes:
 
 Examples:
  $PDFSCALE_NAME myPdfFile.pdf
+ $PDFSCALE_NAME -i '/home/My Folder/My PDF File.pdf'
  $PDFSCALE_NAME myPdfFile.pdf \"My Scaled Pdf\"
  $PDFSCALE_NAME -v -v myPdfFile.pdf
  $PDFSCALE_NAME -s 0.85 myPdfFile.pdf My\\ Scaled\\ Pdf.pdf
