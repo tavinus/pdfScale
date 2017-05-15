@@ -48,6 +48,8 @@ ADAPTIVEMODE=$TRUE         # Automatically try to guess best mode
 AUTOMATIC_SCALING=$TRUE    # Default scaling in $SCALE, override by resize mode
 MODE=""
 RESIZE_PAPER_TYPE=""
+CUSTOM_RESIZE_PAPER=$FALSE
+FLIP_DETECTION=$TRUE
 PGWIDTH=""
 PGHEIGHT=""
 RESIZE_WIDTH=""
@@ -76,7 +78,7 @@ EXIT_INVALID_PAPER_SIZE=50
 # Main function called at the end
 main() {
         printVersion 1 'verbose'
-        loadDeps
+	checkDeps
         vprint "    Input file: $INFILEPDF"
         vprint "   Output file: $OUTFILEPDF"
         getPageSize
@@ -118,7 +120,7 @@ main() {
 ########################## INITIALIZER ##########################
 
 # Loads external dependencies and checks for errors
-loadDeps() {
+initDeps() {
         GSBIN="$(which gs 2>/dev/null)"
         BCBIN="$(which bc 2>/dev/null)"
         IDBIN=$(which identify 2>/dev/null)
@@ -128,8 +130,11 @@ loadDeps() {
         vprint "Checking for ghostscript and bcmath"
         if notIsAvailable "$GSBIN"; then printDependency 'ghostscript'; fi
         if notIsAvailable "$BCBIN"; then printDependency 'bc'; fi
-        
-        if [[ $MODE = "IDENTIFY" ]]; then
+}
+
+# Checks for dependencies errors, run after getting options
+checkDeps() {
+	if [[ $MODE = "IDENTIFY" ]]; then
                 vprint "Checking for imagemagick's identify"
                 if notIsAvailable "$IDBIN"; then printDependency 'imagemagick'; fi
         fi
@@ -150,7 +155,7 @@ loadDeps() {
 
 # Parse options
 getOptions() {
-        while getopts ":vhVs:m:r:p" o; do
+        while getopts ":vhVs:m:r:pf" o; do
             case "${o}" in
                 v)
                     ((VERBOSE++))
@@ -175,6 +180,9 @@ getOptions() {
                 p)
                     printPaperInfo
                     exit $EXIT_SUCCESS
+                    ;;
+                f)
+                    FLIP_DETECTION=$FALSE
                     ;;
                 *)
                     initError "Invalid Option: -$OPTARG" $EXIT_INVALID_OPTION
@@ -206,14 +214,15 @@ getOptions() {
 # Parses and validates the scaling factor
 parseScale() {
         AUTOMATIC_SCALING=$FALSE
-        if ! [[ -n "$1" && "$1" =~ ^-?[0-9]*([.][0-9]+)?$ && (($1 > 0 )) ]] ; then
+        if ! isFloatBiggerThanZero "$1"; then
                 printError "Invalid factor: $1"
                 printError "The factor must be a floating point number greater than 0"
                 printError "Example: for 80% use 0.8"
                 exit $EXIT_INVALID_SCALE
         fi
-        SCALE=$1
+        SCALE="$1"
 }
+
 
 ###################### GHOSTSCRIPT CALLS #######################
 
@@ -241,16 +250,16 @@ pageScale() {
 
 # Runs the ghostscript paper resize script
 pageResize() {
-        getGSPaperSize "$RESIZE_PAPER_TYPE"
+        isNotCustomPaper && getGSPaperSize "$RESIZE_PAPER_TYPE"
         local tmpInverter=""
-        if [[ $PGWIDTH -gt $PGHEIGHT && $RESIZE_WIDTH -lt $RESIZE_HEIGHT ]]; then
+        if [[ $FLIP_DETECTION -eq $TRUE && $PGWIDTH -gt $PGHEIGHT && $RESIZE_WIDTH -lt $RESIZE_HEIGHT ]]; then
                 vprint "   Flip Detect: Wrong orientation!"
                 vprint "                Inverting Width <-> Height"
                 tmpInverter=$RESIZE_HEIGHT
                 RESIZE_HEIGHT=$RESIZE_WIDTH
                 RESIZE_WIDTH=$tmpInverter
         fi
-        vprint "   Resizing to: $(uppercase $RESIZE_PAPER_TYPE) ( $RESIZE_WIDTH x $RESIZE_HEIGHT )"
+        vprint "   Resizing to: $(uppercase $RESIZE_PAPER_TYPE) ( $RESIZE_WIDTH x $RESIZE_HEIGHT ) pts"
 
         # Change page size
         "$GSBIN" \
@@ -265,7 +274,6 @@ pageResize() {
         wait ${!}
 
 }
-
 
 
 ################### PDF PAGE SIZE DETECTION ####################
@@ -611,7 +619,8 @@ flsa flse halfletter hagaki)
 printPaperNames() {
         isEmpty "$paperNames" && getPaperNames
         for i in "${!paperNames[@]}"; do 
-                [[ $i -ne 0 && $((i % 5)) -eq 0 ]] && echo ""
+                [[ $i -eq 0 ]] && echo -n -e ' '
+                [[ $i -ne 0 && $((i % 5)) -eq 0 ]] && echo -n -e $'\n '
                 ppN="$(uppercase ${paperNames[i]})"
                 printf "%-14s" "$ppN"
         done
@@ -677,8 +686,62 @@ printPaperTable() {
 parsePaperResize() {
         isEmpty "$1" && initError 'Invalid Paper Type: (empty)' $EXIT_INVALID_PAPER_SIZE
         local lowercasePaper="$(lowercase $1)"
-        isPaperName "$lowercasePaper" || initError "Invalid Paper Type: $1" $EXIT_INVALID_PAPER_SIZE
-        RESIZE_PAPER_TYPE="$lowercasePaper"
+        if [[ "$1" = 'custom' ]]; then
+                if isNotValidMeasure "$2" || ! isFloatBiggerThanZero "$3" || ! isFloatBiggerThanZero "$4"; then
+                        initError "Invalid Custom Paper Definition!"$'\n'"Use: -r 'custom <measurement> <width> <height>'"$'\n'"Measurements: mm, in, pts" $EXIT_INVALID_OPTION
+                fi
+                RESIZE_PAPER_TYPE="custom"
+                CUSTOM_RESIZE_PAPER=$TRUE
+                if isMilimeter "$2"; then
+                        RESIZE_WIDTH="$(milimetersToPoints "$3")"
+                        RESIZE_HEIGHT="$(milimetersToPoints "$4")"
+                elif isInch "$2"; then
+                        RESIZE_WIDTH="$(inchesToPoints "$3")"
+                        RESIZE_HEIGHT="$(inchesToPoints "$4")"
+                elif isPoint "$2"; then
+                        RESIZE_WIDTH="$3"
+                        RESIZE_HEIGHT="$4"
+                else
+                        initError "Invalid Custom Paper Definition!"$'\n'"Use: -r 'custom <measurement> <width> <height>'"$'\n'"Measurements: mm, in, pts" $EXIT_INVALID_OPTION
+                fi
+        else
+                isPaperName "$lowercasePaper" || initError "Invalid Paper Type: $1" $EXIT_INVALID_PAPER_SIZE
+                RESIZE_PAPER_TYPE="$lowercasePaper"
+        fi
+}
+
+# Returns $TRUE if $1 is a valid measurement for a custom paper, $FALSE otherwise
+isNotValidMeasure() {
+        isMilimeter "$1" || isInch "$1" || isPoint "$1" && return $FALSE
+        return $TRUE
+}
+
+# Returns $TRUE if $1 is a valid milimeter string, $FALSE otherwise
+isMilimeter() {
+        [[ "$1" = 'mm' || "$1" = 'milimeters' || "$1" = 'milimeter' ]] && return $TRUE
+        return $FALSE
+}
+
+# Returns $TRUE if $1 is a valid inch string, $FALSE otherwise
+isInch() {
+        [[ "$1" = 'in' || "$1" = 'inch' || "$1" = 'inches' ]] && return $TRUE
+        return $FALSE
+}
+
+# Returns $TRUE if $1 is a valid point string, $FALSE otherwise
+isPoint() {
+        [[ "$1" = 'pt' || "$1" = 'pts' || "$1" = 'point' || "$1" = 'points' ]] && return $TRUE
+        return $FALSE
+}
+
+# Returns $TRUE if a custom paper is being used, $FALSE otherwise
+isCustomPaper() {
+        return $CUSTOM_RESIZE_PAPER
+}
+
+isNotCustomPaper() {
+        isCustomPaper && return $FALSE
+        return $TRUE
 }
 
 # Returns $TRUE if the scale was set manually, $FALSE if we are using automatic scaling
@@ -747,10 +810,22 @@ uppercase() {
         done
 }
 
+# Prints the postscript points rounded equivalent from $1 mm
+milimetersToPoints() {
+        local pts=$(echo "scale=6; $1 * 72 / 25.4" | "$BCBIN")
+        printf '%.0f' "$pts"    # Print rounded conversion
+}
+
+# Prints the postscript points rounded equivalent from $1 mm
+inchesToPoints() {
+        local pts=$(echo "scale=6; $1 * 72" | "$BCBIN")
+        printf '%.0f' "$pts"    # Print rounded conversion
+}
+
 
 ########################## VALIDATORS ##########################
 
-# Returns $TRUE if $PGWIDTH OR $PGWIDTH are empty or NOT an Integer, false otherwise
+# Returns $TRUE if $PGWIDTH OR $PGWIDTH are empty or NOT an Integer, $FALSE otherwise
 pageSizeIsInvalid() {
         if isNotAnInteger "$PGWIDTH" || isNotAnInteger "$PGHEIGHT"; then
                 return $TRUE
@@ -759,33 +834,33 @@ pageSizeIsInvalid() {
 }
 
 
-# Return $TRUE if adaptive mode is enabled, false otherwise
+# Return $TRUE if adaptive mode is enabled, $FALSE otherwise
 isAdaptiveMode() {
         return $ADAPTIVEMODE
 }
 
 
-# Return $TRUE if adaptive mode is disabled, false otherwise
+# Return $TRUE if adaptive mode is disabled, $FALSE otherwise
 isNotAdaptiveMode() {
         isAdaptiveMode && return $FALSE
         return $TRUE
 }
 
 
-# Return $TRUE if $1 is empty, false otherwise
+# Return $TRUE if $1 is empty, $FALSE otherwise
 isEmpty() {
         [[ -z "$1" ]] && return $TRUE
         return $FALSE
 }
 
 
-# Return $TRUE if $1 is NOT empty, false otherwise
+# Return $TRUE if $1 is NOT empty, $FALSE otherwise
 isNotEmpty() {
         [[ -z "$1" ]] && return $FALSE
         return $TRUE
 }
 
-
+# Returns $TRUE if $1 is an integer, $FALSE otherwise
 isAnInteger() {
         case $1 in
             ''|*[!0-9]*) return $FALSE ;;
@@ -793,7 +868,7 @@ isAnInteger() {
         esac
 }
 
-
+# Returns $TRUE if $1 is NOT an integer, $FALSE otherwise
 isNotAnInteger() {
         case $1 in
             ''|*[!0-9]*) return $TRUE ;;
@@ -801,6 +876,17 @@ isNotAnInteger() {
         esac
 }
 
+# Returns $TRUE if $1 is a floating point number (or an integer), $FALSE otherwise
+isFloat() {
+        [[ -n "$1" && "$1" =~ ^-?[0-9]*([.][0-9]+)?$ ]] && return $TRUE
+        return $FALSE
+}
+
+# Returns $TRUE if $1 is a floating point number bigger than zero, $FALSE otherwise
+isFloatBiggerThanZero() {
+        isFloat "$1" && [[ (( $1 > 0 )) ]] && return $TRUE
+        return $FALSE
+}
 
 # Returns $TRUE if $1 has a .pdf extension, false otherwsie
 isPDF() {
@@ -892,30 +978,32 @@ Parameters:
              Eg. -s 0.8 for 80% of the original size
  -r <paper>  Triggers the Resize Paper Mode
              Resize PDF paper proportionally
-             Must be a valid Ghostscript paper name
+             A valid paper name or a custom defined paper
+ -f          Disables the flip detection, paper will not be
+             rotated to landscape when needed (resize-only)
  -p          Prints Ghostscript paper info tables to screen
 
 Scaling Mode:
-The default mode of operation is scaling mode with fixed paper
-size and scaling pre-set to $SCALE. By not using the resize mode
-you are using scaling mode.
+ The default mode of operation is scaling mode with fixed paper
+ size and scaling pre-set to $SCALE. By not using the resize mode
+ you are using scaling mode.
 
 Resize Paper Mode:
-Disables the default scaling factor! ($SCALE)
-Alternative mode of operation to change the PDF paper
-proportionally. Will fit-to-page.
+ Disables the default scaling factor! ($SCALE)
+ Alternative mode of operation to change the PDF paper
+ proportionally. Will fit-to-page.
 
 Mixed Mode:
-In mixed mode both the -s option and -r option must be specified.
-The PDF will be both scaled and have the paper type changed.
+ In mixed mode both the -s option and -r option must be specified.
+ The PDF will be first resized then scaled.
 
 Output filename:
-The output filename is optional. If no file name is passed
-the output file will have the same name/destination of the
-input file with added suffixes:
-  .SCALED.pdf             is added to scaled files
-  .<PAPERSIZE>.pdf        is added to resized files
-  .<PAPERSIZE>.SCALED.pdf is added in mixed mode
+ The output filename is optional. If no file name is passed
+ the output file will have the same name/destination of the
+ input file with added suffixes:
+   .SCALED.pdf             is added to scaled files
+   .<PAPERSIZE>.pdf        is added to resized files
+   .<PAPERSIZE>.SCALED.pdf is added in mixed mode
 
 Page Detection Modes:
  a, adaptive  Default mode, tries all the methods below
@@ -926,6 +1014,14 @@ Page Detection Modes:
 
 Valid Ghostscript Paper Names:
 $paperList
+
+Custom Paper Size:
+ Paper size can be set manually in Milimeters, Inches or Points.
+ Use: $PDFSCALE_NAME -r 'custom <measurement> <width> <height>'
+ Ex:  $PDFSCALE_NAME -r 'custom mm 210 297'
+ Measurements can be: mm, inch, pts.
+ Custom paper definition MUST be quoted into a single parameter.
+ Actual size is applied in points (mms and inches are transformed).
 
 Notes:
  - Adaptive Page size detection will try different modes until
@@ -939,11 +1035,13 @@ Notes:
 
 Examples:
  $PDFSCALE_NAME myPdfFile.pdf
- $PDFSCALE_NAME myPdfFile.pdf myScaledPdf
+ $PDFSCALE_NAME myPdfFile.pdf \"My Scaled Pdf\"
  $PDFSCALE_NAME -v -v myPdfFile.pdf
- $PDFSCALE_NAME -s 0.85 myPdfFile.pdf myScaledPdf.pdf
+ $PDFSCALE_NAME -s 0.85 myPdfFile.pdf My\\ Scaled\\ Pdf.pdf
  $PDFSCALE_NAME -m pdfinfo -s 0.80 -v myPdfFile.pdf
  $PDFSCALE_NAME -v -v -m i -s 0.7 myPdfFile.pdf
+ $PDFSCALE_NAME -r A4 myPdfFile.pdf
+ $PDFSCALE_NAME -v -v -r \"custom mm 252 356\" -s 0.9 -f \"../input file.pdf\" \"../my new pdf\"
  $PDFSCALE_NAME -h
 "
 }
@@ -1001,6 +1099,7 @@ printError() {
 
 ########################## EXECUTION ###########################
 
+initDeps
 getOptions "${@}"
 main
 exit $?
