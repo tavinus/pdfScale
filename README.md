@@ -12,7 +12,7 @@ Better than explaining is showing it:
 #### Checking File Information
 ```
 $ ./pdfScale.sh -i ../input-nup.pdf 
-pdfScale.sh v2.0.0 - Paper Sizes
+pdfScale.sh v2.0.2 - Paper Sizes
 ------------+-----------------------------
        File | input-nup.pdf
  Paper Type | A4 Landscape
