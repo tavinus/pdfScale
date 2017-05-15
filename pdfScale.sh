@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.0.1"
+VERSION="2.0.2"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -135,7 +135,7 @@ printPDFSizes() {
                 printVersion 3 " - Paper Sizes"
                 getPageSize || initError "Could not get pagesize!"
                 local paperType="$(getGSPaperName $PGWIDTH $PGHEIGHT)"
-                isEmpty "$paperType" && paperType="NOT Detected"
+                isEmpty "$paperType" && paperType="Custom Paper Size"
                 printf '%s\n' "------------+-----------------------------"
                 printf "       File | %s\n" "$(basename "$INFILEPDF")"
                 printf " Paper Type | %s\n" "$paperType"
