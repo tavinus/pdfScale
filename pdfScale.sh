@@ -1218,7 +1218,6 @@ Examples:
  $PDFSCALE_NAME -v -v -m i -s 0.7 myPdfFile.pdf
  $PDFSCALE_NAME -r A4 myPdfFile.pdf
  $PDFSCALE_NAME -v -v -r \"custom mm 252 356\" -s 0.9 -f \"../input file.pdf\" \"../my new pdf\"
- $PDFSCALE_NAME -h
 "
 }
 

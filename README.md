@@ -28,7 +28,7 @@ pdfscale v2.0.0 - Verbose Execution
     Input File: ../mixsync manual v1-2-3.pdf
    Output File: ../mixsync manual v1-2-3.A0.SCALED.pdf
  Get Page Size: Adaptive Enabled
-        Method: Cat + Grep
+        Method: Grep
   Source Width: 842 postscript-points
  Source Height: 595 postscript-points
    Auto Rotate: PageByPage
@@ -51,7 +51,7 @@ $ pdfscale -v -v -s 0.9 ../input-nup.pdf "../My Glorius PDF"
 2017-05-15:03:03:23 |     Input File: ../input-nup.pdf
 2017-05-15:03:03:23 |    Output File: ../My Glorius PDF.pdf
 2017-05-15:03:03:23 |  Get Page Size: Adaptive Enabled
-2017-05-15:03:03:23 |         Method: Cat + Grep
+2017-05-15:03:03:23 |         Method: Grep
 2017-05-15:03:03:23 |                 Failed
 2017-05-15:03:03:23 |         Method: Mac Quartz mdls
 2017-05-15:03:03:23 |   Source Width: 842 postscript-points
@@ -70,7 +70,7 @@ pdfscale v2.0.0 - Verbose Execution
     Input File: ../input.pdf
    Output File: ../input.A2.pdf
  Get Page Size: Adaptive Enabled
-        Method: Cat + Grep
+        Method: Grep
   Source Width: 595 postscript-points
  Source Height: 842 postscript-points
   Scale Factor: Disabled (resize only)
@@ -87,7 +87,7 @@ $ pdfscale -v -v -r 'custom mm 200 200' -f disable -s 0.9 ../mixsync\ manual\ v1
 2017-05-15:03:06:23 |     Input File: ../mixsync manual v1-2-3.pdf
 2017-05-15:03:06:23 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
 2017-05-15:03:06:23 |  Get Page Size: Adaptive Enabled
-2017-05-15:03:06:23 |         Method: Cat + Grep
+2017-05-15:03:06:23 |         Method: Grep
 2017-05-15:03:06:23 |   Source Width: 842 postscript-points
 2017-05-15:03:06:23 |  Source Height: 595 postscript-points
 2017-05-15:03:06:23 |    Auto Rotate: PageByPage
@@ -104,16 +104,16 @@ $ pdfscale -v -v -r 'custom mm 200 200' -f disable -s 0.9 ../mixsync\ manual\ v1
 
 ## Help info
 ```
-$ pdfscale -h
-pdfscale v2.0.0
+$ ./pdfScale.sh -h
+pdfScale.sh v2.0.0
 
-Usage: pdfscale <inFile.pdf>
-       pdfscale -i <inFile.pdf>
-       pdfscale [-v] [-s <factor>] [-m <page-detection>] <inFile.pdf> [outfile.pdf]
-       pdfscale [-v] [-r <paper>] [-f <flip-detection>] [-a <auto-rotation>] <inFile.pdf> [outfile.pdf]
-       pdfscale -p
-       pdfscale -h
-       pdfscale -V
+Usage: pdfScale.sh <inFile.pdf>
+       pdfScale.sh -i <inFile.pdf>
+       pdfScale.sh [-v] [-s <factor>] [-m <page-detection>] <inFile.pdf> [outfile.pdf]
+       pdfScale.sh [-v] [-r <paper>] [-f <flip-detection>] [-a <auto-rotation>] <inFile.pdf> [outfile.pdf]
+       pdfScale.sh -p
+       pdfScale.sh -h
+       pdfScale.sh -V
 
 Parameters:
  -v          Verbose mode, prints extra information
@@ -167,7 +167,7 @@ Output filename:
 
 Page Size Detection Modes:
  a, adaptive  Default mode, tries all the methods below
- c, cat+grep  Forces the use of the cat + grep method
+ g, grep      Forces the use of grep method
  m, mdls      Forces the use of MacOS Quartz mdls
  p, pdfinfo   Forces the use of PDFInfo
  i, identify  Forces the use of ImageMagick's Identify
@@ -186,8 +186,8 @@ Valid Paper Names: (case-insensitive)
 
 Custom Paper Size:
  Paper size can be set manually in Milimeters, Inches or Points.
- Use: pdfscale -r 'custom <measurement> <width> <height>'
- Ex:  pdfscale -r 'custom mm 300 300'
+ Use: pdfScale.sh -r 'custom <measurement> <width> <height>'
+ Ex:  pdfScale.sh -r 'custom mm 300 300'
  Measurements can be: mm, inch, pts.
  Custom paper definition MUST be quoted into a single parameter.
  Actual size is applied in points (mms and inches are transformed).
@@ -204,16 +204,15 @@ Additional Notes:
  - Most of the options are case-insensitive, Ex: -m PdFinFo
 
 Examples:
- pdfscale myPdfFile.pdf
- pdfscale -i '/home/My Folder/My PDF File.pdf'
- pdfscale myPdfFile.pdf "My Scaled Pdf"
- pdfscale -v -v myPdfFile.pdf
- pdfscale -s 0.85 myPdfFile.pdf My\ Scaled\ Pdf.pdf
- pdfscale -m pdfinfo -s 0.80 -v myPdfFile.pdf
- pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
- pdfscale -r A4 myPdfFile.pdf
- pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
- pdfscale -h
+ pdfScale.sh myPdfFile.pdf
+ pdfScale.sh -i '/home/My Folder/My PDF File.pdf'
+ pdfScale.sh myPdfFile.pdf "My Scaled Pdf"
+ pdfScale.sh -v -v myPdfFile.pdf
+ pdfScale.sh -s 0.85 myPdfFile.pdf My\ Scaled\ Pdf.pdf
+ pdfScale.sh -m pdfinfo -s 0.80 -v myPdfFile.pdf
+ pdfScale.sh -v -v -m i -s 0.7 myPdfFile.pdf
+ pdfScale.sh -r A4 myPdfFile.pdf
+ pdfScale.sh -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
 ```
 
 ## GhostScript Paper Tables
@@ -328,7 +327,7 @@ It will try the following methods in sequence:
  4. Failed ? Try ImageMagick's `identify`
  5. Failed ? `Exit` with error message
  
-The `cat`+`grep` method will fail on PDFs without a `/MediaBox`.   
+The `grep` method will fail on PDFs without a `/MediaBox`.   
 You may install any of the optionals to be used in that case.  
   
 MacOS is fine using `mdls` if the metadata of the file is accurate.  
