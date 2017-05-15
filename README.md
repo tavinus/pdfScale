@@ -55,7 +55,7 @@ brew install imagemagick xpdf
 
 ## Example Runs
 
-#### Resize to A0 and scale by 1.05 (+5%)
+#### Resize to A0 and Scale by 1.05 (+5%)
 ```
 $ pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
 pdfscale v2.0.0 - Verbose Execution
