@@ -231,6 +231,7 @@ Additional Notes:
  - File and folder names with spaces should be quoted or escaped.
  - The scaling is centered and using a scale bigger than 1 may
    result on cropping parts of the pdf.
+ - Most of the options are case-insensitive, Ex: -m PdFinFo
 
 Examples:
  pdfscale myPdfFile.pdf
