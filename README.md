@@ -217,7 +217,7 @@ Examples:
 ```
 
 ## GhostScript Paper Tables
-The `-p` parameters prints detailed paper types information
+The `-p` parameter prints detailed paper types information
 ```
 $ ./pdfScale.sh -p
 pdfScale.sh v2.0.0
