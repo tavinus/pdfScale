@@ -1,6 +1,6 @@
 # pdfScale 2
 Bash Script to ***scale*** and/or ***resize*** PDFs from the command line.  
-Uses ghostscript to create a scaled and/or resized version of the pdf input.  
+Uses ghostscript (`gs`) to create a scaled and/or resized version of the pdf input.  
   
 In `scaling mode`, the PDF paper size does not change, just the elements are scaled.  
 In `resize mode`, the PDF paper will be changed and fit-to-page will be applied.  
