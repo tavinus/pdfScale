@@ -55,6 +55,7 @@ brew install imagemagick xpdf
 
 ## Example Runs
 
+#### Resize to A0 and scale by 1.05 (+5%)
 ```
 $ pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
 pdfscale v2.0.0 - Verbose Execution
@@ -76,6 +77,7 @@ pdfscale v2.0.0 - Verbose Execution
    Run Scaling: 5 %
   Final Status: File created successfully
 ```
+#### Scale by 0.9 (-10%)
 ```
 $ pdfscale -v -v -s 0.9 ../input-nup.pdf "../My Glorius PDF"
 2017-05-14:23:55:33 | pdfscale v2.0.0 - Verbose Execution
@@ -94,6 +96,7 @@ $ pdfscale -v -v -s 0.9 ../input-nup.pdf "../My Glorius PDF"
 2017-05-14:23:55:33 |    Run Scaling: -10 %
 2017-05-14:23:55:33 |   Final Status: File created successfully
 ```
+#### Resize to A2
 ```
 $ pdfscale -v -r a2 ../input.pdf
 pdfscale v2.0.0 - Verbose Execution
@@ -108,6 +111,27 @@ pdfscale v2.0.0 - Verbose Execution
    Flip Detect: No change needed
   Run Resizing: A2 ( 1191 x 1684 ) pts
   Final Status: File created successfully
+```
+#### Resize to custom 200x200 mm and Scale by 0.95 (-5%)
+```
+$ pdfscale -v -v -r 'custom mm 200 200' -s 0.9 ../mixsync\ manual\ v1-2-3.pdf
+2017-05-15:00:12:20 | pdfscale v2.0.0 - Verbose Execution
+2017-05-15:00:12:20 |    Mixed Tasks: Resize & Scale
+2017-05-15:00:12:20 |     Input File: ../mixsync manual v1-2-3.pdf
+2017-05-15:00:12:20 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
+2017-05-15:00:12:20 |  Get Page Size: Adaptive Enabled
+2017-05-15:00:12:20 |         Method: Cat + Grep
+2017-05-15:00:12:20 |   Source Width: 842 postscript-points
+2017-05-15:00:12:20 |  Source Height: 595 postscript-points
+2017-05-15:00:12:20 |    Flip Detect: No change needed
+2017-05-15:00:12:20 |   Run Resizing: CUSTOM ( 567 x 567 ) pts
+2017-05-15:00:12:20 |      New Width: 567 postscript-points
+2017-05-15:00:12:20 |     New Height: 567 postscript-points
+2017-05-15:00:12:20 |   Scale Factor: 0.9
+2017-05-15:00:12:20 |  Translation X: 31.499685
+2017-05-15:00:12:20 |  Translation Y: 31.499685
+2017-05-15:00:12:20 |    Run Scaling: -10 %
+2017-05-15:00:12:20 |   Final Status: File created successfully
 ```
 
 ## Help info
