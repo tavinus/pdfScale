@@ -1039,7 +1039,7 @@ Page Detection Modes:
  p, pdfinfo   Forces the use of PDFInfo
  i, identify  Forces the use of ImageMagick's Identify
 
-Valid Ghostscript Paper Names:
+Valid Paper Names:
 $paperList
 
 Custom Paper Size:

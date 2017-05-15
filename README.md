@@ -190,7 +190,7 @@ Page Detection Modes:
  p, pdfinfo   Forces the use of PDFInfo
  i, identify  Forces the use of ImageMagick's Identify
 
-Valid Ghostscript Paper Names:
+Valid Paper Names:
  A0            A1            A2            A3            A4            
  A4SMALL       A5            A6            A7            A8            
  A9            A10           ISOB0         ISOB1         ISOB2         
