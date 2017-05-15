@@ -70,6 +70,7 @@ EXIT_MISSING_DEPENDENCY=25
 EXIT_IMAGEMAGIK_NOT_FOUND=26
 EXIT_MAC_MDLS_NOT_FOUND=27
 EXIT_PDFINFO_NOT_FOUND=28
+EXIT_TEMP_FILE_EXISTS=40
 EXIT_INVALID_PAPER_SIZE=50
 
 
@@ -91,6 +92,10 @@ main() {
         if isMixedMode; then
                 outputFile="$OUTFILEPDF"                    # backup outFile name
                 tempFile="${OUTFILEPDF%.pdf}.$tempSuffix"   # set a temp file name
+                if isFile "$tempFile"; then
+                        printError $'Error! Temporary file name already exists!\n'"File: $tempFile"$'\nAborting execution to avoid overwriting the file.\nPlease Try again...'
+                        exit $EXIT_TEMP_FILE_EXISTS
+                fi
                 OUTFILEPDF="$tempFile"                      # set output to tmp file
                 pageResize                                  # resize to tmp file
                 finalRet=$?
