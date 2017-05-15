@@ -22,6 +22,25 @@ pdfScale.sh v2.0.0 - Paper Sizes
  Milimeters |      297 x 210     
      Inches |     11.7 x 8.3
 ```
+#### Scale by 0.95 (-5%)
+```
+$ pdfscale -v ../input-nup.pdf
+pdfscale v2.0.2 - Verbose Execution
+   Single Task: Scale PDF Contents
+    Input File: ../input-nup.pdf
+   Output File: ../input-nup.SCALED.pdf
+ Get Page Size: Adaptive Enabled
+        Method: Grep
+                Failed
+        Method: Mac Quartz mdls
+  Source Width: 842 postscript-points
+ Source Height: 595 postscript-points
+  Scale Factor: 0.95 (auto)
+ Translation X: 22.157230
+ Translation Y: 15.657425
+   Run Scaling: -5 %
+  Final Status: File created successfully
+```
 #### Resize to A0 and Scale by 1.05 (+5%)
 ```
 $ pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
@@ -45,25 +64,6 @@ pdfscale v2.0.0 - Verbose Execution
    Run Scaling: 5 %
   Final Status: File created successfully
 ```
-#### Scale by 0.9 (-10%)
-```
-$ pdfscale -v -v -s 0.9 ../input-nup.pdf "../My Glorius PDF"
-2017-05-15:03:03:23 | pdfscale v2.0.0 - Verbose Execution
-2017-05-15:03:03:23 |    Single Task: Scale PDF Contents
-2017-05-15:03:03:23 |     Input File: ../input-nup.pdf
-2017-05-15:03:03:23 |    Output File: ../My Glorius PDF.pdf
-2017-05-15:03:03:23 |  Get Page Size: Adaptive Enabled
-2017-05-15:03:03:23 |         Method: Grep
-2017-05-15:03:03:23 |                 Failed
-2017-05-15:03:03:23 |         Method: Mac Quartz mdls
-2017-05-15:03:03:23 |   Source Width: 842 postscript-points
-2017-05-15:03:03:23 |  Source Height: 595 postscript-points
-2017-05-15:03:03:23 |   Scale Factor: 0.9 (manual)
-2017-05-15:03:03:23 |  Translation X: 46.777310
-2017-05-15:03:03:23 |  Translation Y: 33.055225
-2017-05-15:03:03:23 |    Run Scaling: -10 %
-2017-05-15:03:03:24 |   Final Status: File created successfully
-```
 #### Resize to A2 and disables Auto-Rotation
 ```
 $ pdfscale -v -r A2 -a none ../input.pdf
@@ -83,25 +83,25 @@ pdfscale v2.0.0 - Verbose Execution
 ```
 #### Resize to custom 200x200 mm, disable Flip-Detection and Scale by 0.95 (-5%)
 ```
-$ pdfscale -v -v -r 'custom mm 200 200' -f disable -s 0.9 ../mixsync\ manual\ v1-2-3.pdf
-2017-05-15:03:06:23 | pdfscale v2.0.0 - Verbose Execution
-2017-05-15:03:06:23 |    Mixed Tasks: Resize & Scale
-2017-05-15:03:06:23 |     Input File: ../mixsync manual v1-2-3.pdf
-2017-05-15:03:06:23 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
-2017-05-15:03:06:23 |  Get Page Size: Adaptive Enabled
-2017-05-15:03:06:23 |         Method: Grep
-2017-05-15:03:06:23 |   Source Width: 842 postscript-points
-2017-05-15:03:06:23 |  Source Height: 595 postscript-points
-2017-05-15:03:06:23 |    Auto Rotate: PageByPage
-2017-05-15:03:06:23 |    Flip Detect: Disabled
-2017-05-15:03:06:23 |   Run Resizing: CUSTOM ( 567 x 567 ) pts
-2017-05-15:03:06:23 |      New Width: 567 postscript-points
-2017-05-15:03:06:23 |     New Height: 567 postscript-points
-2017-05-15:03:06:23 |   Scale Factor: 0.9
-2017-05-15:03:06:23 |  Translation X: 31.499685
-2017-05-15:03:06:23 |  Translation Y: 31.499685
-2017-05-15:03:06:23 |    Run Scaling: -10 %
-2017-05-15:03:06:23 |   Final Status: File created successfully
+$ pdfscale -v -v -r 'custom mm 200 200' -f disable -s 0.95 ../mixsync\ manual\ v1-2-3.pdf
+2017-05-15:08:48:06 | pdfscale v2.0.2 - Verbose Execution
+2017-05-15:08:48:06 |    Mixed Tasks: Resize & Scale
+2017-05-15:08:48:06 |     Input File: ../mixsync manual v1-2-3.pdf
+2017-05-15:08:48:06 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
+2017-05-15:08:48:06 |  Get Page Size: Adaptive Enabled
+2017-05-15:08:48:06 |         Method: Grep
+2017-05-15:08:48:06 |   Source Width: 842 postscript-points
+2017-05-15:08:48:06 |  Source Height: 595 postscript-points
+2017-05-15:08:48:06 |    Auto Rotate: PageByPage
+2017-05-15:08:48:06 |    Flip Detect: Disabled
+2017-05-15:08:48:06 |   Run Resizing: CUSTOM ( 567 x 567 ) pts
+2017-05-15:08:48:06 |      New Width: 567 postscript-points
+2017-05-15:08:48:06 |     New Height: 567 postscript-points
+2017-05-15:08:48:06 |   Scale Factor: 0.95
+2017-05-15:08:48:06 |  Translation X: 14.920605
+2017-05-15:08:48:06 |  Translation Y: 14.920605
+2017-05-15:08:48:06 |    Run Scaling: -5 %
+2017-05-15:08:48:07 |   Final Status: File created successfully
 ```
 
 ## Help info
