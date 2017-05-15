@@ -1039,7 +1039,7 @@ Page Detection Modes:
  p, pdfinfo   Forces the use of PDFInfo
  i, identify  Forces the use of ImageMagick's Identify
 
-Valid Paper Names:
+Valid Paper Names: (case-insensitive)
 $paperList
 
 Custom Paper Size:
