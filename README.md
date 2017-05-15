@@ -176,12 +176,12 @@ Parameters:
 Scaling Mode:
  The default mode of operation is scaling mode with fixed paper
  size and scaling pre-set to 0.95. By not using the resize mode
- you are using scaling mode.
+ you are using scaling mode. Flip-Detection and auto-rotation are
+ disabled in Scaling mode.
 
 Resize Paper Mode:
  Disables the default scaling factor! (0.95)
- Alternative mode of operation to change the PDF paper
- proportionally. Will fit-to-page.
+ Changes the PDF Paper Size in points. Will fit-to-page.
 
 Mixed Mode:
  In mixed mode both the -s option and -r option must be specified.
@@ -195,7 +195,7 @@ Output filename:
    .<PAPERSIZE>.pdf        is added to resized files
    .<PAPERSIZE>.SCALED.pdf is added in mixed mode
 
-Page Detection Modes:
+Page Size Detection Modes:
  a, adaptive  Default mode, tries all the methods below
  c, cat+grep  Forces the use of the cat + grep method
  m, mdls      Forces the use of MacOS Quartz mdls
@@ -217,12 +217,12 @@ Valid Paper Names: (case-insensitive)
 Custom Paper Size:
  Paper size can be set manually in Milimeters, Inches or Points.
  Use: pdfscale -r 'custom <measurement> <width> <height>'
- Ex:  pdfscale -r 'custom mm 210 297'
+ Ex:  pdfscale -r 'custom mm 300 300'
  Measurements can be: mm, inch, pts.
  Custom paper definition MUST be quoted into a single parameter.
  Actual size is applied in points (mms and inches are transformed).
 
-Notes:
+Additional Notes:
  - Adaptive Page size detection will try different modes until
    it gets a page size. You can force a mode with -m 'mode'.
  - Options must be passed before the file names to be parsed.
@@ -241,6 +241,7 @@ Examples:
  pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
  pdfscale -r A4 myPdfFile.pdf
  pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
+ pdfscale -h
 ```
 
 ## GhostScript Paper Tables
