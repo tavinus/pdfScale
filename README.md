@@ -137,11 +137,14 @@ $ pdfscale -v -v -r 'custom mm 200 200' -s 0.9 ../mixsync\ manual\ v1-2-3.pdf
 ## Help info
 ```
 $ pdfscale -h
+pdfscale v2.0.0
 
-Usage: pdfScale.sh [-v] [-s <factor>] [-m <mode>] [-r <paper>] <inFile.pdf> [outfile.pdf]
-       pdfScale.sh -p
-       pdfScale.sh -h
-       pdfScale.sh -V
+Usage: pdfscale <inFile.pdf>
+       pdfscale [-v] [-s <factor>] [-m <page-detection>] <inFile.pdf> [outfile.pdf]
+       pdfscale [-v] [-r <paper>] [-f <flip-detection>] [-a <auto-rotation>] <inFile.pdf> [outfile.pdf]
+       pdfscale -p
+       pdfscale -h
+       pdfscale -V
 
 Parameters:
  -v          Verbose mode, prints extra information
@@ -157,8 +160,17 @@ Parameters:
  -r <paper>  Triggers the Resize Paper Mode
              Resize PDF paper proportionally
              Uses a valid paper name or a custom defined paper
- -f          Disables the flip detection, paper will not be
-             rotated when inconsistent sizes are detected.
+ -f <mode>   Flip Detection Mode, defaults to 'auto'.
+             Inverts Width <-> Height of a Resized PDF.
+             Modes: a, auto    - automatic detection, default
+                    f, force   - forces flip W <-> H
+                    d, disable - disables flipping 
+ -a <mode>   GS Auto-Rotation Setting, defaults to 'PageByPage'.
+             Setting for GS -dAutoRotatePages.
+             Modes: p, pagebypage - auto-rotates pages individually
+                    a, all        - rotates all pages (or none) depending
+                                    on a kind of "majority decision"
+                    n, none       - retains orientation of each page
  -p          Prints Ghostscript paper info tables to screen
 
 Scaling Mode:
@@ -204,8 +216,8 @@ Valid Paper Names: (case-insensitive)
 
 Custom Paper Size:
  Paper size can be set manually in Milimeters, Inches or Points.
- Use: pdfScale.sh -r 'custom <measurement> <width> <height>'
- Ex:  pdfScale.sh -r 'custom mm 210 297'
+ Use: pdfscale -r 'custom <measurement> <width> <height>'
+ Ex:  pdfscale -r 'custom mm 210 297'
  Measurements can be: mm, inch, pts.
  Custom paper definition MUST be quoted into a single parameter.
  Actual size is applied in points (mms and inches are transformed).
@@ -221,15 +233,14 @@ Notes:
    result on cropping parts of the pdf.
 
 Examples:
- pdfScale.sh myPdfFile.pdf
- pdfScale.sh myPdfFile.pdf "My Scaled Pdf"
- pdfScale.sh -v -v myPdfFile.pdf
- pdfScale.sh -s 0.85 myPdfFile.pdf My\ Scaled\ Pdf.pdf
- pdfScale.sh -m pdfinfo -s 0.80 -v myPdfFile.pdf
- pdfScale.sh -v -v -m i -s 0.7 myPdfFile.pdf
- pdfScale.sh -r A4 myPdfFile.pdf
- pdfScale.sh -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
- pdfScale.sh -h
+ pdfscale myPdfFile.pdf
+ pdfscale myPdfFile.pdf "My Scaled Pdf"
+ pdfscale -v -v myPdfFile.pdf
+ pdfscale -s 0.85 myPdfFile.pdf My\ Scaled\ Pdf.pdf
+ pdfscale -m pdfinfo -s 0.80 -v myPdfFile.pdf
+ pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
+ pdfscale -r A4 myPdfFile.pdf
+ pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
 ```
 
 ## GhostScript Paper Tables
