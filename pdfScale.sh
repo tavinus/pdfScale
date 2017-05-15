@@ -85,10 +85,12 @@ main() {
         getPageSize
         vPrintPageSizes ' Source'
         local finalRet=$EXIT_ERROR
+        local tempFile=""
+        local tempSuffix="$RANDOM""_TEMP_$RANDOM.pdf"
 
         if isMixedMode; then
                 outputFile="$OUTFILEPDF"                    # backup outFile name
-                tempFile="${OUTFILEPDF%.pdf}.__TEMP__.pdf"  # set a temp file name
+                tempFile="${OUTFILEPDF%.pdf}.$tempSuffix"   # set a temp file name
                 OUTFILEPDF="$tempFile"                      # set output to tmp file
                 pageResize                                  # resize to tmp file
                 finalRet=$?
