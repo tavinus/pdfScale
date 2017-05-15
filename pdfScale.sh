@@ -243,6 +243,9 @@ pageScale() {
         vprint " Translation X: $XTRANS"
         vprint " Translation Y: $YTRANS"
 
+        local increase=$(echo "scale=0; (($SCALE - 1) * 100)/1" | "$BCBIN")
+        vprint "   Run Scaling: $increase %"
+
         # Scale page
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
@@ -279,7 +282,7 @@ pageResize() {
                 vprint "   Flip Detect: Disabled"
         fi
 
-        vprint "   Resizing to: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
+        vprint "  Run Resizing: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
 
         # Change page size
         "$GSBIN" \
