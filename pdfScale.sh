@@ -78,42 +78,51 @@ EXIT_INVALID_PAPER_SIZE=50
 # Main function called at the end
 main() {
         printVersion 1 'verbose'
-	checkDeps
+        checkDeps
         vprint "    Input file: $INFILEPDF"
         vprint "   Output file: $OUTFILEPDF"
         getPageSize
+        vPrintSourcePageSizes ' Source'
+        local finalRet=$EXIT_ERROR
 
         if isMixedMode; then
                 vprint "   Mixed Tasks: Resize & Scale"
                 vprint "  Scale factor: $SCALE"
-                vPrintSourcePageSizes ' Source'
                 outputFile="$OUTFILEPDF"                    # backup outFile name
                 tempFile="${OUTFILEPDF%.pdf}.__TEMP__.pdf"  # set a temp file name
                 OUTFILEPDF="$tempFile"                      # set output to tmp file
                 pageResize                                  # resize to tmp file
+                finalRet=$?
                 INFILEPDF="$tempFile"                       # get tmp file as input
                 OUTFILEPDF="$outputFile"                    # reset final target
                 PGWIDTH=$RESIZE_WIDTH                       # we already know the new page size
                 PGHEIGHT=$RESIZE_HEIGHT                     # from the last command (Resize)
                 vPrintSourcePageSizes '    New'
                 pageScale                                   # scale the resized pdf
+                finalRet=$(($finalRet+$?))
                                                             # remove tmp file
                 rm "$tempFile" >/dev/null 2>&1 || printError "Error when removing temporary file: $tempFile"
         elif isResizeMode; then
                 vprint "   Single Task: Resize PDF Paper"
                 vprint "  Scale factor: Disabled (resize only)"
-                vPrintSourcePageSizes ' Source'
                 pageResize
+                finalRet=$?
         else
                 local scaleMode=""
                 vprint "   Single Task: Scale PDF Contents"
                 isManualScaledMode && scaleMode='(manual)' || scaleMode='(auto)'
                 vprint "  Scale factor: $SCALE $scaleMode"
-                vPrintSourcePageSizes ' Source'
                 pageScale
+                finalRet=$?
         fi
 
-        return $EXIT_SUCCESS
+        if [[ finalRet -eq $EXIT_SUCCESS ]]; then
+                vprint "  Final Status: File created successfully"
+        else
+                vprint "  Final Status: Errors were detected. Exit status: $finalRet"
+        fi
+
+        return $finalRet
 }
 
 
@@ -134,7 +143,7 @@ initDeps() {
 
 # Checks for dependencies errors, run after getting options
 checkDeps() {
-	if [[ $MODE = "IDENTIFY" ]]; then
+        if [[ $MODE = "IDENTIFY" ]]; then
                 vprint "Checking for imagemagick's identify"
                 if notIsAvailable "$IDBIN"; then printDependency 'imagemagick'; fi
         fi
@@ -234,7 +243,7 @@ pageScale() {
         vprint " Translation X: $XTRANS"
         vprint " Translation Y: $YTRANS"
 
-        # Do it.
+        # Scale page
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
 -dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
@@ -243,23 +252,34 @@ pageScale() {
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
 -sOutputFile="$OUTFILEPDF" \
 -c "<</BeginPage{$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
--f "$INFILEPDF" &
-        wait ${!}
+-f "$INFILEPDF" 
+
+        return $?
 }
 
 
 # Runs the ghostscript paper resize script
 pageResize() {
+        # Get new paper sizes if not custom paper
         isNotCustomPaper && getGSPaperSize "$RESIZE_PAPER_TYPE"
+
+        # Flip detect
         local tmpInverter=""
-        if [[ $FLIP_DETECTION -eq $TRUE && $PGWIDTH -gt $PGHEIGHT && $RESIZE_WIDTH -lt $RESIZE_HEIGHT ]]; then
-                vprint "   Flip Detect: Wrong orientation!"
-                vprint "                Inverting Width <-> Height"
-                tmpInverter=$RESIZE_HEIGHT
-                RESIZE_HEIGHT=$RESIZE_WIDTH
-                RESIZE_WIDTH=$tmpInverter
+        if [[ $FLIP_DETECTION -eq $TRUE ]]; then
+                if [[ $PGWIDTH -gt $PGHEIGHT && $RESIZE_WIDTH -lt $RESIZE_HEIGHT ]]; then
+                        vprint "   Flip Detect: Wrong orientation!"
+                        vprint "                Inverting Width <-> Height"
+                        tmpInverter=$RESIZE_HEIGHT
+                        RESIZE_HEIGHT=$RESIZE_WIDTH
+                        RESIZE_WIDTH=$tmpInverter
+                else
+                        vprint "   Flip Detect: No change needed"
+                fi
+        else
+                vprint "   Flip Detect: Disabled"
         fi
-        vprint "   Resizing to: $(uppercase $RESIZE_PAPER_TYPE) ( $RESIZE_WIDTH x $RESIZE_HEIGHT ) pts"
+
+        vprint "   Resizing to: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
 
         # Change page size
         "$GSBIN" \
@@ -270,9 +290,9 @@ pageResize() {
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
 -dFIXEDMEDIA -dPDFFitPage \
 -sOutputFile="$OUTFILEPDF" \
--f "$INFILEPDF" &
-        wait ${!}
+-f "$INFILEPDF" 
 
+        return $?
 }
 
 
