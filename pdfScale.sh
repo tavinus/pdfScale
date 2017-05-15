@@ -50,6 +50,8 @@ MODE=""
 RESIZE_PAPER_TYPE=""
 CUSTOM_RESIZE_PAPER=$FALSE
 FLIP_DETECTION=$TRUE
+FLIP_FORCE=$FALSE
+AUTO_ROTATION='/PageByPage'
 PGWIDTH=""
 PGHEIGHT=""
 RESIZE_WIDTH=""
@@ -122,7 +124,76 @@ main() {
 }
 
 
-########################## INITIALIZER ##########################
+###################### GHOSTSCRIPT CALLS #######################
+
+# Runs the ghostscript scaling script
+pageScale() {
+        # Compute translation factors (to center page).
+        XTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGWIDTH" | "$BCBIN")
+        YTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGHEIGHT" | "$BCBIN")
+        vprint " Translation X: $XTRANS"
+        vprint " Translation Y: $YTRANS"
+
+        local increase=$(echo "scale=0; (($SCALE - 1) * 100)/1" | "$BCBIN")
+        vprint "   Run Scaling: $increase %"
+
+        # Scale page
+        "$GSBIN" \
+-q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
+-dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
+-dColorConversionStrategy=/LeaveColorUnchanged \
+-dSubsetFonts=true -dEmbedAllFonts=true \
+-dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
+-sOutputFile="$OUTFILEPDF" \
+-c "<</BeginPage{$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
+-f "$INFILEPDF" 
+
+        return $?
+}
+
+
+# Runs the ghostscript paper resize script
+pageResize() {
+        # Get new paper sizes if not custom paper
+        isNotCustomPaper && getGSPaperSize "$RESIZE_PAPER_TYPE"
+
+	vprint "   Auto Rotate: $(basename $AUTO_ROTATION)"
+
+        # Flip detect
+        local tmpInverter=""
+        if [[ $FLIP_DETECTION -eq $TRUE || $FLIP_FORCE -eq $TRUE ]]; then
+                if [[ $PGWIDTH -gt $PGHEIGHT && $RESIZE_WIDTH -lt $RESIZE_HEIGHT ]] || [[ $FLIP_FORCE -eq $TRUE ]]; then
+			[[ $FLIP_FORCE -eq $TRUE ]] && vprint "   Flip Detect: Forced Mode!" || vprint "   Flip Detect: Wrong orientation detected!"
+                        vprint "                Inverting Width <-> Height"
+                        tmpInverter=$RESIZE_HEIGHT
+                        RESIZE_HEIGHT=$RESIZE_WIDTH
+                        RESIZE_WIDTH=$tmpInverter
+                else
+                        vprint "   Flip Detect: No change needed"
+                fi
+        else
+                vprint "   Flip Detect: Disabled"
+        fi
+
+        vprint "  Run Resizing: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
+
+        # Change page size
+        "$GSBIN" \
+-q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
+-dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
+-dColorConversionStrategy=/LeaveColorUnchanged \
+-dSubsetFonts=true -dEmbedAllFonts=true \
+-dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
+-dAutoRotatePages=$AUTO_ROTATION \
+-dFIXEDMEDIA -dPDFFitPage \
+-sOutputFile="$OUTFILEPDF" \
+-f "$INFILEPDF" 
+
+        return $?
+}
+
+
+########################## INITIALIZERS #########################
 
 # Loads external dependencies and checks for errors
 initDeps() {
@@ -160,7 +231,7 @@ checkDeps() {
 
 # Parse options
 getOptions() {
-        while getopts ":vhVs:m:r:pf" o; do
+        while getopts ":vhVs:m:r:pf:a:" o; do
             case "${o}" in
                 v)
                     ((VERBOSE++))
@@ -187,7 +258,10 @@ getOptions() {
                     exit $EXIT_SUCCESS
                     ;;
                 f)
-                    FLIP_DETECTION=$FALSE
+                    parseFlipDetectionMode ${OPTARG}
+                    ;;
+                a)
+                    parseAutoRotationMode ${OPTARG}
                     ;;
                 *)
                     initError "Invalid Option: -$OPTARG" $EXIT_INVALID_OPTION
@@ -228,75 +302,6 @@ parseScale() {
         fi
         SCALE="$1"
 }
-
-
-###################### GHOSTSCRIPT CALLS #######################
-
-# Runs the ghostscript scaling script
-pageScale() {
-        # Compute translation factors (to center page).
-        XTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGWIDTH" | "$BCBIN")
-        YTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGHEIGHT" | "$BCBIN")
-        vprint " Translation X: $XTRANS"
-        vprint " Translation Y: $YTRANS"
-
-        local increase=$(echo "scale=0; (($SCALE - 1) * 100)/1" | "$BCBIN")
-        vprint "   Run Scaling: $increase %"
-
-        # Scale page
-        "$GSBIN" \
--q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
--dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
--dColorConversionStrategy=/LeaveColorUnchanged \
--dSubsetFonts=true -dEmbedAllFonts=true \
--dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
--sOutputFile="$OUTFILEPDF" \
--c "<</BeginPage{$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
--f "$INFILEPDF" 
-
-        return $?
-}
-
-
-# Runs the ghostscript paper resize script
-pageResize() {
-        # Get new paper sizes if not custom paper
-        isNotCustomPaper && getGSPaperSize "$RESIZE_PAPER_TYPE"
-
-        # Flip detect
-        local tmpInverter=""
-        if [[ $FLIP_DETECTION -eq $TRUE ]]; then
-                if [[ $PGWIDTH -gt $PGHEIGHT && $RESIZE_WIDTH -lt $RESIZE_HEIGHT ]]; then
-                        vprint "   Flip Detect: Wrong orientation!"
-                        vprint "                Inverting Width <-> Height"
-                        tmpInverter=$RESIZE_HEIGHT
-                        RESIZE_HEIGHT=$RESIZE_WIDTH
-                        RESIZE_WIDTH=$tmpInverter
-                else
-                        vprint "   Flip Detect: No change needed"
-                fi
-        else
-                vprint "   Flip Detect: Disabled"
-        fi
-
-        vprint "  Run Resizing: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
-
-        # Change page size
-        "$GSBIN" \
--q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
--dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
--dColorConversionStrategy=/LeaveColorUnchanged \
--dSubsetFonts=true -dEmbedAllFonts=true \
--dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
--dFIXEDMEDIA -dPDFFitPage \
--sOutputFile="$OUTFILEPDF" \
--f "$INFILEPDF" 
-
-        return $?
-}
-
-
-################### PDF PAGE SIZE DETECTION ####################
 
 # Parse a forced mode of operation
 parseMode() {
@@ -339,6 +344,47 @@ parseMode() {
         return $FALSE
 }
 
+# Parses and validates the scaling factor
+parseFlipDetectionMode() {
+	local param="$(lowercase $1)"
+	case "${param}" in
+		d|disable)
+			FLIP_DETECTION=$FALSE
+			FLIP_FORCE=$FALSE
+			;;
+		f|force)
+			FLIP_DETECTION=$FALSE
+			FLIP_FORCE=$TRUE
+			;;
+		*)
+	        	[[ "$param" != 'a' || "$param" != 'auto' ]] && printError "Error! Invalid Flip Detection Mode: \"$1\", using automatic mode!"
+			FLIP_DETECTION=$TRUE
+			FLIP_FORCE=$FALSE
+			;;
+	esac
+}
+
+# Parses and validates the scaling factor
+parseAutoRotationMode() {
+	local param="$(lowercase $1)"
+	case "${param}" in
+		n|none)
+			AUTO_ROTATION='/None'
+			;;
+		a|all)
+			AUTO_ROTATION='/All'
+			;;
+		p|pagebypage|auto)
+			AUTO_ROTATION='/PageByPage'
+			;;
+		*)
+			printError "Error! Invalid Auto Rotation Mode: $param, using default: $(basename $AUTO_ROTATION)"
+			;;
+	esac
+}
+
+
+################### PDF PAGE SIZE DETECTION ####################
 
 # Gets page size using imagemagick's identify
 getPageSizeImagemagick() {
@@ -1006,8 +1052,11 @@ Parameters:
  -r <paper>  Triggers the Resize Paper Mode
              Resize PDF paper proportionally
              Uses a valid paper name or a custom defined paper
- -f          Disables the flip detection, paper will not be
-             rotated when inconsistent sizes are detected.
+ -f <mode>   Flip Detection Mode, defaults to 'auto'.
+             Inverts Width <-> Height of a Resized PDF.
+             Modes: a, auto    - automatic detection, default
+                    f, force   - forces flip W <-> H
+                    d, disable - disables flipping 
  -p          Prints Ghostscript paper info tables to screen
 
 Scaling Mode:
