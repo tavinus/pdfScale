@@ -57,12 +57,14 @@ brew install imagemagick xpdf
 
 #### Checking File Information
 ```
-./pdfScale.sh -i ../mixsync\ manual\ v1-2-3.A0.SCALED.pdf 
+$ ./pdfScale.sh -i ../input-nup.A0.SCALED.pdf
 pdfScale.sh v2.0.0 - Paper Sizes
-       File: mixsync manual v1-2-3.A0.SCALED.pdf 
-     Points:     3370 x 2384    
- Milimeters:     1189 x 841     
-     Inches:    46.81 x 33.11
+       File: input-nup.A0.SCALED.pdf
+ Paper Type: A0 Landscape
+------------+----WIDTH-+-HEIGHT-----------
+     Points |     3370 | 2384    
+ Milimeters |     1189 | 841     
+     Inches |    46.81 | 33.11
 ```
 #### Resize to A0 and Scale by 1.05 (+5%)
 ```

@@ -79,7 +79,7 @@ EXIT_INVALID_PAPER_SIZE=50
 # Main function called at the end
 main() {
         checkDeps
-	printPDFSizes
+        printPDFSizes
         vprint "    Input File: $INFILEPDF"
         vprint "   Output File: $OUTFILEPDF"
         getPageSize
@@ -129,18 +129,23 @@ main() {
         return $finalRet
 }
 
-# Prints PDF Info and exits with $EXIT_SUCCESS
+# Prints PDF Info and exits with $EXIT_SUCCESS, but only if $JUST_IDENTIFY is $TRUE
 printPDFSizes() {
-	if [[ $JUST_IDENTIFY -eq $TRUE ]]; then
-		VERBOSE=0
-		printVersion 3 " - Paper Sizes"
-		getPageSize || initError "Could not get pagesize!"
-		printf "       File: %+8s \n" "$(basename "$INFILEPDF")"
-		printf "     Points: %+8s x %-8s\n" "$PGWIDTH" "$PGHEIGHT"
-		printf " Milimeters: %+8s x %-8s\n" "$(pointsToMilimeters $PGWIDTH)" "$(pointsToMilimeters $PGHEIGHT)"
-		printf "     Inches: %+8s x %-8s\n" "$(pointsToInches $PGWIDTH)" "$(pointsToInches $PGHEIGHT)"
-		exit $EXIT_SUCCESS
-	fi
+        if [[ $JUST_IDENTIFY -eq $TRUE ]]; then
+                VERBOSE=0
+                printVersion 3 " - Paper Sizes"
+                getPageSize || initError "Could not get pagesize!"
+                local paperType="$(getGSPaperName $PGWIDTH $PGHEIGHT)"
+                isEmpty "$paperType" && paperType="NOT Detected"
+                printf "       File: %s\n" "$(basename "$INFILEPDF")"
+                printf " Paper Type: %s\n" "$paperType"
+                printf '%s\n' "------------+----WIDTH-+-HEIGHT-----------"
+                printf "     Points | %+8s | %-8s\n" "$PGWIDTH" "$PGHEIGHT"
+                printf " Milimeters | %+8s | %-8s\n" "$(pointsToMilimeters $PGWIDTH)" "$(pointsToMilimeters $PGHEIGHT)"
+                printf "     Inches | %+8s | %-8s\n" "$(pointsToInches $PGWIDTH)" "$(pointsToInches $PGHEIGHT)"
+                exit $EXIT_SUCCESS
+        fi
+        return $EXIT_SUCCESS
 }
 
 ###################### GHOSTSCRIPT CALLS #######################
@@ -292,10 +297,10 @@ getOptions() {
         done
         shift $((OPTIND-1))
         
-	if [[ $JUST_IDENTIFY -eq $TRUE ]]; then
-		VERBOSE=0
-	fi
-	
+        if [[ $JUST_IDENTIFY -eq $TRUE ]]; then
+                VERBOSE=0
+        fi
+        
         # Validate input PDF file
         INFILEPDF="$1"
         isEmpty "$INFILEPDF" && initError "Input file is empty!" $EXIT_NO_INPUT_FILE
@@ -703,6 +708,31 @@ getGSPaperSize() {
         done <<< "$sizesAll"
 }
 
+# Gets a paper size in points and sets it to RESIZE_WIDTH and RESIZE_HEIGHT
+getGSPaperName() {
+        local w="$(printf "%.0f" $1)"
+        local h="$(printf "%.0f" $2)"
+        isEmpty "$sizesall" && getPaperInfo
+        # Because US Standard has inverted sizes, I need to scan 2 times
+        # instead of just testing if width is bigger than height
+        while read l; do 
+                local cols=($l)
+                if [[ "$w" == ${cols[5]} && "$h" == ${cols[6]} ]]; then
+                        printf "%s Portrait" $(uppercase ${cols[0]})
+                        return $TRUE
+                fi
+        done <<< "$sizesAll"
+        while read l; do 
+                local cols=($l)
+                if [[ "$w" == ${cols[6]} && "$h" == ${cols[5]} ]]; then
+                        printf "%s Landscape" $(uppercase ${cols[0]})
+                        return $TRUE
+                fi
+        done <<< "$sizesAll"
+        return $FALSE
+}
+
+
 # Loads an array with paper names to memory
 getPaperNames() {
         paperNames=(a0 a1 a2 a3 a4 a4small a5 a6 a7 a8 a9 a10 isob0 isob1 isob2 isob3 isob4 isob5 isob6 c0 c1 c2 c3 c4 c5 c6 \
@@ -1059,7 +1089,7 @@ printVersion() {
         if [[ $1 -eq 2 ]]; then
                 printError "$strBanner"
         elif [[ $1 -eq 3 ]]; then
-		local extra="$(isNotEmpty "$2" && echo "$2")"
+                local extra="$(isNotEmpty "$2" && echo "$2")"
                 echo "$strBanner$extra"
         else
                 vprint "$strBanner"
