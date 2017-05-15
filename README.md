@@ -23,6 +23,9 @@ pdfScale.sh v2.0.3 - Paper Sizes
      Inches |     11.7 x 8.3
 ```
 #### Scale by 0.95 (-5%)
+This also shows a very special case of PDF file that has no `/MediaBox` defined,  
+because it is a dumb container of n-up printed binary PDF pages.  
+So, `grep` fails on this one.
 ```
 $ pdfscale -v ../input-nup.pdf
 pdfscale v2.0.2 - Verbose Execution
