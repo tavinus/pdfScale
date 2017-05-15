@@ -137,12 +137,16 @@ printPDFSizes() {
                 getPageSize || initError "Could not get pagesize!"
                 local paperType="$(getGSPaperName $PGWIDTH $PGHEIGHT)"
                 isEmpty "$paperType" && paperType="NOT Detected"
-                printf "       File: %s\n" "$(basename "$INFILEPDF")"
-                printf " Paper Type: %s\n" "$paperType"
-                printf '%s\n' "------------+----WIDTH-+-HEIGHT-----------"
-                printf "     Points | %+8s | %-8s\n" "$PGWIDTH" "$PGHEIGHT"
-                printf " Milimeters | %+8s | %-8s\n" "$(pointsToMilimeters $PGWIDTH)" "$(pointsToMilimeters $PGHEIGHT)"
-                printf "     Inches | %+8s | %-8s\n" "$(pointsToInches $PGWIDTH)" "$(pointsToInches $PGHEIGHT)"
+               #printf '%s\n' "-----+------+----WIDTH-+-HEIGHT-----------"
+                printf '%s\n' "------------+-----------------------------"
+                printf "       File | %s\n" "$(basename "$INFILEPDF")"
+                printf " Paper Type | %s\n" "$paperType"
+                printf '%s\n' "------------+-----------------------------"
+               #printf '%s\n' "------------+----WIDTH-+-HEIGHT-----------"
+                printf '%s\n' "            |    WIDTH x HEIGHT"
+                printf "     Points | %+8s x %-8s\n" "$PGWIDTH" "$PGHEIGHT"
+                printf " Milimeters | %+8s x %-8s\n" "$(pointsToMilimeters $PGWIDTH)" "$(pointsToMilimeters $PGHEIGHT)"
+                printf "     Inches | %+8s x %-8s\n" "$(pointsToInches $PGWIDTH)" "$(pointsToInches $PGHEIGHT)"
                 exit $EXIT_SUCCESS
         fi
         return $EXIT_SUCCESS

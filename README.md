@@ -11,14 +11,16 @@ A temporary file is used in `mixed mode`, at the target location.
 
 #### Checking File Information
 ```
-$ ./pdfScale.sh -i ../input-nup.A0.SCALED.pdf
+$ ./pdfScale.sh -i ../input-nup.pdf 
 pdfScale.sh v2.0.0 - Paper Sizes
-       File: input-nup.A0.SCALED.pdf
- Paper Type: A0 Landscape
-------------+----WIDTH-+-HEIGHT-----------
-     Points |     3370 | 2384    
- Milimeters |     1189 | 841     
-     Inches |    46.81 | 33.11
+------------+-----------------------------
+       File | input-nup.pdf
+ Paper Type | A4 Landscape
+------------+-----------------------------
+            |    WIDTH x HEIGHT
+     Points |      842 x 595     
+ Milimeters |      297 x 210     
+     Inches |    11.69 x 8.26
 ```
 #### Resize to A0 and Scale by 1.05 (+5%)
 ```
