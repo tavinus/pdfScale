@@ -87,7 +87,7 @@ main() {
         vPrintPageSizes ' Source'
         local finalRet=$EXIT_ERROR
         local tempFile=""
-        local tempSuffix="$RANDOM""_TEMP_$RANDOM.pdf"
+        local tempSuffix="$RANDOM$RANDOM""_TEMP_$RANDOM$RANDOM.pdf"
 
         if isMixedMode; then
                 outputFile="$OUTFILEPDF"                    # backup outFile name
