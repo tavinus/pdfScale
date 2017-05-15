@@ -1057,6 +1057,12 @@ Parameters:
              Modes: a, auto    - automatic detection, default
                     f, force   - forces flip W <-> H
                     d, disable - disables flipping 
+ -a <mode>   GS Auto-Rotation Setting, defaults to 'PageByPage'.
+             Setting for GS -dAutoRotatePages.
+             Modes: p, pagebypage - auto-rotates pages individually
+                    a, all        - rotates all pages (or none) depending
+                                    on a kind of \"majority decision\"
+                    n, none       - retains orientation of each page
  -p          Prints Ghostscript paper info tables to screen
 
 Scaling Mode:
