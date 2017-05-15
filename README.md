@@ -176,20 +176,21 @@ pdfscale v2.0.0 - Verbose Execution
 ```
 ```
 $ pdfscale -v -v -s 0.9 ../input-nup.pdf "../My Glorius PDF"
-2017-05-14:23:43:46 | pdfscale v2.0.0 - Verbose Execution
-2017-05-14:23:43:46 |     Input File: ../input-nup.pdf
-2017-05-14:23:43:46 |    Output File: ../My Glorius PDF.pdf
-2017-05-14:23:43:46 |  Get Page Size: Adaptive Enabled
-2017-05-14:23:43:46 |         Method: Cat + Grep
-2017-05-14:23:43:46 |                 Failed
-2017-05-14:23:43:46 |         Method: Mac Quartz mdls
-2017-05-14:23:43:46 |   Source Width: 842 postscript-points
-2017-05-14:23:43:46 |  Source Height: 595 postscript-points
-2017-05-14:23:43:46 |   Scale Factor: 0.9 (manual)
-2017-05-14:23:43:46 |  Translation X: 46.777310
-2017-05-14:23:43:46 |  Translation Y: 33.055225
-2017-05-14:23:43:46 |    Run Scaling: -10 %
-2017-05-14:23:43:47 |   Final Status: File created successfully
+2017-05-14:23:55:33 | pdfscale v2.0.0 - Verbose Execution
+2017-05-14:23:55:33 |    Single Task: Scale PDF Contents
+2017-05-14:23:55:33 |     Input File: ../input-nup.pdf
+2017-05-14:23:55:33 |    Output File: ../My Glorius PDF.pdf
+2017-05-14:23:55:33 |  Get Page Size: Adaptive Enabled
+2017-05-14:23:55:33 |         Method: Cat + Grep
+2017-05-14:23:55:33 |                 Failed
+2017-05-14:23:55:33 |         Method: Mac Quartz mdls
+2017-05-14:23:55:33 |   Source Width: 842 postscript-points
+2017-05-14:23:55:33 |  Source Height: 595 postscript-points
+2017-05-14:23:55:33 |   Scale Factor: 0.9 (manual)
+2017-05-14:23:55:33 |  Translation X: 46.777310
+2017-05-14:23:55:33 |  Translation Y: 33.055225
+2017-05-14:23:55:33 |    Run Scaling: -10 %
+2017-05-14:23:55:33 |   Final Status: File created successfully
 ```
 ```
 $ pdfscale -v -r a2 ../input.pdf

@@ -203,20 +203,17 @@ getOptions() {
         isFile "$INFILEPDF"  || initError "Input file not found: $INFILEPDF" $EXIT_FILE_NOT_FOUND
         
         printVersion 1 'verbose'
-        if isEmpty "$2"; then
-                if isMixedMode; then
-                        vprint "   Mixed Tasks: Resize & Scale"
-                        OUTFILEPDF="${INFILEPDF%.pdf}.$(uppercase $RESIZE_PAPER_TYPE).SCALED.pdf"
-                elif isResizeMode; then
-                        vprint "   Single Task: Resize PDF Paper"
-                        OUTFILEPDF="${INFILEPDF%.pdf}.$(uppercase $RESIZE_PAPER_TYPE).pdf"
-                else
-                        vprint "   Single Task: Scale PDF Contents"
-                        OUTFILEPDF="${INFILEPDF%.pdf}.SCALED.pdf"
-                fi
+        if isMixedMode; then
+                vprint "   Mixed Tasks: Resize & Scale"
+                isEmpty "$2" && OUTFILEPDF="${INFILEPDF%.pdf}.$(uppercase $RESIZE_PAPER_TYPE).SCALED.pdf"
+        elif isResizeMode; then
+                vprint "   Single Task: Resize PDF Paper"
+                isEmpty "$2" && OUTFILEPDF="${INFILEPDF%.pdf}.$(uppercase $RESIZE_PAPER_TYPE).pdf"
         else
-                OUTFILEPDF="${2%.pdf}.pdf"
+                vprint "   Single Task: Scale PDF Contents"
+                isEmpty "$2" && OUTFILEPDF="${INFILEPDF%.pdf}.SCALED.pdf"
         fi
+        isNotEmpty "$2" && OUTFILEPDF="${2%.pdf}.pdf"
 }
 
 
