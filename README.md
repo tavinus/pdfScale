@@ -53,7 +53,63 @@ sudo yum install imagemagick pdfinfo
 brew install imagemagick xpdf
 ```
 
- 
+## Example Runs
+
+```
+$ pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
+pdfscale v2.0.0 - Verbose Execution
+   Mixed Tasks: Resize & Scale
+    Input File: ../mixsync manual v1-2-3.pdf
+   Output File: ../mixsync manual v1-2-3.A0.SCALED.pdf
+ Get Page Size: Adaptive Enabled
+        Method: Cat + Grep
+  Source Width: 842 postscript-points
+ Source Height: 595 postscript-points
+   Flip Detect: Wrong orientation!
+                Inverting Width <-> Height
+  Run Resizing: A0 ( 3370 x 2384 ) pts
+     New Width: 3370 postscript-points
+    New Height: 2384 postscript-points
+  Scale Factor: 1.05
+ Translation X: -80.236330
+ Translation Y: -56.760656
+   Run Scaling: 5 %
+  Final Status: File created successfully
+```
+```
+$ pdfscale -v -v -s 0.9 ../input-nup.pdf "../My Glorius PDF"
+2017-05-14:23:55:33 | pdfscale v2.0.0 - Verbose Execution
+2017-05-14:23:55:33 |    Single Task: Scale PDF Contents
+2017-05-14:23:55:33 |     Input File: ../input-nup.pdf
+2017-05-14:23:55:33 |    Output File: ../My Glorius PDF.pdf
+2017-05-14:23:55:33 |  Get Page Size: Adaptive Enabled
+2017-05-14:23:55:33 |         Method: Cat + Grep
+2017-05-14:23:55:33 |                 Failed
+2017-05-14:23:55:33 |         Method: Mac Quartz mdls
+2017-05-14:23:55:33 |   Source Width: 842 postscript-points
+2017-05-14:23:55:33 |  Source Height: 595 postscript-points
+2017-05-14:23:55:33 |   Scale Factor: 0.9 (manual)
+2017-05-14:23:55:33 |  Translation X: 46.777310
+2017-05-14:23:55:33 |  Translation Y: 33.055225
+2017-05-14:23:55:33 |    Run Scaling: -10 %
+2017-05-14:23:55:33 |   Final Status: File created successfully
+```
+```
+$ pdfscale -v -r a2 ../input.pdf
+pdfscale v2.0.0 - Verbose Execution
+   Single Task: Resize PDF Paper
+    Input File: ../input.pdf
+   Output File: ../input.A2.pdf
+ Get Page Size: Adaptive Enabled
+        Method: Cat + Grep
+  Source Width: 595 postscript-points
+ Source Height: 842 postscript-points
+  Scale Factor: Disabled (resize only)
+   Flip Detect: No change needed
+  Run Resizing: A2 ( 1191 x 1684 ) pts
+  Final Status: File created successfully
+```
+
 ## Help info
 ```
 $ pdfscale -h
@@ -152,61 +208,6 @@ Examples:
  pdfScale.sh -h
 ```
 
-## Example Runs
-```
-$ pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
-pdfscale v2.0.0 - Verbose Execution
-   Mixed Tasks: Resize & Scale
-    Input File: ../mixsync manual v1-2-3.pdf
-   Output File: ../mixsync manual v1-2-3.A0.SCALED.pdf
- Get Page Size: Adaptive Enabled
-        Method: Cat + Grep
-  Source Width: 842 postscript-points
- Source Height: 595 postscript-points
-   Flip Detect: Wrong orientation!
-                Inverting Width <-> Height
-  Run Resizing: A0 ( 3370 x 2384 ) pts
-     New Width: 3370 postscript-points
-    New Height: 2384 postscript-points
-  Scale Factor: 1.05
- Translation X: -80.236330
- Translation Y: -56.760656
-   Run Scaling: 5 %
-  Final Status: File created successfully
-```
-```
-$ pdfscale -v -v -s 0.9 ../input-nup.pdf "../My Glorius PDF"
-2017-05-14:23:55:33 | pdfscale v2.0.0 - Verbose Execution
-2017-05-14:23:55:33 |    Single Task: Scale PDF Contents
-2017-05-14:23:55:33 |     Input File: ../input-nup.pdf
-2017-05-14:23:55:33 |    Output File: ../My Glorius PDF.pdf
-2017-05-14:23:55:33 |  Get Page Size: Adaptive Enabled
-2017-05-14:23:55:33 |         Method: Cat + Grep
-2017-05-14:23:55:33 |                 Failed
-2017-05-14:23:55:33 |         Method: Mac Quartz mdls
-2017-05-14:23:55:33 |   Source Width: 842 postscript-points
-2017-05-14:23:55:33 |  Source Height: 595 postscript-points
-2017-05-14:23:55:33 |   Scale Factor: 0.9 (manual)
-2017-05-14:23:55:33 |  Translation X: 46.777310
-2017-05-14:23:55:33 |  Translation Y: 33.055225
-2017-05-14:23:55:33 |    Run Scaling: -10 %
-2017-05-14:23:55:33 |   Final Status: File created successfully
-```
-```
-$ pdfscale -v -r a2 ../input.pdf
-pdfscale v2.0.0 - Verbose Execution
-   Single Task: Resize PDF Paper
-    Input File: ../input.pdf
-   Output File: ../input.A2.pdf
- Get Page Size: Adaptive Enabled
-        Method: Cat + Grep
-  Source Width: 595 postscript-points
- Source Height: 842 postscript-points
-  Scale Factor: Disabled (resize only)
-   Flip Detect: No change needed
-  Run Resizing: A2 ( 1191 x 1684 ) pts
-  Final Status: File created successfully
-```
 ## GhostScript Paper Tables
 ```
 $ ./pdfScale.sh -p
