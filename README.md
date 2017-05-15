@@ -11,8 +11,8 @@ A temporary file is used in `mixed mode`, at the target location.
 Better than explaining is showing it:  
 #### Checking File Information
 ```
-$ ./pdfScale.sh -i ../input-nup.pdf 
-pdfScale.sh v2.0.2 - Paper Sizes
+$ ./pdfScale.sh -i ../input-nup.pdf
+pdfScale.sh v2.0.3 - Paper Sizes
 ------------+-----------------------------
        File | input-nup.pdf
  Paper Type | A4 Landscape
