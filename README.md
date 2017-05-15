@@ -301,10 +301,11 @@ Valid Ghostscript Paper Sizes accepted
 ```
 
 ## Dependencies  
-The script uses `basename`, `cat`, `grep`, `bc`, `head` and `gs` (ghostscript).   
+The script uses `basename`, `grep`, `bc` and `gs` (ghostscript).   
 You probably have everything installed already, except for ghostscript.   
 Optional dependencies are `imagemagick`, `pdfinfo` and `mdls` (Mac).  
 This app is focused in `Bash`, so it will probably not run in other shells.  
+The script will need to see the dependencies on your `$PATH` variable.
 
 ##### apt-get
 ```
@@ -321,7 +322,7 @@ brew install ghostscript
 ##### Optionals
 Page Size detection is by default in Adaptive Mode.  
 It will try the following methods in sequence:   
- 1. Try to get `/MediaBox` with `cat` + `grep`
+ 1. Try to get `/MediaBox` with `grep` (fastest)
  2. Failed AND MacOS ? Try `mdls`
  3. Failed ? Try `pdfinfo`
  4. Failed ? Try ImageMagick's `identify`

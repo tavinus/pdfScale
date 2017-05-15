@@ -221,15 +221,18 @@ pageResize() {
 
 # Loads external dependencies and checks for errors
 initDeps() {
+	GREPBIN="$(which grep 2>/dev/null)"
         GSBIN="$(which gs 2>/dev/null)"
         BCBIN="$(which bc 2>/dev/null)"
         IDBIN=$(which identify 2>/dev/null)
         MDLSBIN="$(which mdls 2>/dev/null)"
         PDFINFOBIN="$(which pdfinfo 2>/dev/null)"
         
-        vprint "Checking for ghostscript and bcmath"
-        if notIsAvailable "$GSBIN"; then printDependency 'ghostscript'; fi
-        if notIsAvailable "$BCBIN"; then printDependency 'bc'; fi
+        vprint "Checking for grep, ghostscript and bcmath"
+        notIsAvailable "$GSBIN" && printDependency 'ghostscript'
+        notIsAvailable "$BCBIN" && printDependency 'bc'
+        notIsAvailable "$GREPBIN" && printDependency 'grep'
+	return $TRUE
 }
 
 # Checks for dependencies errors, run after getting options
@@ -248,6 +251,7 @@ checkDeps() {
                         initError 'mdls executable was not found! Is this even MacOS?' $EXIT_MAC_MDLS_NOT_FOUND 'nobanner'
                 fi
         fi
+	return $TRUE
 }
 
 
@@ -338,7 +342,7 @@ parseScale() {
 parseMode() {
         local param="$(lowercase $1)"
         case "${param}" in
-                c|catgrep|'cat+grep')
+                c|catgrep|'cat+grep'|grep|g)
                         ADAPTIVEMODE=$FALSE
                         MODE="CATGREP"
                         return $TRUE
@@ -417,7 +421,7 @@ parseAutoRotationMode() {
 ################################################################
 # Detects operation mode and also runs the adaptive mode
 # PAGESIZE LOGIC
-# 1- Try to get Mediabox with CAT/GREP
+# 1- Try to get Mediabox with GREP
 # 2- MacOS => try to use mdls
 # 3- Try to use pdfinfo
 # 4- Try to use identify (imagemagick)
@@ -427,7 +431,7 @@ getPageSize() {
         if isNotAdaptiveMode; then
                 vprint " Get Page Size: Adaptive Disabled"
                 if [[ $MODE = "CATGREP" ]]; then
-                        vprint "        Method: Cat + Grep"
+                        vprint "        Method: Grep"
                         getPageSizeCatGrep
                 elif [[ $MODE = "MDLS" ]]; then
                         vprint "        Method: Mac Quartz mdls"
@@ -447,7 +451,7 @@ getPageSize() {
         fi
         
         vprint " Get Page Size: Adaptive Enabled"
-        vprint "        Method: Cat + Grep"
+        vprint "        Method: Grep"
         getPageSizeCatGrep
         if pageSizeIsInvalid && [[ $OSNAME = "Darwin" ]]; then
                 vprint "                Failed"
@@ -548,7 +552,7 @@ getPageSizePdfInfo() {
         fi
 
         # get data from image magick
-        local identify="$("$PDFINFOBIN" "$INFILEPDF" 2>/dev/null | grep -i 'Page size:' )"
+        local identify="$("$PDFINFOBIN" "$INFILEPDF" 2>/dev/null | "$GREPBIN" -i 'Page size:' )"
 
         if isEmpty "$identify" && isNotAdaptiveMode; then
                 notAdaptiveFailed "Linux PdfInfo returned an empty string!"
@@ -574,7 +578,14 @@ getPageSizeCatGrep() {
         # /MediaBox[ 0 0 595.28 841.89 ]
 
         # Get MediaBox data if possible
-        local mediaBox="$(cat "$INFILEPDF" | grep -a '/MediaBox' | head -n1)"
+        #local mediaBox="$(cat "$INFILEPDF" | "$GREPBIN" -a '/MediaBox' | "$HEADBIN" -n1)"
+        #local mediaBox="$("$GREPBIN" -a -e '/MediaBox' "$INFILEPDF" | "$HEADBIN" -n1)"
+        local mediaBox="$("$GREPBIN" -a -e '/MediaBox' "$INFILEPDF" 2>/dev/null)"$'\n\n'
+        while read l; do 
+		mediaBox="$l"
+		break
+        done <<< "$mediaBox"
+
         mediaBox="${mediaBox##*/MediaBox}"
 
         # No page size data available
@@ -1169,7 +1180,7 @@ Output filename:
 
 Page Size Detection Modes:
  a, adaptive  Default mode, tries all the methods below
- c, cat+grep  Forces the use of the cat + grep method
+ g, grep      Forces the use of grep method
  m, mdls      Forces the use of MacOS Quartz mdls
  p, pdfinfo   Forces the use of PDFInfo
  i, identify  Forces the use of ImageMagick's Identify
