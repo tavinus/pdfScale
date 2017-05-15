@@ -11,7 +11,7 @@ A temporary file is used in `mixed mode`, at the target location.
 The script uses `basename`, `cat`, `grep`, `bc`, `head` and `gs` (ghostscript).   
 You probably have everything installed already, except for ghostscript.   
 Optional dependencies are `imagemagick`, `pdfinfo` and `mdls` (Mac).  
-This app is focused in `Bash`, so it will probably not run on other Shells.  
+This app is focused in `Bash`, so it will probably not run in other Shells.  
 
 ##### apt-get
 ```
