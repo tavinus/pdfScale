@@ -1070,7 +1070,7 @@ Parameters:
 Scaling Mode:
  The default mode of operation is scaling mode with fixed paper
  size and scaling pre-set to $SCALE. By not using the resize mode
- you are using scaling mode. Flip-Detection and auto-rotation are
+ you are using scaling mode. Flip-Detection and Auto-Rotation are
  disabled in Scaling mode.
 
 Resize Paper Mode:
