@@ -78,7 +78,7 @@ Parameters:
              Resize PDF paper proportionally
              A valid paper name or a custom defined paper
  -f          Disables the flip detection, paper will not be
-             rotated to landscape when needed (resize-only)
+             rotated when inconsistent sizes are detected.
  -p          Prints Ghostscript paper info tables to screen
 
 Scaling Mode:
