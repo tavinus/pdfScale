@@ -157,13 +157,13 @@ pageResize() {
         # Get new paper sizes if not custom paper
         isNotCustomPaper && getGSPaperSize "$RESIZE_PAPER_TYPE"
 
-	vprint "   Auto Rotate: $(basename $AUTO_ROTATION)"
+        vprint "   Auto Rotate: $(basename $AUTO_ROTATION)"
 
         # Flip detect
         local tmpInverter=""
         if [[ $FLIP_DETECTION -eq $TRUE || $FLIP_FORCE -eq $TRUE ]]; then
                 if [[ $PGWIDTH -gt $PGHEIGHT && $RESIZE_WIDTH -lt $RESIZE_HEIGHT ]] || [[ $FLIP_FORCE -eq $TRUE ]]; then
-			[[ $FLIP_FORCE -eq $TRUE ]] && vprint "   Flip Detect: Forced Mode!" || vprint "   Flip Detect: Wrong orientation detected!"
+                        [[ $FLIP_FORCE -eq $TRUE ]] && vprint "   Flip Detect: Forced Mode!" || vprint "   Flip Detect: Wrong orientation detected!"
                         vprint "                Inverting Width <-> Height"
                         tmpInverter=$RESIZE_HEIGHT
                         RESIZE_HEIGHT=$RESIZE_WIDTH
@@ -305,82 +305,79 @@ parseScale() {
 
 # Parse a forced mode of operation
 parseMode() {
-        if isEmpty "$1"; then
-                printError "Mode is empty, please specify the desired mode"
-                printError "Falling back to adaptive mode!"
-                ADAPTIVEMODE=$TRUE
-                MODE=""
-                return $FALSE
-        fi
-        
-        if [[ $1 = 'c' || $1 = 'catgrep' || $1 = 'cat+grep' || $1 = 'CatGrep' || $1 = 'C' || $1 = 'CATGREP' ]]; then
-                ADAPTIVEMODE=$FALSE
-                MODE="CATGREP"
-                return $TRUE
-        elif [[ $1 = 'i' || $1 = 'imagemagick' || $1 = 'identify' || $1 = 'ImageMagick' || $1 = 'Identify' || $1 = 'I' || $1 = 'IDENTIFY' ]]; then
-                ADAPTIVEMODE=$FALSE
-                MODE="IDENTIFY"
-                return $TRUE
-        elif [[ $1 = 'm' || $1 = 'mdls' || $1 = 'MDLS' || $1 = 'quartz' || $1 = 'mac' || $1 = 'M' ]]; then
-                ADAPTIVEMODE=$FALSE
-                MODE="MDLS"
-                return $TRUE
-        elif [[ $1 = 'p' || $1 = 'pdfinfo' || $1 = 'PDFINFO' || $1 = 'PdfInfo' || $1 = 'P' ]]; then
-                ADAPTIVEMODE=$FALSE
-                MODE="PDFINFO"
-                return $TRUE
-        elif [[ $1 = 'a' || $1 = 'adaptive' || $1 = 'automatic' || $1 = 'A' || $1 = 'ADAPTIVE' || $1 = 'AUTOMATIC' ]]; then
-                ADAPTIVEMODE=$TRUE
-                MODE=""
-                return $TRUE
-        else
-                printError "Invalid mode: $1"
-                printError "Falling back to adaptive mode!"
-                ADAPTIVEMODE=$TRUE
-                MODE=""
-                return $FALSE
-        fi
+        local param="$(lowercase $1)"
+        case "${param}" in
+                c|catgrep|'cat+grep')
+                        ADAPTIVEMODE=$FALSE
+                        MODE="CATGREP"
+                        return $TRUE
+                        ;;
+                i|imagemagick|identify)
+                        ADAPTIVEMODE=$FALSE
+                        MODE="IDENTIFY"
+                        return $TRUE
+                        ;;
+                m|mdls|quartz|mac)
+                        ADAPTIVEMODE=$FALSE
+                        MODE="MDLS"
+                        return $TRUE
+                        ;;
+                p|pdfinfo)
+                        ADAPTIVEMODE=$FALSE
+                        MODE="PDFINFO"
+                        return $TRUE
+                        ;;
+                *)
+                        ADAPTIVEMODE=$TRUE
+                        MODE=""
+                        if [[ "$param" != 'a' && "$param" != 'auto' && "$param" != 'automatic' && "$param" != 'adaptive' ]]; then
+                                printError "Error! Invalid PDF Size Detection Mode: \"$1\", using adaptive mode!"
+                                return $FALSE
+                        fi
+                        return $TRUE
+                        ;;
+        esac
         
         return $FALSE
 }
 
 # Parses and validates the scaling factor
 parseFlipDetectionMode() {
-	local param="$(lowercase $1)"
-	case "${param}" in
-		d|disable)
-			FLIP_DETECTION=$FALSE
-			FLIP_FORCE=$FALSE
-			;;
-		f|force)
-			FLIP_DETECTION=$FALSE
-			FLIP_FORCE=$TRUE
-			;;
-		*)
-	        	[[ "$param" != 'a' || "$param" != 'auto' ]] && printError "Error! Invalid Flip Detection Mode: \"$1\", using automatic mode!"
-			FLIP_DETECTION=$TRUE
-			FLIP_FORCE=$FALSE
-			;;
-	esac
+        local param="$(lowercase $1)"
+        case "${param}" in
+                d|disable)
+                        FLIP_DETECTION=$FALSE
+                        FLIP_FORCE=$FALSE
+                        ;;
+                f|force)
+                        FLIP_DETECTION=$FALSE
+                        FLIP_FORCE=$TRUE
+                        ;;
+                *)
+                        [[ "$param" != 'a' && "$param" != 'auto' ]] && printError "Error! Invalid Flip Detection Mode: \"$1\", using automatic mode!"
+                        FLIP_DETECTION=$TRUE
+                        FLIP_FORCE=$FALSE
+                        ;;
+        esac
 }
 
 # Parses and validates the scaling factor
 parseAutoRotationMode() {
-	local param="$(lowercase $1)"
-	case "${param}" in
-		n|none)
-			AUTO_ROTATION='/None'
-			;;
-		a|all)
-			AUTO_ROTATION='/All'
-			;;
-		p|pagebypage|auto)
-			AUTO_ROTATION='/PageByPage'
-			;;
-		*)
-			printError "Error! Invalid Auto Rotation Mode: $param, using default: $(basename $AUTO_ROTATION)"
-			;;
-	esac
+        local param="$(lowercase $1)"
+        case "${param}" in
+                n|none)
+                        AUTO_ROTATION='/None'
+                        ;;
+                a|all)
+                        AUTO_ROTATION='/All'
+                        ;;
+                p|pagebypage|auto)
+                        AUTO_ROTATION='/PageByPage'
+                        ;;
+                *)
+                        printError "Error! Invalid Auto Rotation Mode: $param, using default: $(basename $AUTO_ROTATION)"
+                        ;;
+        esac
 }
 
 
@@ -1013,10 +1010,13 @@ notIsAvailable() {
 printVersion() {
         local vStr=""
         [[ "$2" = 'verbose' ]] && vStr=" - Verbose Execution"
+        local strBanner="$PDFSCALE_NAME v$VERSION$vStr"
         if [[ $1 -eq 2 ]]; then
-                printError "$PDFSCALE_NAME v$VERSION$vStr"
+                printError "$strBanner"
+        elif [[ $1 -eq 3 ]]; then
+                echo "$strBanner"
         else
-                vprint "$PDFSCALE_NAME v$VERSION$vStr"
+                vprint "$strBanner"
         fi
 }
 
@@ -1030,10 +1030,12 @@ vPrintScaleFactor() {
 
 # Prints help info
 printHelp() {
-        printVersion
+        printVersion 3
         local paperList="$(printPaperNames)"
         echo "
-Usage: $PDFSCALE_NAME [-v] [-s <factor>] [-m <mode>] [-r <paper>] <inFile.pdf> [outfile.pdf]
+Usage: $PDFSCALE_NAME <inFile.pdf>
+       $PDFSCALE_NAME [-v] [-s <factor>] [-m <page-detection>] <inFile.pdf> [outfile.pdf]
+       $PDFSCALE_NAME [-v] [-r <paper>] [-f <flip-detection>] [-a <auto-rotation>] <inFile.pdf> [outfile.pdf]
        $PDFSCALE_NAME -p
        $PDFSCALE_NAME -h
        $PDFSCALE_NAME -V
