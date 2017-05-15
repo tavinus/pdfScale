@@ -81,7 +81,7 @@ main() {
         vprint "    Input File: $INFILEPDF"
         vprint "   Output File: $OUTFILEPDF"
         getPageSize
-        vPrintSourcePageSizes ' Source'
+        vPrintPageSizes ' Source'
         local finalRet=$EXIT_ERROR
 
         if isMixedMode; then
@@ -94,7 +94,7 @@ main() {
                 OUTFILEPDF="$outputFile"                    # reset final target
                 PGWIDTH=$RESIZE_WIDTH                       # we already know the new page size
                 PGHEIGHT=$RESIZE_HEIGHT                     # from the last command (Resize)
-                vPrintSourcePageSizes '    New'
+                vPrintPageSizes '    New'
                 vPrintScaleFactor
                 pageScale                                   # scale the resized pdf
                 finalRet=$(($finalRet+$?))
@@ -540,7 +540,7 @@ notAdaptiveFailed() {
 }
 
 # Verbose print of the Width and Height (Source or New) to screen
-vPrintSourcePageSizes() {
+vPrintPageSizes() {
         vprint " $1 Width: $PGWIDTH postscript-points"
         vprint "$1 Height: $PGHEIGHT postscript-points"
 }
