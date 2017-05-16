@@ -208,7 +208,7 @@ pageResize() {
         fi
 
         vprint "  Run Resizing: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
-        GS_RUN_STATUS="$GS_RUN_STATUS$(gsPageResize 2>&1)"
+        GS_RUN_STATUS="$GS_RUN_STATUS""$(gsPageResize 2>&1)"
         return $?
 }
 
