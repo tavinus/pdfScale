@@ -124,7 +124,7 @@ main() {
                 vprint "  Final Status: File created successfully"
         else
                 vprint "  Final Status: Error detected"$'\n'"                Exit status: $finalRet"
-                printError $'\n'"Ghostscript Debug Info:"$'\n'"$GS_RUN_STATUS"
+                printError $'\n'"PdfScale: ERROR!"$'\n'"Ghostscript Debug Info:"$'\n'"$GS_RUN_STATUS"
         fi
 
         return $finalRet
@@ -164,7 +164,7 @@ pageScale() {
         local increase=$(echo "scale=0; (($SCALE - 1) * 100)/1" | "$BCBIN")
         vprint "   Run Scaling: $increase %"
 
-        GS_RUN_STATUS="$GS_RUN_STATUS$(gsPageScale 2>&1)"
+        GS_RUN_STATUS="$GS_RUN_STATUS""$(gsPageScale 2>&1)"
         return $? # Last command is always returned I think
 }
 
