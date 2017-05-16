@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.0.4"
+VERSION="2.0.5"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -40,6 +40,7 @@ SCALE="0.95"                   # scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                      # verbosity Level
 PDFSCALE_NAME="$(basename $0)" # simplified name of this script
 OSNAME="$(uname 2>/dev/null)"  # Check where we are running
+GS_RUN_STATUS=""               # Holds GS error messages, signals errors
 
 JUST_IDENTIFY=$FALSE        # Flag to just show PDF info
 ADAPTIVEMODE=$TRUE          # Automatically try to guess best mode
@@ -119,10 +120,11 @@ main() {
                 finalRet=$?
         fi
 
-        if [[ $finalRet -eq $EXIT_SUCCESS ]]; then
+        if [[ $finalRet -eq $EXIT_SUCCESS ]] && isEmpty "$GS_RUN_STATUS"; then
                 vprint "  Final Status: File created successfully"
         else
-                vprint "  Final Status: Errors were detected. Exit status: $finalRet"
+                vprint "  Final Status: Error detected"$'\n'"                Exit status: $finalRet"
+                printError $'\n'"Ghostscript Debug Info:"$'\n'"$GS_RUN_STATUS"
         fi
 
         return $finalRet
@@ -162,6 +164,12 @@ pageScale() {
         local increase=$(echo "scale=0; (($SCALE - 1) * 100)/1" | "$BCBIN")
         vprint "   Run Scaling: $increase %"
 
+        GS_RUN_STATUS="$GS_RUN_STATUS$(gsPageScale 2>&1)"
+        return $? # Last command is always returned I think
+}
+
+# Runs GS call for scaling, nothing else should run here
+gsPageScale() {
         # Scale page
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
@@ -172,7 +180,6 @@ pageScale() {
 -sOutputFile="$OUTFILEPDF" \
 -c "<</BeginPage{$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
 -f "$INFILEPDF" 
-
         return $?
 }
 
@@ -201,7 +208,12 @@ pageResize() {
         fi
 
         vprint "  Run Resizing: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
+        GS_RUN_STATUS="$GS_RUN_STATUS$(gsPageResize 2>&1)"
+        return $?
+}
 
+# Runs GS call for resizing, nothing else should run here
+gsPageResize() {
         # Change page size
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
@@ -213,10 +225,8 @@ pageResize() {
 -dFIXEDMEDIA -dPDFFitPage \
 -sOutputFile="$OUTFILEPDF" \
 -f "$INFILEPDF" 
-
         return $?
 }
-
 
 ########################## INITIALIZERS #########################
 
