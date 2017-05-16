@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.0.3"
+VERSION="2.0.4"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -78,7 +78,7 @@ EXIT_INVALID_PAPER_SIZE=50
 
 # Main function called at the end
 main() {
-        printPDFSizes
+        printPDFSizes  # may exit here
         vprint "    Input File: $INFILEPDF"
         vprint "   Output File: $OUTFILEPDF"
         getPageSize
@@ -119,7 +119,7 @@ main() {
                 finalRet=$?
         fi
 
-        if [[ finalRet -eq $EXIT_SUCCESS ]]; then
+        if [[ $finalRet -eq $EXIT_SUCCESS ]]; then
                 vprint "  Final Status: File created successfully"
         else
                 vprint "  Final Status: Errors were detected. Exit status: $finalRet"
