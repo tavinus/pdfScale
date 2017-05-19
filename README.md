@@ -242,7 +242,7 @@ Examples:
  pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
 ```
 
-## GhostScript Paper Tables
+## Standard Paper Tables
 The `-p` parameter prints detailed paper types information
 ```
 $ pdfscale -p
