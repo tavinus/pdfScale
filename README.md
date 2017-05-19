@@ -109,7 +109,7 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v2.1.1
+pdfscale v2.1.2
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
