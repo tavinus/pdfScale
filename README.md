@@ -109,7 +109,7 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v2.1.0
+pdfscale v2.1.1
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -154,7 +154,7 @@ Parameters:
              Modes: a, auto     Keeps source orientation, default
                     f, force    Forces flip W <-> H
                     d, disable  Disables flipping 
- -a, auto-rotate <mode>
+ -a, --auto-rotate <mode>
              Setting for GS -dAutoRotatePages, defaults to 'PageByPage'
              Uses text-orientation detection to set Portrait/Landscape
              Modes: p, pagebypage  Auto-rotates pages individually
