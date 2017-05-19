@@ -1338,7 +1338,7 @@ Custom Paper Size:
 
 Using Source Paper Size: (no-resizing)
  - Wildcard 'source' is used used to keep paper size the same as the input
- - Usefull to run Flip-Detection and Auto-Rotation without resizing
+ - Usefull to run Auto-Rotation without resizing
  - Eg. $PDFSCALE_NAME -r source ./input.dpf
 
 Options and Parameters Parsing:
