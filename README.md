@@ -12,7 +12,7 @@ Better than explaining is showing it:
 #### Checking File Information
 ```
 $ ./pdfScale.sh -i ../input-nup.pdf
-pdfScale.sh v2.0.3 - Paper Sizes
+pdfScale.sh v2.1.0 - Paper Sizes
 ------------+-----------------------------
        File | input-nup.pdf
  Paper Type | A4 Landscape
@@ -27,7 +27,7 @@ This also shows a very special case of a PDF file that has no `/MediaBox` define
 It is a dumb container of n-up binary PDF pages. So, `grep` fails on this one.
 ```
 $ pdfscale -v ../input-nup.pdf
-pdfscale v2.0.2 - Verbose Execution
+pdfscale v2.1.0 - Verbose Execution
    Single Task: Scale PDF Contents
     Input File: ../input-nup.pdf
    Output File: ../input-nup.SCALED.pdf
@@ -46,7 +46,7 @@ pdfscale v2.0.2 - Verbose Execution
 #### Resize to A0 and Scale by 1.05 (+5%)
 ```
 $ pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
-pdfscale v2.0.0 - Verbose Execution
+pdfscale v2.1.0 - Verbose Execution
    Mixed Tasks: Resize & Scale
     Input File: ../mixsync manual v1-2-3.pdf
    Output File: ../mixsync manual v1-2-3.A0.SCALED.pdf
@@ -69,7 +69,7 @@ pdfscale v2.0.0 - Verbose Execution
 #### Resize to A2 and disables Auto-Rotation
 ```
 $ pdfscale -v -r A2 -a none ../input.pdf
-pdfscale v2.0.0 - Verbose Execution
+pdfscale v2.1.0 - Verbose Execution
    Single Task: Resize PDF Paper
     Input File: ../input.pdf
    Output File: ../input.A2.pdf
@@ -83,100 +83,113 @@ pdfscale v2.0.0 - Verbose Execution
   Run Resizing: A2 ( 1191 x 1684 ) pts
   Final Status: File created successfully
 ```
-#### Resize to custom 200x200 mm, disable Flip-Detection and Scale by 0.95 (-5%)
+#### Resize to custom 200x300 mm, disable Flip-Detection and Scale by 0.95 (-5%)
 ```
-$ pdfscale -v -v -r 'custom mm 200 200' -f disable -s 0.95 ../mixsync\ manual\ v1-2-3.pdf
-2017-05-15:08:48:06 | pdfscale v2.0.2 - Verbose Execution
-2017-05-15:08:48:06 |    Mixed Tasks: Resize & Scale
-2017-05-15:08:48:06 |     Input File: ../mixsync manual v1-2-3.pdf
-2017-05-15:08:48:06 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
-2017-05-15:08:48:06 |  Get Page Size: Adaptive Enabled
-2017-05-15:08:48:06 |         Method: Grep
-2017-05-15:08:48:06 |   Source Width: 842 postscript-points
-2017-05-15:08:48:06 |  Source Height: 595 postscript-points
-2017-05-15:08:48:06 |    Auto Rotate: PageByPage
-2017-05-15:08:48:06 |    Flip Detect: Disabled
-2017-05-15:08:48:06 |   Run Resizing: CUSTOM ( 567 x 567 ) pts
-2017-05-15:08:48:06 |      New Width: 567 postscript-points
-2017-05-15:08:48:06 |     New Height: 567 postscript-points
-2017-05-15:08:48:06 |   Scale Factor: 0.95
-2017-05-15:08:48:06 |  Translation X: 14.920605
-2017-05-15:08:48:06 |  Translation Y: 14.920605
-2017-05-15:08:48:06 |    Run Scaling: -5 %
-2017-05-15:08:48:07 |   Final Status: File created successfully
+$ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v1-2-3.pdf
+2017-05-19:08:07:14 | pdfscale v2.1.0 - Verbose Execution
+2017-05-19:08:07:14 |    Mixed Tasks: Resize & Scale
+2017-05-19:08:07:14 |     Input File: ../mixsync manual v1-2-3.pdf
+2017-05-19:08:07:14 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
+2017-05-19:08:07:14 |  Get Page Size: Adaptive Enabled
+2017-05-19:08:07:14 |         Method: Grep
+2017-05-19:08:07:14 |   Source Width: 842 postscript-points
+2017-05-19:08:07:14 |  Source Height: 595 postscript-points
+2017-05-19:08:07:14 |    Auto Rotate: PageByPage
+2017-05-19:08:07:14 |    Flip Detect: Disabled
+2017-05-19:08:07:14 |   Run Resizing: CUSTOM ( 567 x 850 ) pts
+2017-05-19:08:07:14 |      New Width: 567 postscript-points
+2017-05-19:08:07:14 |     New Height: 850 postscript-points
+2017-05-19:08:07:14 |   Scale Factor: 0.95
+2017-05-19:08:07:14 |  Translation X: 14.920605
+2017-05-19:08:07:14 |  Translation Y: 22.367750
+2017-05-19:08:07:14 |    Run Scaling: -5 %
+2017-05-19:08:07:15 |   Final Status: File created successfully
 ```
 
 ## Help info
 ```
-$ ./pdfScale.sh -h
-pdfScale.sh v2.0.0
+$ pdfscale -h
+pdfscale v2.1.0
 
-Usage: pdfScale.sh <inFile.pdf>
-       pdfScale.sh -i <inFile.pdf>
-       pdfScale.sh [-v] [-s <factor>] [-m <page-detection>] <inFile.pdf> [outfile.pdf]
-       pdfScale.sh [-v] [-r <paper>] [-f <flip-detection>] [-a <auto-rotation>] <inFile.pdf> [outfile.pdf]
-       pdfScale.sh -p
-       pdfScale.sh -h
-       pdfScale.sh -V
+Usage: pdfscale <inFile.pdf>
+       pdfscale -i <inFile.pdf>
+       pdfscale [-v] [-s <factor>] [-m <page-detection>] <inFile.pdf> [outfile.pdf]
+       pdfscale [-v] [-r <paper>] [-f <flip-detection>] [-a <auto-rotation>] <inFile.pdf> [outfile.pdf]
+       pdfscale -p
+       pdfscale -h
+       pdfscale -V
 
 Parameters:
- -v          Verbose mode, prints extra information
+ -v, --verbose
+             Verbose mode, prints extra information
              Use twice for timestamp
- -h          Print this help to screen and exits
- -V          Prints version to screen and exits
- -m <mode>   Page size Detection mode 
-             May disable the Adaptive Mode
- -i <file>   Prints <file> Page Size information to screen and exits
- -s <factor> Changes the scaling factor or forces scaling
-             Defaults: 0.95 / no scaling (resize mode)
+ -h, --help  
+             Print this help to screen and exits
+ -V, --version
+             Prints version to screen and exits
+ -n, --no-overwrite
+             Aborts execution if the output PDF file already exists
+             By default, the output file will be overwritten
+ -m, --mode <mode>
+             Paper size detection mode 
+             Modes: a, adaptive  Default mode, tries all the methods below
+                    g, grep      Forces the use of Grep method
+                    m, mdls      Forces the use of MacOS Quartz mdls
+                    p, pdfinfo   Forces the use of PDFInfo
+                    i, identify  Forces the use of ImageMagick's Identify
+ -i, --info <file>
+             Prints <file> Paper Size information to screen and exits
+ -s, --scale <factor>
+             Changes the scaling factor or forces mixed mode
+             Defaults: 0.95 (scale mode) / Disabled (resize mode)
              MUST be a number bigger than zero
              Eg. -s 0.8 for 80% of the original size
- -r <paper>  Triggers the Resize Paper Mode
-             Resize PDF paper proportionally
-             Uses a valid paper name or a custom defined paper
- -f <mode>   Flip Detection Mode, defaults to 'auto'.
-             Inverts Width <-> Height of a Resized PDF.
-             Modes: a, auto    - automatic detection, default
-                    f, force   - forces flip W <-> H
-                    d, disable - disables flipping 
- -a <mode>   GS Auto-Rotation Setting, defaults to 'PageByPage'.
-             Setting for GS -dAutoRotatePages.
-             Modes: p, pagebypage - auto-rotates pages individually
-                    a, all        - rotates all pages (or none) depending
-                                    on a kind of "majority decision"
-                    n, none       - retains orientation of each page
- -p          Prints Ghostscript paper info tables to screen
+ -r, --resize <paper>
+             Triggers the Resize Paper Mode, disables auto-scaling of 0.95
+             Resize PDF and fit-to-page
+             <paper> can be: source, custom or a valid std paper name, read below
+ -f, --flip-detect <mode>
+             Flip Detection Mode, defaults to 'auto'
+             Inverts Width <-> Height of a Resized PDF
+             Modes: a, auto     Keeps source orientation, default
+                    f, force    Forces flip W <-> H
+                    d, disable  Disables flipping 
+ -a, auto-rotate <mode>
+             Setting for GS -dAutoRotatePages, defaults to 'PageByPage'
+             Uses text-orientation detection to set Portrait/Landscape
+             Modes: p, pagebypage  Auto-rotates pages individually
+                    n, none        Retains orientation of each page
+                    a, all         Rotates all pages (or none) depending
+                                   on a kind of "majority decision"
+ -p, --print-papers
+             Prints Standard Paper info tables to screen and exits
 
 Scaling Mode:
- The default mode of operation is scaling mode with fixed paper
- size and scaling pre-set to 0.95. By not using the resize mode
- you are using scaling mode. Flip-Detection and Auto-Rotation are
- disabled in Scaling mode.
+ - The default mode of operation is scaling mode with fixed paper
+   size and scaling pre-set to 0.95
+ - By not using the resize mode you are using scaling mode
+ - Flip-Detection and Auto-Rotation are disabled in Scaling mode,
+   you can use '-r source -s <scale>' to override. 
 
 Resize Paper Mode:
- Disables the default scaling factor! (0.95)
- Changes the PDF Paper Size in points. Will fit-to-page.
+ - Disables the default scaling factor! (0.95)
+ - Changes the PDF Paper Size in points. Will fit-to-page
 
 Mixed Mode:
- In mixed mode both the -s option and -r option must be specified.
- The PDF will be first resized then scaled.
+ - In mixed mode both the -s option and -r option must be specified
+ - The PDF will be first resized then scaled
 
 Output filename:
- The output filename is optional. If no file name is passed
- the output file will have the same name/destination of the
- input file with added suffixes:
+ - Having the extension .pdf on the output file name is optional,
+   it will be added if not present.
+ - The output filename is optional. If no file name is passed
+   the output file will have the same name/destination of the
+   input file with added suffixes:
    .SCALED.pdf             is added to scaled files
    .<PAPERSIZE>.pdf        is added to resized files
    .<PAPERSIZE>.SCALED.pdf is added in mixed mode
 
-Page Size Detection Modes:
- a, adaptive  Default mode, tries all the methods below
- g, grep      Forces the use of grep method
- m, mdls      Forces the use of MacOS Quartz mdls
- p, pdfinfo   Forces the use of PDFInfo
- i, identify  Forces the use of ImageMagick's Identify
-
-Valid Paper Names: (case-insensitive)
+Standard Paper Names: (case-insensitive)
  A0            A1            A2            A3            A4            
  A4SMALL       A5            A6            A7            A8            
  A9            A10           ISOB0         ISOB1         ISOB2         
@@ -189,43 +202,53 @@ Valid Paper Names: (case-insensitive)
  HALFLETTER    HAGAKI        
 
 Custom Paper Size:
- Paper size can be set manually in Milimeters, Inches or Points.
- Use: pdfScale.sh -r 'custom <measurement> <width> <height>'
- Ex:  pdfScale.sh -r 'custom mm 300 300'
- Measurements can be: mm, inch, pts.
- Custom paper definition MUST be quoted into a single parameter.
- Actual size is applied in points (mms and inches are transformed).
+ - Paper size can be set manually in Milimeters, Inches or Points
+ - Custom paper definition MUST be quoted into a single parameter
+ - Actual size is applied in points (mms and inches are transformed)
+ - Measurements: mm, mms,  milimeters 
+                 pt, pts,  points
+                 in, inch, inches
+ Use: pdfscale -r 'custom <measurement> <width> <height>'
+ Ex:  pdfscale -r 'custom mm 300 300'
+
+Using Source Paper Size: (no-resizing)
+ - Wildcard 'source' is used used to keep paper size the same as the input
+ - Usefull to run Flip-Detection and Auto-Rotation without resizing
+ - Eg. pdfscale -r source ./input.dpf
+
+Options and Parameters Parsing:
+ - From v2.1.0 (long-opts) there is no need to pass file names at the end
+ - Anything that is not a short-option is case-insensitive
+ - Short-options: case-sensitive   Eg. -v for Verbose, -V for Version
+ - Long-options:  case-insensitive Eg. --SCALE and --scale are the same
+ - Subparameters: case-insensitive Eg. -m PdFinFo is valid
+ - Grouping short-options is not supported Eg. -vv, or -vs 0.9
 
 Additional Notes:
- - Adaptive Page size detection will try different modes until
-   it gets a page size. You can force a mode with -m 'mode'.
- - Options must be passed before the file names to be parsed.
- - Having the extension .pdf on the output file name is optional,
-   it will be added if not present.
- - File and folder names with spaces should be quoted or escaped.
- - The scaling is centered and using a scale bigger than 1 may
-   result on cropping parts of the pdf.
- - Most of the options are case-insensitive, Ex: -m PdFinFo
+ - File and folder names with spaces should be quoted or escaped
+ - The scaling is centered and using a scale bigger than 1.0 may
+   result on cropping parts of the PDF
+ - For detailed paper types information, use: pdfscale -p
 
 Examples:
- pdfScale.sh myPdfFile.pdf
- pdfScale.sh -i '/home/My Folder/My PDF File.pdf'
- pdfScale.sh myPdfFile.pdf "My Scaled Pdf"
- pdfScale.sh -v -v myPdfFile.pdf
- pdfScale.sh -s 0.85 myPdfFile.pdf My\ Scaled\ Pdf.pdf
- pdfScale.sh -m pdfinfo -s 0.80 -v myPdfFile.pdf
- pdfScale.sh -v -v -m i -s 0.7 myPdfFile.pdf
- pdfScale.sh -r A4 myPdfFile.pdf
- pdfScale.sh -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
+ pdfscale myPdfFile.pdf
+ pdfscale -i '/home/My Folder/My PDF File.pdf'
+ pdfscale myPdfFile.pdf "My Scaled Pdf"
+ pdfscale -v -v myPdfFile.pdf
+ pdfscale -s 0.85 myPdfFile.pdf My\ Scaled\ Pdf.pdf
+ pdfscale -m pdfinfo -s 0.80 -v myPdfFile.pdf
+ pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
+ pdfscale -r A4 myPdfFile.pdf
+ pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
 ```
 
 ## GhostScript Paper Tables
 The `-p` parameter prints detailed paper types information
 ```
-$ ./pdfScale.sh -p
-pdfScale.sh v2.0.0
+$ pdfscale -p
+pdfscale v2.1.0
 
-Valid Ghostscript Paper Sizes accepted
+Paper Sizes Information
 
 +-----------------------------------------------------------------+
 | ISO STANDARD                                                    |
@@ -350,14 +373,20 @@ sudo yum install imagemagick pdfinfo
 brew install imagemagick xpdf
 ```
 
+## Clone using git
+```
+git clone https://github.com/tavinus/pdfScale.git
+cd ./pdfScale
+./pdfScale.sh --version
+```
+
 ## System Install
 The installer will name the executable as `pdfscale` with no uppercase chars and without the `.sh` extension.  
   
 If you have `make` installed you can use it to install to `/usr/local/bin/pdfscale` with:  
 ```
 sudo make install
-```  
-  
+```
 To remove the installation use:  
 ```
 sudo make uninstall
