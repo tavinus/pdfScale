@@ -59,6 +59,7 @@ PGWIDTH=""                  # Input PDF Page Width
 PGHEIGHT=""                 # Input PDF Page Height
 RESIZE_WIDTH=""             # Resized PDF Page Width
 RESIZE_HEIGHT=""            # Resized PDF Page Height
+IMAGE_RESOLUTION=300        # Image resolution (dpi) (300 is /Printer default)
 
 
 ########################## EXIT FLAGS ##########################
@@ -79,6 +80,7 @@ EXIT_NOWRITE_PERMISSION=29
 EXIT_NOREAD_PERMISSION=30
 EXIT_TEMP_FILE_EXISTS=40
 EXIT_INVALID_PAPER_SIZE=50
+EXIT_INVALID_IMAGE_RESOLUTION=51
 
 
 ############################# MAIN #############################
@@ -189,6 +191,7 @@ gsPageScale() {
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
 -dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
+-dColorImageResolution=$IMAGE_RESOLUTION -dGrayImageResolution=$IMAGE_RESOLUTION \
 -dColorConversionStrategy=/LeaveColorUnchanged \
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
@@ -217,6 +220,7 @@ gsPageResize() {
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
 -dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
+-dColorImageResolution=$IMAGE_RESOLUTION -dGrayImageResolution=$IMAGE_RESOLUTION \
 -dColorConversionStrategy=/LeaveColorUnchanged \
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
@@ -381,6 +385,11 @@ getOptions() {
                 -a|--autorotation|--auto-rotation|--autorotate|--auto-rotate)
                         shift
                         parseAutoRotationMode "$1"
+                        shift
+                        ;;
+                --image-resolution)
+                        shift
+                        parseImageResolution "$1"
                         shift
                         ;;
                 *)
@@ -557,6 +566,16 @@ parsePaperResize() {
                 isPaperName "$lowercasePaper" || initError "Invalid Paper Type: $1" $EXIT_INVALID_PAPER_SIZE
                 RESIZE_PAPER_TYPE="$lowercasePaper"
         fi
+}
+
+# Parses and validates the scaling factor
+parseImageResolution() {
+        if isNotAnInteger "$1"; then
+                printError "Invalid image resolution: $1"
+                printError "The image resolution must be an integer"
+                exit $EXIT_INVALID_IMAGE_RESOLUTION
+        fi
+        IMAGE_RESOLUTION="$1"
 }
 
 
@@ -1295,6 +1314,9 @@ Parameters:
                     n, none        Retains orientation of each page
                     a, all         Rotates all pages (or none) depending
                                    on a kind of \"majority decision\"
+ --image-resolution <dpi>
+             Resolution in DPI of color and grayscale images in output
+             Default: 300
  -p, --print-papers
              Prints Standard Paper info tables to screen and exits
 
