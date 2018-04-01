@@ -132,7 +132,7 @@ Parameters:
              Should contain the full path with the desired executable name
  --upgrade, --self-upgrade
              Upgrades itself in-place (same path/name of the pdfScale.sh caller)
-                         Downloads the master branch tarball and tries to self-upgrade
+             Downloads the master branch tarball and tries to self-upgrade
  -n, --no-overwrite
              Aborts execution if the output PDF file already exists
              By default, the output file will be overwritten
