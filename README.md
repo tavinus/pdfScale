@@ -1,7 +1,7 @@
 # pdfScale 2
 Bash Script to ***scale*** and/or ***resize*** PDFs from the command line.  
 Uses ghostscript (`gs`) to create a scaled and/or resized version of the pdf input.  
-  
+
 In `scaling mode`, the PDF paper size does not change, just the elements are scaled.  
 In `resize mode`, the PDF paper will be changed and fit-to-page will be applied.  
 In `mixed mode`, the PDF will first be `resized` then `scaled` with two Ghostscript calls.  
@@ -108,8 +108,8 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 
 ## Help info
 ```
-$ pdfscale -h
-pdfscale v2.1.2
+$ pdfscale --help
+pdfscale v2.2.0
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -123,7 +123,7 @@ Parameters:
  -v, --verbose
              Verbose mode, prints extra information
              Use twice for timestamp
- -h, --help  
+ -h, --help
              Print this help to screen and exits
  -V, --version
              Prints version to screen and exits
@@ -131,7 +131,7 @@ Parameters:
              Aborts execution if the output PDF file already exists
              By default, the output file will be overwritten
  -m, --mode <mode>
-             Paper size detection mode 
+             Paper size detection mode
              Modes: a, adaptive  Default mode, tries all the methods below
                     g, grep      Forces the use of Grep method
                     m, mdls      Forces the use of MacOS Quartz mdls
@@ -153,7 +153,7 @@ Parameters:
              Inverts Width <-> Height of a Resized PDF
              Modes: a, auto     Keeps source orientation, default
                     f, force    Forces flip W <-> H
-                    d, disable  Disables flipping 
+                    d, disable  Disables flipping
  -a, --auto-rotate <mode>
              Setting for GS -dAutoRotatePages, defaults to 'PageByPage'
              Uses text-orientation detection to set Portrait/Landscape
@@ -161,6 +161,33 @@ Parameters:
                     n, none        Retains orientation of each page
                     a, all         Rotates all pages (or none) depending
                                    on a kind of "majority decision"
+ --hor-align,--horizontal-alignment <left|center|right>
+             Where to translate the scaled page
+             Default: center
+             Options: left, right, center
+ --vert-align,--vertical-alignment <top|center|bottom>
+             Where to translate the scaled page
+             Default: center
+             Options: top, bootom, center
+ --xoffset,--xtrans-offset <FloatNumber>
+             Add/Subtract from the X translation (move left-right)
+             Default: 0.0 (zero)
+             Options: Positive or negative floating point number
+ --yoffset,--ytrans-offset <FloatNumber>
+             Add/Subtract from the Y translation (move top-bottim)
+             Default: 0.0 (zero)
+             Options: Positive or negative floating point number
+ --pdf-settings <gs-pdf-profile>
+             Ghostscript PDF Profile to use in -dPDFSETTINGS
+             Default: printer
+             Options: screen, ebook, printer, prepress, default
+ --image-downsample <gs-downsample-method>
+             Ghostscript Image Downsample Method
+             Default: bicubic
+             Options: subsample, average, bicubic
+ --image-resolution <dpi>
+             Resolution in DPI of color and grayscale images in output
+             Default: 300
  -p, --print-papers
              Prints Standard Paper info tables to screen and exits
 
@@ -169,7 +196,9 @@ Scaling Mode:
    size and scaling pre-set to 0.95
  - By not using the resize mode you are using scaling mode
  - Flip-Detection and Auto-Rotation are disabled in Scaling mode,
-   you can use '-r source -s <scale>' to override. 
+   you can use '-r source -s <scale>' to override.
+ - Ghostscript placement is from bottom-left position. This means that
+   a bottom-left placement has ZERO for both X and Y translations.
 
 Resize Paper Mode:
  - Disables the default scaling factor! (0.95)
@@ -190,22 +219,22 @@ Output filename:
    .<PAPERSIZE>.SCALED.pdf is added in mixed mode
 
 Standard Paper Names: (case-insensitive)
- A0            A1            A2            A3            A4            
- A4SMALL       A5            A6            A7            A8            
- A9            A10           ISOB0         ISOB1         ISOB2         
- ISOB3         ISOB4         ISOB5         ISOB6         C0            
- C1            C2            C3            C4            C5            
- C6            11X17         LEDGER        LEGAL         LETTER        
- LETTERSMALL   ARCHE         ARCHD         ARCHC         ARCHB         
- ARCHA         JISB0         JISB1         JISB2         JISB3         
- JISB4         JISB5         JISB6         FLSA          FLSE          
- HALFLETTER    HAGAKI        
+ A0            A1            A2            A3            A4
+ A4SMALL       A5            A6            A7            A8
+ A9            A10           ISOB0         ISOB1         ISOB2
+ ISOB3         ISOB4         ISOB5         ISOB6         C0
+ C1            C2            C3            C4            C5
+ C6            11X17         LEDGER        LEGAL         LETTER
+ LETTERSMALL   ARCHE         ARCHD         ARCHC         ARCHB
+ ARCHA         JISB0         JISB1         JISB2         JISB3
+ JISB4         JISB5         JISB6         FLSA          FLSE
+ HALFLETTER    HAGAKI
 
 Custom Paper Size:
  - Paper size can be set manually in Milimeters, Inches or Points
  - Custom paper definition MUST be quoted into a single parameter
  - Actual size is applied in points (mms and inches are transformed)
- - Measurements: mm, mms,  milimeters 
+ - Measurements: mm, mms,  milimeters
                  pt, pts,  points
                  in, inch, inches
  Use: pdfscale -r 'custom <measurement> <width> <height>'
@@ -353,13 +382,13 @@ It will try the following methods in sequence:
  3. Failed ? Try `pdfinfo`
  4. Failed ? Try ImageMagick's `identify`
  5. Failed ? `Exit` with error message
- 
+
 The `grep` method will fail on PDFs without a `/MediaBox`.   
 You may install any of the optionals to be used in that case.  
-  
+
 MacOS is fine using `mdls` if the metadata of the file is accurate.  
 The metadata is generated automatically by the OS (Spotlight)
-  
+
 ##### apt-get
 ```
 sudo apt-get install imagemagick pdfinfo
@@ -382,7 +411,7 @@ cd ./pdfScale
 
 ## System Install
 The installer will name the executable as `pdfscale` with no uppercase chars and without the `.sh` extension.  
-  
+
 If you have `make` installed you can use it to install to `/usr/local/bin/pdfscale` with:  
 ```
 sudo make install

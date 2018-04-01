@@ -5,14 +5,14 @@
 # Scale PDF to specified percentage of original size.
 #
 # Gustavo Arnosti Neves - 2016 / 07 / 10
-#        Latest Version - 2017 / 05 / 19
+#        Latest Version - 2018 / 04 / 01
 #
 # This script: https://github.com/tavinus/pdfScale
 #    Based on: http://ma.juii.net/blog/scale-page-content-of-pdf-files
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.1.3"
+VERSION="2.2.0"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -59,8 +59,31 @@ PGWIDTH=""                  # Input PDF Page Width
 PGHEIGHT=""                 # Input PDF Page Height
 RESIZE_WIDTH=""             # Resized PDF Page Width
 RESIZE_HEIGHT=""            # Resized PDF Page Height
-IMAGE_RESOLUTION=300        # Image resolution (dpi) (300 is /Printer default)
 
+############################# Image resolution (dpi) 
+IMAGE_RESOLUTION=300        # 300 is /Printer default
+
+############################# Image compression setting
+#                             default        screen        ebook        printer        prepress 
+# ColorImageDownsampleType    /Subsample     /Average      /Bicubic     /Bicubic       /Bicubic 
+IMAGE_DOWNSAMPLE_TYPE='/Bicubic'
+
+############################# default PDF profile
+# /screen /ebook /printer /prepress /default
+# -dPDFSETTINGS=/screen   (screen-view-only quality, 72 dpi images)
+# -dPDFSETTINGS=/ebook    (low quality, 150 dpi images)
+# -dPDFSETTINGS=/printer  (high quality, 300 dpi images)
+# -dPDFSETTINGS=/prepress (high quality, color preserving, 300 dpi imgs)
+# -dPDFSETTINGS=/default  (almost identical to /screen)
+PDF_SETTINGS='/printer'
+
+############################# default Scaling alignment
+VERT_ALIGN="CENTER"
+HOR_ALIGN="CENTER"
+
+############################# Translation Offset to apply
+XTRANSOFFSET=0.0
+YTRANSOFFSET=0.0
 
 ########################## EXIT FLAGS ##########################
 
@@ -172,11 +195,29 @@ printPDFSizes() {
 
 # Runs the ghostscript scaling script
 pageScale() {
-        # Compute translation factors (to center page).
-        XTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGWIDTH" | "$BCBIN")
-        YTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGHEIGHT" | "$BCBIN")
-        vprint " Translation X: $XTRANS"
-        vprint " Translation Y: $YTRANS"
+        # Compute translation factors to position pages
+        CENTERXTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGWIDTH" | "$BCBIN")
+        CENTERYTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGHEIGHT" | "$BCBIN")
+        BXTRANS=$CENTERXTRANS
+        BYTRANS=$CENTERYTRANS
+        if [[ "$VERT_ALIGN" = "TOP" ]]; then
+            BYTRANS=$(echo "scale=6; 2*$CENTERYTRANS" | "$BCBIN")
+        elif [[ "$VERT_ALIGN" = "BOTTOM" ]]; then
+            BYTRANS=0
+        fi
+        if [[ "$HOR_ALIGN" = "LEFT" ]]; then
+            BXTRANS=0
+        elif [[ "$HOR_ALIGN" = "RIGHT" ]]; then
+            BXTRANS=$(echo "scale=6; 2*$CENTERXTRANS" | "$BCBIN")
+        fi
+        vprint "    Vert-Align: $VERT_ALIGN"
+        vprint "     Hor-Align: $HOR_ALIGN"
+
+        XTRANS=$(echo "scale=6; $BXTRANS + $XTRANSOFFSET" | "$BCBIN")
+        YTRANS=$(echo "scale=6; $BYTRANS + $YTRANSOFFSET" | "$BCBIN")
+
+        vprint "$(printf ' Translation X: %.2f = %.2f + %.2f (offset)' $XTRANS $BXTRANS $XTRANSOFFSET)"
+        vprint "$(printf ' Translation Y: %.2f = %.2f + %.2f (offset)' $YTRANS $BYTRANS $YTRANSOFFSET)"
 
         local increase=$(echo "scale=0; (($SCALE - 1) * 100)/1" | "$BCBIN")
         vprint "   Run Scaling: $increase %"
@@ -190,8 +231,9 @@ gsPageScale() {
         # Scale page
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
--dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
+-dCompatibilityLevel="1.5" -dPDFSETTINGS="$PDF_SETTINGS" \
 -dColorImageResolution=$IMAGE_RESOLUTION -dGrayImageResolution=$IMAGE_RESOLUTION \
+-dColorImageDownsampleType="$IMAGE_DOWNSAMPLE_TYPE" -dGrayImageDownsampleType="$IMAGE_DOWNSAMPLE_TYPE" \
 -dColorConversionStrategy=/LeaveColorUnchanged \
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
@@ -219,8 +261,9 @@ gsPageResize() {
         # Change page size
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
--dCompatibilityLevel="1.5" -dPDFSETTINGS="/printer" \
+-dCompatibilityLevel="1.5" -dPDFSETTINGS="$PDF_SETTINGS" \
 -dColorImageResolution=$IMAGE_RESOLUTION -dGrayImageResolution=$IMAGE_RESOLUTION \
+-dColorImageDownsampleType="$IMAGE_DOWNSAMPLE_TYPE" -dGrayImageDownsampleType="$IMAGE_DOWNSAMPLE_TYPE" \
 -dColorConversionStrategy=/LeaveColorUnchanged \
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
@@ -387,9 +430,39 @@ getOptions() {
                         parseAutoRotationMode "$1"
                         shift
                         ;;
+                --pdf-settings)
+                        shift
+                        parsePDFSettings "$1"
+                        shift
+                        ;;
+                --image-downsample)
+                        shift
+                        parseImageDownSample "$1"
+                        shift
+                        ;;
                 --image-resolution)
                         shift
                         parseImageResolution "$1"
+                        shift
+                        ;;
+                --horizontal-alignment|--hor-align|--xalign|--x-align)
+                        shift
+                        parseHorizontalAlignment "$1"
+                        shift
+                        ;;
+                --vertical-alignment|--ver-align|--vert-align|--yalign|--y-align)
+                        shift
+                        parseVerticalAlignment "$1"
+                        shift
+                        ;;
+                --xtrans|--xtrans-offset|--xoffset)
+                        shift
+                        parseXTransOffset "$1"
+                        shift
+                        ;;
+                --ytrans|--ytrans-offset|--yoffset)
+                        shift
+                        parseYTransOffset "$1"
                         shift
                         ;;
                 *)
@@ -521,13 +594,13 @@ parseFlipDetectionMode() {
 parseAutoRotationMode() {
         local param="$(lowercase $1)"
         case "${param}" in
-                n|none)
+                n|none|'/none')
                         AUTO_ROTATION='/None'
                         ;;
-                a|all)
+                a|all|'/all')
                         AUTO_ROTATION='/All'
                         ;;
-                p|pagebypage|auto)
+                p|pagebypage|'/pagebypage'|auto)
                         AUTO_ROTATION='/PageByPage'
                         ;;
                 *)
@@ -568,7 +641,7 @@ parsePaperResize() {
         fi
 }
 
-# Parses and validates the scaling factor
+# Goes to GS -dColorImageResolution and -dGrayImageResolution parameters
 parseImageResolution() {
         if isNotAnInteger "$1"; then
                 printError "Invalid image resolution: $1"
@@ -578,6 +651,113 @@ parseImageResolution() {
         IMAGE_RESOLUTION="$1"
 }
 
+# Goes to GS -dColorImageDownsampleType and -dGrayImageDownsampleType parameters
+parseImageDownSample() {
+        local param="$(lowercase $1)"
+        case "${param}" in
+                s|subsample|'/subsample')
+                        IMAGE_DOWNSAMPLE_TYPE='/Subsample'
+                        ;;
+                a|average|'/average')
+                        IMAGE_DOWNSAMPLE_TYPE='/Average'
+                        ;;
+                b|bicubic|'/bicubic'|auto)
+                        IMAGE_DOWNSAMPLE_TYPE='/Bicubic'
+                        ;;
+                *)
+                        initError "Invalid Image Downsample Mode: \"$1\"" $EXIT_INVALID_OPTION
+                        return $FALSE
+                        ;;
+        esac
+}
+
+# Goes to GS -dColorImageDownsampleType and -dGrayImageDownsampleType parameters
+parsePDFSettings() {
+        local param="$(lowercase $1)"
+        case "${param}" in
+                s|screen|'/screen')
+                        PDF_SETTINGS='/screen'
+                        ;;
+                e|ebook|'/ebook')
+                        PDF_SETTINGS='/ebook'
+                        ;;
+                p|printer|'/printer'|auto)
+                        PDF_SETTINGS='/printer'
+                        ;;
+                r|prepress|'/prepress')
+                        PDF_SETTINGS='/prepress'
+                        ;;
+                d|default|'/default')
+                        PDF_SETTINGS='/default'
+                        ;;
+                *)
+                        initError "Invalid PDF Setting Profile: \"$1\""$'\nValid > printer, screen, ebook, prepress, default' $EXIT_INVALID_OPTION
+                        return $FALSE
+                        ;;
+        esac
+}
+
+# How to position the resized pages (sets translation)
+parseHorizontalAlignment() {
+        local param="$(lowercase $1)"
+        case "${param}" in
+                l|left)
+                        HOR_ALIGN='LEFT'
+                        ;;
+                r|right)
+                        HOR_ALIGN='RIGHT'
+                        ;;
+                c|center|middle)
+                        HOR_ALIGN='CENTER'
+                        ;;
+                *)
+                        initError "Invalid Horizontal Alignment Setting: \"$1\""$'\nValid > left, right, center' $EXIT_INVALID_OPTION
+                        return $FALSE
+                        ;;
+        esac
+}
+
+# How to position the resized pages (sets translation)
+parseVerticalAlignment() {
+        local param="$(lowercase $1)"
+        case "${param}" in
+                t|top)
+                        VERT_ALIGN='TOP'
+                        ;;
+                b|bottom|bot)
+                        VERT_ALIGN='BOTTOM'
+                        ;;
+                c|center|middle)
+                        VERT_ALIGN='CENTER'
+                        ;;
+                *)
+                        initError "Invalid Vertical Alignment Setting: \"$1\""$'\nValid > top, bottom, center' $EXIT_INVALID_OPTION
+                        return $FALSE
+                        ;;
+        esac
+}
+
+# Set X Translation Offset
+parseXTransOffset() {
+        if isFloat "$1"; then
+				XTRANSOFFSET="$1"
+                return $TRUE
+        fi
+        printError "Invalid X Translation Offset: $1"
+        printError "The X Translation Offset must be a floating point number"
+        exit $EXIT_INVALID_OPTION
+}
+
+# Set Y Translation Offset
+parseYTransOffset() {
+        if isFloat "$1"; then
+				YTRANSOFFSET="$1"
+                return $TRUE
+        fi
+        printError "Invalid Y Translation Offset: $1"
+        printError "The Y Translation Offset must be a floating point number"
+        exit $EXIT_INVALID_OPTION
+}
 
 ################### PDF PAGE SIZE DETECTION ####################
 
@@ -1314,6 +1494,30 @@ Parameters:
                     n, none        Retains orientation of each page
                     a, all         Rotates all pages (or none) depending
                                    on a kind of \"majority decision\"
+ --hor-align,--horizontal-alignment <left|center|right>
+             Where to translate the scaled page
+             Default: center
+             Options: left, right, center
+ --vert-align,--vertical-alignment <top|center|bottom>
+             Where to translate the scaled page
+             Default: center
+             Options: top, bootom, center
+ --xoffset,--xtrans-offset <FloatNumber>
+             Add/Subtract from the X translation (move left-right)
+             Default: 0.0 (zero)
+             Options: Positive or negative floating point number
+ --yoffset,--ytrans-offset <FloatNumber>
+             Add/Subtract from the Y translation (move top-bottim)
+             Default: 0.0 (zero)
+             Options: Positive or negative floating point number
+ --pdf-settings <gs-pdf-profile>
+             Ghostscript PDF Profile to use in -dPDFSETTINGS
+             Default: printer
+             Options: screen, ebook, printer, prepress, default
+ --image-downsample <gs-downsample-method>
+             Ghostscript Image Downsample Method
+             Default: bicubic
+             Options: subsample, average, bicubic
  --image-resolution <dpi>
              Resolution in DPI of color and grayscale images in output
              Default: 300
@@ -1326,6 +1530,8 @@ Scaling Mode:
  - By not using the resize mode you are using scaling mode
  - Flip-Detection and Auto-Rotation are disabled in Scaling mode,
    you can use '-r source -s <scale>' to override. 
+ - Ghostscript placement is from bottom-left position. This means that
+   a bottom-left placement has ZERO for both X and Y translations.
 
 Resize Paper Mode:
  - Disables the default scaling factor! ($SCALE)
