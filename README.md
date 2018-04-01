@@ -109,7 +109,7 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 ## Help info
 ```
 $ pdfscale --help
-pdfscale v2.2.0
+pdfscale v2.2.1
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -161,19 +161,19 @@ Parameters:
                     n, none        Retains orientation of each page
                     a, all         Rotates all pages (or none) depending
                                    on a kind of "majority decision"
- --hor-align,--horizontal-alignment <left|center|right>
+ --hor-align, --horizontal-alignment <left|center|right>
              Where to translate the scaled page
              Default: center
              Options: left, right, center
- --vert-align,--vertical-alignment <top|center|bottom>
+ --vert-align, --vertical-alignment <top|center|bottom>
              Where to translate the scaled page
              Default: center
              Options: top, bootom, center
- --xoffset,--xtrans-offset <FloatNumber>
+ --xoffset, --xtrans-offset <FloatNumber>
              Add/Subtract from the X translation (move left-right)
              Default: 0.0 (zero)
              Options: Positive or negative floating point number
- --yoffset,--ytrans-offset <FloatNumber>
+ --yoffset, --ytrans-offset <FloatNumber>
              Add/Subtract from the Y translation (move top-bottim)
              Default: 0.0 (zero)
              Options: Positive or negative floating point number
@@ -188,6 +188,10 @@ Parameters:
  --image-resolution <dpi>
              Resolution in DPI of color and grayscale images in output
              Default: 300
+ --dry-run, --simulate
+             Just simulate execution. Will not run ghostscript
+ --print-gs-call, --gs-call
+             Print GS call to stdout. Will print at the very end between markers
  -p, --print-papers
              Prints Standard Paper info tables to screen and exits
 

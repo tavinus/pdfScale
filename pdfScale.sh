@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.2.0"
+VERSION="2.2.1"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -85,6 +85,11 @@ HOR_ALIGN="CENTER"
 XTRANSOFFSET=0.0
 YTRANSOFFSET=0.0
 
+############################# Execution Flags
+SIMULATE=$FALSE             # Avoid execution
+PRINT_GS_CALL=$FALSE        # Print GS Call to stdout
+GS_CALL_STRING=""           # Buffer
+
 ########################## EXIT FLAGS ##########################
 
 EXIT_SUCCESS=0
@@ -135,7 +140,9 @@ main() {
                 pageScale                                   # scale the resized pdf
                 finalRet=$(($finalRet+$?))
                                                             # remove tmp file
-                isFile "$tempFile" && rm "$tempFile" >/dev/null 2>&1 || printError "Error when removing temporary file: $tempFile"
+                if isFile "$tempFile"; then
+						rm "$tempFile" >/dev/null 2>&1 || printError "Error when removing temporary file: $tempFile"
+				fi
         elif isResizeMode; then
                 initMain "   Single Task: Resize PDF Paper"
                 vPrintScaleFactor "Disabled (resize only)"
@@ -151,11 +158,19 @@ main() {
         fi
 
         if [[ $finalRet -eq $EXIT_SUCCESS ]] && isEmpty "$GS_RUN_STATUS"; then
-                vprint "  Final Status: File created successfully"
+				if isDryRun; then
+						vprint "  Final Status: Simulation completed successfully"
+				else
+						vprint "  Final Status: File created successfully"
+				fi
         else
                 vprint "  Final Status: Error detected. Exit status: $finalRet"
                 printError "PdfScale: ERROR!"$'\n'"Ghostscript Debug Info:"$'\n'"$GS_RUN_STATUS"
         fi
+		
+		if isNotEmpty "$GS_CALL_STRING" && shouldPrintGSCall; then
+                printf "%s" "$GS_CALL_STRING"
+		fi
 
         return $finalRet
 }
@@ -164,6 +179,9 @@ main() {
 initMain() {
         printVersion 1 'verbose'
         isNotEmpty "$1" && vprint "$1"
+		local sim="FALSE"
+		isDryRun && sim="TRUE (Simulating)"
+		vprint "       Dry-Run: $sim"
         vPrintFileInfo
         getPageSize
         vPrintPageSizes ' Source'
@@ -223,11 +241,15 @@ pageScale() {
         vprint "   Run Scaling: $increase %"
 
         GS_RUN_STATUS="$GS_RUN_STATUS""$(gsPageScale 2>&1)"
+		GS_CALL_STRING="$GS_CALL_STRING"$'[GS SCALE CALL STARTS]\n'"$(gsPrintPageScale)"$'\n[GS SCALE CALL ENDS]\n'
         return $? # Last command is always returned I think
 }
 
 # Runs GS call for scaling, nothing else should run here
 gsPageScale() {
+        if isDryRun; then
+		        return $TRUE
+		fi
         # Scale page
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
@@ -240,7 +262,25 @@ gsPageScale() {
 -sOutputFile="$OUTFILEPDF" \
 -c "<</BeginPage{$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
 -f "$INFILEPDF" 
-        return $?
+        
+}
+
+# Prints GS call for scaling
+gsPrintPageScale() {
+        # Print Scale page command
+		cat << _EOF_
+"$GSBIN" \
+-q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
+-dCompatibilityLevel="1.5" -dPDFSETTINGS="$PDF_SETTINGS" \
+-dColorImageResolution=$IMAGE_RESOLUTION -dGrayImageResolution=$IMAGE_RESOLUTION \
+-dColorImageDownsampleType="$IMAGE_DOWNSAMPLE_TYPE" -dGrayImageDownsampleType="$IMAGE_DOWNSAMPLE_TYPE" \
+-dColorConversionStrategy=/LeaveColorUnchanged \
+-dSubsetFonts=true -dEmbedAllFonts=true \
+-dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
+-sOutputFile="$OUTFILEPDF" \
+-c "<</BeginPage{$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
+-f "$INFILEPDF"
+_EOF_
 }
 
 # Runs the ghostscript paper resize script
@@ -253,11 +293,15 @@ pageResize() {
         runFlipDetect
         vprint "  Run Resizing: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
         GS_RUN_STATUS="$GS_RUN_STATUS""$(gsPageResize 2>&1)"
+		GS_CALL_STRING="$GS_CALL_STRING"$'[GS RESIZE CALL STARTS]\n'"$(gsPrintPageScale)"$'\n[GS RESIZE CALL ENDS]\n'
         return $?
 }
 
 # Runs GS call for resizing, nothing else should run here
 gsPageResize() {
+        if isDryRun; then
+		        return $TRUE
+		fi
         # Change page size
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
@@ -270,8 +314,27 @@ gsPageResize() {
 -dAutoRotatePages=$AUTO_ROTATION \
 -dFIXEDMEDIA -dPDFFitPage \
 -sOutputFile="$OUTFILEPDF" \
--f "$INFILEPDF" 
+-f "$INFILEPDF"
         return $?
+}
+
+# Prints GS call for resizing
+gsPrintPageResize() {
+        # Print Resize page command
+		cat << _EOF_
+"$GSBIN" \
+-q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
+-dCompatibilityLevel="1.5" -dPDFSETTINGS="$PDF_SETTINGS" \
+-dColorImageResolution=$IMAGE_RESOLUTION -dGrayImageResolution=$IMAGE_RESOLUTION \
+-dColorImageDownsampleType="$IMAGE_DOWNSAMPLE_TYPE" -dGrayImageDownsampleType="$IMAGE_DOWNSAMPLE_TYPE" \
+-dColorConversionStrategy=/LeaveColorUnchanged \
+-dSubsetFonts=true -dEmbedAllFonts=true \
+-dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
+-dAutoRotatePages=$AUTO_ROTATION \
+-dFIXEDMEDIA -dPDFFitPage \
+-sOutputFile="$OUTFILEPDF" \
+-f "$INFILEPDF"
+_EOF_
 }
 
 # Returns $TRUE if we should use the source paper size, $FALSE otherwise
@@ -465,6 +528,14 @@ getOptions() {
                         parseYTransOffset "$1"
                         shift
                         ;;
+                --simulate|--dry-run)
+                        SIMULATE=$TRUE
+                        shift
+                        ;;
+                --print-gs-call|--gs-call)
+                        PRINT_GS_CALL=$TRUE
+                        shift
+                        ;;
                 *)
                         initError "Invalid Parameter: \"$1\"" $EXIT_INVALID_OPTION
                         ;;
@@ -515,6 +586,16 @@ validateOutFile() {
 # Returns $TRUE if we should not overwrite $OUTFILEPDF, $FALSE otherwise
 isAbortOnOverwrite() {
         return $ABORT_ON_OVERWRITE
+}
+
+# Returns $TRUE if we should print the GS call to stdout
+shouldPrintGSCall() {
+        return $PRINT_GS_CALL
+}
+
+# Returns $TRUE if we are simulating, dry-run (no GS execution)
+isDryRun() {
+        return $SIMULATE
 }
 
 # Parses and validates the scaling factor
@@ -1494,19 +1575,19 @@ Parameters:
                     n, none        Retains orientation of each page
                     a, all         Rotates all pages (or none) depending
                                    on a kind of \"majority decision\"
- --hor-align,--horizontal-alignment <left|center|right>
+ --hor-align, --horizontal-alignment <left|center|right>
              Where to translate the scaled page
              Default: center
              Options: left, right, center
- --vert-align,--vertical-alignment <top|center|bottom>
+ --vert-align, --vertical-alignment <top|center|bottom>
              Where to translate the scaled page
              Default: center
              Options: top, bootom, center
- --xoffset,--xtrans-offset <FloatNumber>
+ --xoffset, --xtrans-offset <FloatNumber>
              Add/Subtract from the X translation (move left-right)
              Default: 0.0 (zero)
              Options: Positive or negative floating point number
- --yoffset,--ytrans-offset <FloatNumber>
+ --yoffset, --ytrans-offset <FloatNumber>
              Add/Subtract from the Y translation (move top-bottim)
              Default: 0.0 (zero)
              Options: Positive or negative floating point number
@@ -1521,6 +1602,10 @@ Parameters:
  --image-resolution <dpi>
              Resolution in DPI of color and grayscale images in output
              Default: 300
+ --dry-run, --simulate
+             Just simulate execution. Will not run ghostscript
+ --print-gs-call, --gs-call
+             Print GS call to stdout. Will print at the very end between markers
  -p, --print-papers
              Prints Standard Paper info tables to screen and exits
 
