@@ -109,7 +109,7 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 ## Help info
 ```
 $ pdfscale --help
-pdfscale v2.2.1
+pdfscale v2.3.0
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -127,6 +127,12 @@ Parameters:
              Print this help to screen and exits
  -V, --version
              Prints version to screen and exits
+ --install, --self-install [target-path]
+             Install itself to [target-path] or /usr/local/bin/pdfscale if not specified
+             Should contain the full path with the desired executable name
+ --upgrade, --self-upgrade
+             Upgrades itself in-place (same path/name of the pdfScale.sh caller)
+                         Downloads the master branch tarball and tries to self-upgrade
  -n, --no-overwrite
              Aborts execution if the output PDF file already exists
              By default, the output file will be overwritten

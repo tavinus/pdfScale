@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.2.1"
+VERSION="2.3.0"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -90,6 +90,12 @@ SIMULATE=$FALSE             # Avoid execution
 PRINT_GS_CALL=$FALSE        # Print GS Call to stdout
 GS_CALL_STRING=""           # Buffer
 
+############################# Project Info
+PROJECT_NAME="pdfScale"
+PROJECT_URL="https://github.com/tavinus/$PROJECT_NAME"
+PROJECT_BRANCH='master'
+HTTPS_INSECURE=$FALSE
+
 ########################## EXIT FLAGS ##########################
 
 EXIT_SUCCESS=0
@@ -141,8 +147,8 @@ main() {
                 finalRet=$(($finalRet+$?))
                                                             # remove tmp file
                 if isFile "$tempFile"; then
-						rm "$tempFile" >/dev/null 2>&1 || printError "Error when removing temporary file: $tempFile"
-				fi
+                        rm "$tempFile" >/dev/null 2>&1 || printError "Error when removing temporary file: $tempFile"
+                fi
         elif isResizeMode; then
                 initMain "   Single Task: Resize PDF Paper"
                 vPrintScaleFactor "Disabled (resize only)"
@@ -158,19 +164,19 @@ main() {
         fi
 
         if [[ $finalRet -eq $EXIT_SUCCESS ]] && isEmpty "$GS_RUN_STATUS"; then
-				if isDryRun; then
-						vprint "  Final Status: Simulation completed successfully"
-				else
-						vprint "  Final Status: File created successfully"
-				fi
+                if isDryRun; then
+                        vprint "  Final Status: Simulation completed successfully"
+                else
+                        vprint "  Final Status: File created successfully"
+                fi
         else
                 vprint "  Final Status: Error detected. Exit status: $finalRet"
                 printError "PdfScale: ERROR!"$'\n'"Ghostscript Debug Info:"$'\n'"$GS_RUN_STATUS"
         fi
-		
-		if isNotEmpty "$GS_CALL_STRING" && shouldPrintGSCall; then
+        
+        if isNotEmpty "$GS_CALL_STRING" && shouldPrintGSCall; then
                 printf "%s" "$GS_CALL_STRING"
-		fi
+        fi
 
         return $finalRet
 }
@@ -179,9 +185,9 @@ main() {
 initMain() {
         printVersion 1 'verbose'
         isNotEmpty "$1" && vprint "$1"
-		local sim="FALSE"
-		isDryRun && sim="TRUE (Simulating)"
-		vprint "       Dry-Run: $sim"
+        local sim="FALSE"
+        isDryRun && sim="TRUE (Simulating)"
+        vprint "       Dry-Run: $sim"
         vPrintFileInfo
         getPageSize
         vPrintPageSizes ' Source'
@@ -241,15 +247,15 @@ pageScale() {
         vprint "   Run Scaling: $increase %"
 
         GS_RUN_STATUS="$GS_RUN_STATUS""$(gsPageScale 2>&1)"
-		GS_CALL_STRING="$GS_CALL_STRING"$'[GS SCALE CALL STARTS]\n'"$(gsPrintPageScale)"$'\n[GS SCALE CALL ENDS]\n'
+        GS_CALL_STRING="$GS_CALL_STRING"$'[GS SCALE CALL STARTS]\n'"$(gsPrintPageScale)"$'\n[GS SCALE CALL ENDS]\n'
         return $? # Last command is always returned I think
 }
 
 # Runs GS call for scaling, nothing else should run here
 gsPageScale() {
         if isDryRun; then
-		        return $TRUE
-		fi
+                return $TRUE
+        fi
         # Scale page
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
@@ -268,7 +274,7 @@ gsPageScale() {
 # Prints GS call for scaling
 gsPrintPageScale() {
         # Print Scale page command
-		cat << _EOF_
+        cat << _EOF_
 "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
 -dCompatibilityLevel="1.5" -dPDFSETTINGS="$PDF_SETTINGS" \
@@ -293,15 +299,15 @@ pageResize() {
         runFlipDetect
         vprint "  Run Resizing: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
         GS_RUN_STATUS="$GS_RUN_STATUS""$(gsPageResize 2>&1)"
-		GS_CALL_STRING="$GS_CALL_STRING"$'[GS RESIZE CALL STARTS]\n'"$(gsPrintPageScale)"$'\n[GS RESIZE CALL ENDS]\n'
+        GS_CALL_STRING="$GS_CALL_STRING"$'[GS RESIZE CALL STARTS]\n'"$(gsPrintPageScale)"$'\n[GS RESIZE CALL ENDS]\n'
         return $?
 }
 
 # Runs GS call for resizing, nothing else should run here
 gsPageResize() {
         if isDryRun; then
-		        return $TRUE
-		fi
+                return $TRUE
+        fi
         # Change page size
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
@@ -321,7 +327,7 @@ gsPageResize() {
 # Prints GS call for resizing
 gsPrintPageResize() {
         # Print Resize page command
-		cat << _EOF_
+        cat << _EOF_
 "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
 -dCompatibilityLevel="1.5" -dPDFSETTINGS="$PDF_SETTINGS" \
@@ -532,6 +538,16 @@ getOptions() {
                         SIMULATE=$TRUE
                         shift
                         ;;
+                --install|--self-install)
+                        shift
+                        selfInstall "$1"
+                        shift
+                        ;;
+                --upgrade|--self-upgrade)
+                        shift
+                        selfUpgrade
+                        shift
+                        ;;
                 --print-gs-call|--gs-call)
                         PRINT_GS_CALL=$TRUE
                         shift
@@ -573,6 +589,278 @@ getOptions() {
         fi
         isNotEmpty "$_tgtFile" && OUTFILEPDF="${_tgtFile%.pdf}.pdf"
         validateOutFile 
+}
+
+# Install pdfScale
+selfInstall() {
+        CURRENT_LOC="$(readlink -f $0)"
+        TARGET_LOC="$1"
+        isEmpty "$TARGET_LOC" && TARGET_LOC="/usr/local/bin/pdfscale"
+        VERBOSE=0
+        NEED_SUDO=$FALSE
+        printVersion 3 " - Self Install"
+        echo ""
+        echo "Current location : $CURRENT_LOC"
+        echo "Target location  : $TARGET_LOC"
+        if [[ "$CURRENT_LOC" = "$TARGET_LOC" ]]; then
+                echo $'\n'"Error! Source and Target locations are the same!"
+                echo "Cannot copy to itself..."
+                exit $EXIT_INVALID_OPTION
+        fi
+        TARGET_FOLDER="$(dirname $TARGET_LOC)"
+        local _answer="NO"
+        if isNotDir "$TARGET_FOLDER"; then
+                echo $'\nThe target folder does not exist\n > '"$TARGET_FOLDER"
+                read -p $'\nCreate the target folder? Y/y to continue > ' _answer
+                _answer="$(lowercase $_answer)"
+                if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
+                        _answer="no"
+                        if mkdir -p "$TARGET_FOLDER" 2>/dev/null; then
+                                echo "Folder Created!"
+                        else
+                                echo $'\n'"There was an error when trying to create the folder."
+                                read -p $'\nDo you want to try again with sudo (as root)? Y/y to continue > ' _answer
+                                _answer="$(lowercase $_answer)"
+                                if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
+                                        NEED_SUDO=$TRUE
+                                        if mkdir -p "$TARGET_FOLDER" 2>/dev/null; then
+                                                echo "Folder Created!"
+                                        else
+                                                echo "There was an error when trying to create the folder."
+                                                exit $EXIT_ERROR
+                                        fi
+                                else
+                                        echo "Exiting..."
+                                        exit $EXIT_ERROR
+                                fi
+                        fi
+                else
+                        echo "Exiting..."
+                        exit $EXIT_ERROR
+                fi
+        fi
+        _answer="no"
+        if isFile "$TARGET_LOC"; then
+                echo $'\n'"The target file already exists: $TARGET_LOC"
+                read -p "Y/y to overwrite, anything else to cancel > " _answer
+                _answer="$(lowercase $_answer)"
+                if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
+                        echo "Target will be replaced!"
+                else
+                        echo "Exiting..."
+                        exit $EXIT_ERROR
+                fi
+        fi
+        if [[ $NEED_SUDO -eq $TRUE ]]; then
+                if sudo cp "$CURRENT_LOC" "$TARGET_LOC"; then
+                        echo $'\nSuccess! Program installed!'
+                        echo " > $TARGET_LOC"
+                        exit $EXIT_SUCCESS
+                else
+                        echo "There was an error when trying to install the program."
+                        exit $EXIT_ERROR
+                fi
+        fi
+        if cp "$CURRENT_LOC" "$TARGET_LOC"; then
+                echo $'\nSuccess! Program installed!'
+                echo " > $TARGET_LOC"
+                exit $EXIT_SUCCESS
+        else
+                _answer="no"
+                echo "There was an error when trying to install pdfScale."
+                read -p $'Do you want to try again with sudo (as root)? Y/y to continue > ' _answer
+                _answer="$(lowercase $_answer)"
+                if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
+                        NEED_SUDO=$TRUE
+                        if sudo cp "$CURRENT_LOC" "$TARGET_LOC"; then
+                                echo $'\nSuccess! Program installed!'
+                                echo " > $TARGET_LOC"
+                                exit $EXIT_SUCCESS
+                        else
+                                echo "There was an error when trying to install the program."
+                                exit $EXIT_ERROR
+                        fi
+                else
+                        echo "Exiting..."
+                        exit $EXIT_ERROR
+                fi
+        fi
+        exit $?
+}
+
+getUrl() {
+        local url="$1"
+        local target="$2"
+        local _stat=""
+        if isEmpty "$url" || isEmpty "$target"; then 
+                echo "Error! Invalid parameters for download."
+                echo "URL    > $url"
+                echo "TARGET > $target"
+                exit $EXIT_INVALID_OPTION
+        fi
+        WGET_BIN="$(which wget 2>/dev/null)"
+        CURL_BIN="$(which curl 2>/dev/null)"
+        if isExecutable "$WGET_BIN"; then
+                useInsecure && WGET_BIN="$WGET_BIN --no-check-certificate"
+                echo "Downloading file with wget"
+                _stat="$("$WGET_BIN" -O "$target" "$url" 2>&1)"
+                if [[ $? -eq 0 ]]; then
+                        return $TRUE
+                else
+                        echo "Error when downloading file!"
+                        echo " > $url"
+                        echo "Status:"
+                        echo "$_stat"
+                        exit $EXIT_ERROR
+                fi
+        elif isExecutable "$CURL_BIN"; then
+                useInsecure && CURL_BIN="$CURL_BIN --insecure"
+                echo "Downloading file with curl"
+                _stat="$("$CURL_BIN" -o "$target" "$url" 2>&1)"
+                if [[ $? -eq 0 ]]; then
+                        return $TRUE
+                else
+                        echo "Error when downloading file!"
+                        echo " > $url"
+                        echo "Status:"
+                        echo "$_stat"
+                        exit $EXIT_ERROR
+                fi
+        else
+                echo "Error! Could not find Wget or Curl to perform download."
+                echo "Please install either curl or wget and try again."
+                exit $EXIT_FILE_NOT_FOUND
+        fi
+}
+
+# Downloads current version from github's MASTER branch
+selfUpgrade() {
+        CURRENT_LOC="$(readlink -f $0)"
+        local _cwd="$(pwd)"
+        TMP_DIR='/tmp'
+        TMP_TARGET="$TMP_DIR/pdfScale_$RANDOM_$RANDOM.tar.gz"
+        TMP_EXTRACTED="$TMP_DIR/$PROJECT_NAME-$PROJECT_BRANCH"
+        
+        local _answer="no"
+        
+        printVersion 3 " - Self Upgrade"
+        echo $'\n'"Preparing download to temp folder"
+        echo " > $TMP_TARGET"
+        getUrl "$PROJECT_URL/archive/$PROJECT_BRANCH.tar.gz" "$TMP_TARGET"
+        if isNotFile "$TMP_TARGET"; then 
+                echo "Error! Could not find downloaded file!"
+                exit $EXIT_FILE_NOT_FOUND
+        fi
+        echo $'\n'"Extracting compressed file"
+        cd "$TMP_DIR"
+        if ! (tar xzf "$TMP_TARGET" 2>/dev/null || gtar xzf "$TMP_TARGET" 2>/dev/null); then
+                cd "$_cwd"
+                echo "Extraction error."
+                exit $EXIT_ERROR
+        fi
+        if ! cd "$TMP_EXTRACTED" 2>/dev/null; then
+                cd "$_cwd"
+                echo "Error when accessing temporary folder"
+                echo " > $TMP_EXTRACTED"
+                exit $EXIT_ERROR
+        fi
+        if ! chmod +x pdfScale.sh; then
+                cd "$_cwd"
+                echo "Error when setting new pdfScale to executable"
+                echo " > $TMP_EXTRACTED/pdfScale.sh"
+                exit $EXIT_ERROR
+        fi
+        local newver="$(./pdfScale.sh --version 2>/dev/null)"
+        local curver="$(printVersion 3 2>/dev/null)"
+        newver=($newver)
+        curver=($curver)
+        newver=${newver[1]#v}
+        curver=${curver[1]#v}
+        echo $'\n'"   Current Version is: $curver"
+        echo      "Downloaded Version is: $newver"$'\n'
+        if [[ "$newver" = "$curver" ]]; then
+                echo "Seems like we have downloaded the same version that is installed."
+        elif isBiggerVersion "$newver" "$curver"; then
+                echo "Seems like the downloaded version is newer that the one installed."
+        elif isBiggerVersion "$curver" "$newver"; then
+                echo "Seems like the downloaded version is older that the one installed."
+                echo "It is basically a miracle or you have came from the future with this version!"
+                echo "BE CAREFUL NOT TO DELETE THE BETA/ALPHA VERSION WITH THIS UPDATE!"
+        else
+                cd "$_cwd"
+                echo "An unidentified error has ocurred. Exiting..."
+                exit $EXIT_ERROR
+        fi
+        
+        echo $'\n'"Are you sure that you want to replace the current instalation with the downloaded one?"
+        read -p "Y/y to continue, anything else to cancel > " _answer
+        _answer="$(lowercase $_answer)"
+        echo
+        if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
+                echo "Upgrading..."
+                if cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
+                        cd "$_cwd"
+                        echo $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC"
+                        exit $EXIT_SUCCESS
+                else
+                        _answer="no"
+                        echo $'\n'"There was an error when copying the new version."
+                        echo "Do you want to retry using sudo (as root)?"
+                        read -p "Y/y to continue, anything else to cancel > " _answer
+                        _answer="$(lowercase $_answer)"
+                        if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
+                                echo "Upgrading with sudo..."
+                                if sudo cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
+                                        cd "$_cwd"
+                                        echo $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC"
+                                        exit $EXIT_SUCCESS
+                                else
+                                        cd "$_cwd"
+                                        echo "There was an error when copying the new version."
+                                        exit $EXIT_ERROR
+                                fi
+                        else
+                                cd "$_cwd"
+                                echo "Exiting..."
+                                exit $EXIT_ERROR
+                        fi
+
+                fi
+                cd "$_cwd"
+                exit $EXIT_ERROR
+        else
+                cd "$_cwd"
+                echo "Exiting..."
+                exit $EXIT_ERROR
+        fi
+        cd "$_cwd"
+        exit $EXIT_ERROR
+}
+
+# Compares versions with x.x.x format
+isBiggerVersion() {
+        local OIFS=$IFS
+        IFS='.'
+        local _first=($1)
+        local _second=($2)
+        local _ret=$FALSE
+        
+        if [[ ${_first[0]} -gt ${_second[0]} ]]; then
+                _ret=$TRUE
+        elif [[ ${_first[0]} -lt ${_second[0]} ]]; then
+                _ret=$FALSE
+        elif [[ ${_first[1]} -gt ${_second[1]} ]]; then
+                _ret=$TRUE
+        elif [[ ${_first[1]} -lt ${_second[1]} ]]; then
+                _ret=$FALSE
+        elif [[ ${_first[2]} -gt ${_second[2]} ]]; then
+                _ret=$TRUE
+        elif [[ ${_first[2]} -lt ${_second[2]} ]]; then
+                _ret=$FALSE
+        fi
+        
+        IFS=$OIFS
+        return $_ret
 }
 
 # Checks if output file is valid and writable
@@ -821,7 +1109,7 @@ parseVerticalAlignment() {
 # Set X Translation Offset
 parseXTransOffset() {
         if isFloat "$1"; then
-				XTRANSOFFSET="$1"
+                XTRANSOFFSET="$1"
                 return $TRUE
         fi
         printError "Invalid X Translation Offset: $1"
@@ -832,7 +1120,7 @@ parseXTransOffset() {
 # Set Y Translation Offset
 parseYTransOffset() {
         if isFloat "$1"; then
-				YTRANSOFFSET="$1"
+                YTRANSOFFSET="$1"
                 return $TRUE
         fi
         printError "Invalid Y Translation Offset: $1"
@@ -1438,6 +1726,12 @@ isDir() {
         return $FALSE;
 }
 
+# Returns $FALSE if $1 is a directory, $TRUE otherwise
+isNotDir() {
+        isDir "$1" && return $FALSE
+        return $TRUE;
+}
+
 # Returns 0 if succeded, other integer otherwise
 isTouchable() {
         touch "$1" 2>/dev/null
@@ -1487,6 +1781,11 @@ isNotAvailable() {
                 return $TRUE
         fi
         return $FALSE
+}
+
+# Returns $TRUE if we should avoid https certificate (on upgrade)
+useInsecure() {
+        return $HTTPS_INSECURE
 }
 
 
@@ -1541,6 +1840,12 @@ Parameters:
              Print this help to screen and exits
  -V, --version
              Prints version to screen and exits
+ --install, --self-install [target-path]
+             Install itself to [target-path] or /usr/local/bin/pdfscale if not specified
+             Should contain the full path with the desired executable name
+ --upgrade, --self-upgrade
+             Upgrades itself in-place (same path/name of the pdfScale.sh caller)
+             Downloads the master branch tarball and tries to self-upgrade
  -n, --no-overwrite
              Aborts execution if the output PDF file already exists
              By default, the output file will be overwritten
