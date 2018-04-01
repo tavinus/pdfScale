@@ -7,6 +7,11 @@ In `resize mode`, the PDF paper will be changed and fit-to-page will be applied.
 In `mixed mode`, the PDF will first be `resized` then `scaled` with two Ghostscript calls.  
 A temporary file is used in `mixed mode`, at the target location.  
 
+## Links
+#### [ma.juii.net - The History](https://ma.juii.net/blog/scale-page-content-of-pdf-files)
+#### [SO - Scale pdf to add border for printing full size pages](https://stackoverflow.com/questions/18343813/scale-pdf-to-add-border-for-printing-full-size-pages/)
+#### [MichaelJCole original gist - pdfScale.sh](https://gist.github.com/MichaelJCole/86e4968dbfc13256228a)
+  
 ## Example Runs
 Better than explaining is showing it:  
 #### Checking File Information
