@@ -431,5 +431,3 @@ sudo make uninstall
 #### [ma.juii.net - The History](https://ma.juii.net/blog/scale-page-content-of-pdf-files)
 #### [SO - Scale pdf to add border for printing full size pages](https://stackoverflow.com/questions/18343813/scale-pdf-to-add-border-for-printing-full-size-pages/)
 #### [MichaelJCole original gist - pdfScale.sh](https://gist.github.com/MichaelJCole/86e4968dbfc13256228a)
-
----
