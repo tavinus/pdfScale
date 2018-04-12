@@ -1359,8 +1359,10 @@ getPageSizeCatGrep() {
         # Get MediaBox data if possible
         local mediaBox="$("$GREPBIN" -a -e '/MediaBox' -m 1 "$INFILEPDF" 2>/dev/null)"
 
-        mediaBox="${mediaBox##*/MediaBox[}"
+        mediaBox="${mediaBox##*/MediaBox}"
+        mediaBox="${mediaBox##*[}"
         mediaBox="${mediaBox%%]*}"
+		#echo "mediaBox=$mediaBox"
 
         # No page size data available
         if isEmpty "$mediaBox" && isNotAdaptiveMode; then
@@ -1369,15 +1371,11 @@ getPageSizeCatGrep() {
                 return $FALSE
         fi
 
-        # remove chars [ and ]
-        #mediaBox="${mediaBox//[}"
-        #mediaBox="${mediaBox//]}"
-
         mediaBox=($mediaBox)        # make it an array
         mbCount=${#mediaBox[@]}     # array size
 
         # sanity
-        if [[ $mbCount -lt 4 ]] || ! isFloat "${mediaBox[2]}" || ! isFloat "${mediaBox[3]}"; then 
+        if [[ $mbCount -lt 4 ]] || ! isFloat "${mediaBox[2]}" || ! isFloat "${mediaBox[3]}" || isZero "${mediaBox[2]}" || isZero "${mediaBox[3]}"; then 
 				if isNotAdaptiveMode; then
 						notAdaptiveFailed $'Error when reading the page size!\nThe page size information is invalid!'
 				fi
@@ -1388,7 +1386,16 @@ getPageSizeCatGrep() {
         PGWIDTH=$(printf '%.0f' "${mediaBox[2]}")  # Get Round Width
         PGHEIGHT=$(printf '%.0f' "${mediaBox[3]}") # Get Round Height
 
+		#echo "PGWIDTH=$PGWIDTH // PGHEIGHT=$PGHEIGHT"
         return $TRUE
+}
+
+isZero() {
+	[[ "$1" == "0" ]] && return $TRUE
+	[[ "$1" == "0.0" ]] && return $TRUE
+	[[ "$1" == "0.00" ]] && return $TRUE
+	[[ "$1" == "0.000" ]] && return $TRUE
+	return $FALSE
 }
 
 # Prints error message and exits execution
