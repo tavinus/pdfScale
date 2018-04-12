@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.3.4"
+VERSION="2.3.5"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -1377,9 +1377,10 @@ getPageSizeCatGrep() {
 
         # sanity
         if [[ $mbCount -lt 4 ]]; then 
-            printError "Error when reading the page size!"
-            printError "The page size information is invalid!"
-            exit $EXIT_INVALID_PAGE_SIZE_DETECTED
+			if isNotAdaptiveMode; then
+				notAdaptiveFailed $'Error when reading the page size!\nThe page size information is invalid!'
+			fi
+			return $FALSE
         fi
 
         # we are done
