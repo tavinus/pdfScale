@@ -423,6 +423,19 @@ cd ./pdfScale
 ./pdfScale.sh --version
 ```
   
+## Self-Install
+Since `v2.3.0` *pdfScale* can install itself using the parameter `--install`.  
+  
+By default it will install to `/usr/local/bin/pdfscale`  
+```
+./pdfScale.sh --install
+```
+A custom location can be specified as a parameter.  
+Should contain full path to executable file.  
+```
+./pdfScale.sh --install /opt/pdfscale/pdfscale
+```
+  
 ## Run installer using `curl` or `wget`
 #### wget oneliners
 ```bash
@@ -449,19 +462,6 @@ curl --insecure -s -o /tmp/pdfScale.sh 'https://raw.githubusercontent.com/tavinu
 #### Remove /tmp/pdfScale.sh ater done
 ```bash
 rm /tmp/pdfScale.sh
-```
-
-## Self-Install
-Since `v2.3.0` *pdfScale* can install itself using the parameter `--install`.  
-  
-By default it will install to `/usr/local/bin/pdfscale`  
-```
-./pdfScale.sh --install
-```
-A custom location can be specified as a parameter.  
-Should contain full path to executable file.  
-```
-./pdfScale.sh --install /opt/pdfscale/pdfscale
 ``` 
   
 ## Self-Upgrade
