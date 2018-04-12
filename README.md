@@ -462,16 +462,7 @@ curl --insecure -s -o /tmp/pdfScale.sh 'https://raw.githubusercontent.com/tavinu
 #### Remove /tmp/pdfScale.sh ater done
 ```bash
 rm /tmp/pdfScale.sh
-``` 
-  
-## Self-Upgrade
-Since `v2.3.0` *pdfScale* can upgrade itself using the parameter `--upgrade`.  
-  
-It will try to get the master branch and update itself in-place.    
 ```
-pdfscale --upgrade
-```
-More info on the [Self-Upgrade Wiki](https://github.com/tavinus/pdfScale/wiki/Self-Upgrade)
   
 ## Install with `make`
 The `make` installer will name the executable as `pdfscale` with no uppercase chars and without the `.sh` extension.  
@@ -483,10 +474,19 @@ sudo make install
 To remove the installation use:  
 ```
 sudo make uninstall
-```  
-
+```   
+  
+## Self-Upgrade
+Since `v2.3.0` *pdfScale* can upgrade itself using the parameter `--upgrade`.  
+  
+It will try to get the master branch and update itself in-place.    
+```
+pdfscale --upgrade
+```
+More info on the [Self-Upgrade Wiki](https://github.com/tavinus/pdfScale/wiki/Self-Upgrade)  
+  
 ---
-
+  
 # Links
 #### [ma.juii.net - The History](https://ma.juii.net/blog/scale-page-content-of-pdf-files)
 #### [SO - Scale pdf to add border for printing full size pages](https://stackoverflow.com/questions/18343813/scale-pdf-to-add-border-for-printing-full-size-pages/)
