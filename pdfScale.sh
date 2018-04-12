@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.3.5"
+VERSION="2.3.6"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -1359,7 +1359,8 @@ getPageSizeCatGrep() {
         # Get MediaBox data if possible
         local mediaBox="$("$GREPBIN" -a -e '/MediaBox' -m 1 "$INFILEPDF" 2>/dev/null)"
 
-        mediaBox="${mediaBox##*/MediaBox}"
+        mediaBox="${mediaBox##*/MediaBox[}"
+        mediaBox="${mediaBox%%]*}"
 
         # No page size data available
         if isEmpty "$mediaBox" && isNotAdaptiveMode; then
@@ -1369,18 +1370,18 @@ getPageSizeCatGrep() {
         fi
 
         # remove chars [ and ]
-        mediaBox="${mediaBox//[}"
-        mediaBox="${mediaBox//]}"
+        #mediaBox="${mediaBox//[}"
+        #mediaBox="${mediaBox//]}"
 
         mediaBox=($mediaBox)        # make it an array
         mbCount=${#mediaBox[@]}     # array size
 
         # sanity
-        if [[ $mbCount -lt 4 ]]; then 
-			if isNotAdaptiveMode; then
-				notAdaptiveFailed $'Error when reading the page size!\nThe page size information is invalid!'
-			fi
-			return $FALSE
+        if [[ $mbCount -lt 4 ]] || ! isFloat "${mediaBox[2]}" || ! isFloat "${mediaBox[3]}"; then 
+				if isNotAdaptiveMode; then
+						notAdaptiveFailed $'Error when reading the page size!\nThe page size information is invalid!'
+				fi
+				return $FALSE
         fi
 
         # we are done
