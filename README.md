@@ -459,7 +459,7 @@ curl -s -o /tmp/pdfScale.sh 'https://raw.githubusercontent.com/tavinus/pdfScale/
 # To ignore SSL, use --insecure
 curl --insecure -s -o /tmp/pdfScale.sh 'https://raw.githubusercontent.com/tavinus/pdfScale/master/pdfScale.sh' && bash /tmp/pdfScale.sh --install
 ```
-#### Remove /tmp/pdfScale.sh ater done
+#### Remove /tmp/pdfScale.sh after done
 ```bash
 rm /tmp/pdfScale.sh
 ```
