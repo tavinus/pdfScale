@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.3.0"
+VERSION="2.3.1"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -273,9 +273,10 @@ gsPageScale() {
 
 # Prints GS call for scaling
 gsPrintPageScale() {
+		local _call_str=""
         # Print Scale page command
-        cat << _EOF_
-"$GSBIN" \
+		read -d '' _call_str<< _EOF_
+        "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
 -dCompatibilityLevel="1.5" -dPDFSETTINGS="$PDF_SETTINGS" \
 -dColorImageResolution=$IMAGE_RESOLUTION -dGrayImageResolution=$IMAGE_RESOLUTION \
@@ -285,8 +286,10 @@ gsPrintPageScale() {
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
 -sOutputFile="$OUTFILEPDF" \
 -c "<</BeginPage{$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
--f "$INFILEPDF"
+-f "$INFILEPDF" 
 _EOF_
+
+		echo -ne "$_call_str"
 }
 
 # Runs the ghostscript paper resize script
@@ -299,7 +302,7 @@ pageResize() {
         runFlipDetect
         vprint "  Run Resizing: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
         GS_RUN_STATUS="$GS_RUN_STATUS""$(gsPageResize 2>&1)"
-        GS_CALL_STRING="$GS_CALL_STRING"$'[GS RESIZE CALL STARTS]\n'"$(gsPrintPageScale)"$'\n[GS RESIZE CALL ENDS]\n'
+        GS_CALL_STRING="$GS_CALL_STRING"$'[GS RESIZE CALL STARTS]\n'"$(gsPrintPageResize)"$'\n[GS RESIZE CALL ENDS]\n'
         return $?
 }
 
@@ -327,7 +330,9 @@ gsPageResize() {
 # Prints GS call for resizing
 gsPrintPageResize() {
         # Print Resize page command
-        cat << _EOF_
+				local _call_str=""
+        # Print Scale page command
+		read -d '' _call_str<< _EOF_
 "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
 -dCompatibilityLevel="1.5" -dPDFSETTINGS="$PDF_SETTINGS" \
@@ -341,6 +346,8 @@ gsPrintPageResize() {
 -sOutputFile="$OUTFILEPDF" \
 -f "$INFILEPDF"
 _EOF_
+
+		echo -ne "$_call_str"
 }
 
 # Returns $TRUE if we should use the source paper size, $FALSE otherwise
