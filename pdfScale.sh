@@ -5,14 +5,14 @@
 # Scale PDF to specified percentage of original size.
 #
 # Gustavo Arnosti Neves - 2016 / 07 / 10
-#        Latest Version - 2018 / 04 / 01
+#        Latest Version - 2018 / 04 / 12
 #
 # This script: https://github.com/tavinus/pdfScale
 #    Based on: http://ma.juii.net/blog/scale-page-content-of-pdf-files
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.3.1"
+VERSION="2.3.2"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -740,12 +740,41 @@ getUrl() {
         fi
 }
 
+# Tries to remove temporary files from upgrade
+clearUpgrade() {
+		echo $'\nCleaning up downloaded files from /tmp'
+		if isFile "$TMP_TARGET"; then
+				echo -n "  Remove $TMP_TARGET > "
+				rm "$TMP_TARGET" 2>/dev/null && echo "Ok" || echo "Fail"
+		else
+				echo "  No temporary tarball was found to remove."
+		fi
+		if isDir "$TMP_EXTRACTED"; then
+				echo -n "  Remove $TMP_EXTRACTED > "
+				rm -rf "$TMP_EXTRACTED" 2>/dev/null && echo "Ok" || echo "Fail"
+		else
+				echo "  No temporary master folder was found to remove."
+		fi
+}
+
+# Exit upgrade with message and status code
+# $1 Mensagem (printed if not empty)
+# $2 Status   (defaults to $EXIT_ERROR)
+exitUpgrade() {
+		isDir "$_cwd" && cd "$_cwd"
+		isNotEmpty "$1" && echo "$1"
+		clearUpgrade
+		isNotEmpty "$2" && exit $2
+		exit $EXIT_ERROR
+}
+
 # Downloads current version from github's MASTER branch
 selfUpgrade() {
         CURRENT_LOC="$(readlink -f $0)"
-        local _cwd="$(pwd)"
+        _cwd="$(pwd)"
+		local _cur_tstamp="$(date '+%Y%m%d-%H%M%S')"
         TMP_DIR='/tmp'
-        TMP_TARGET="$TMP_DIR/pdfScale_$RANDOM_$RANDOM.tar.gz"
+        TMP_TARGET="$TMP_DIR/pdfScale_$_cur_tstamp.tar.gz"
         TMP_EXTRACTED="$TMP_DIR/$PROJECT_NAME-$PROJECT_BRANCH"
         
         local _answer="no"
@@ -761,21 +790,24 @@ selfUpgrade() {
         echo $'\n'"Extracting compressed file"
         cd "$TMP_DIR"
         if ! (tar xzf "$TMP_TARGET" 2>/dev/null || gtar xzf "$TMP_TARGET" 2>/dev/null); then
-                cd "$_cwd"
-                echo "Extraction error."
-                exit $EXIT_ERROR
+				exitUpgrade "Extraction error."
+                #cd "$_cwd"
+                #echo "Extraction error."
+                #exit $EXIT_ERROR
         fi
         if ! cd "$TMP_EXTRACTED" 2>/dev/null; then
-                cd "$_cwd"
-                echo "Error when accessing temporary folder"
-                echo " > $TMP_EXTRACTED"
-                exit $EXIT_ERROR
+				exitUpgrade $'Error when accessing temporary folder\n > '"$TMP_EXTRACTED"
+                #cd "$_cwd"
+                #echo "Error when accessing temporary folder"
+                #echo " > $TMP_EXTRACTED"
+                #exit $EXIT_ERROR
         fi
         if ! chmod +x pdfScale.sh; then
-                cd "$_cwd"
-                echo "Error when setting new pdfScale to executable"
-                echo " > $TMP_EXTRACTED/pdfScale.sh"
-                exit $EXIT_ERROR
+				exitUpgrade $'Error when setting new pdfScale to executable\n > '"$TMP_EXTRACTED/pdfScale.sh"
+                #cd "$_cwd"
+                #echo "Error when setting new pdfScale to executable"
+                #echo " > $TMP_EXTRACTED/pdfScale.sh"
+                #exit $EXIT_ERROR
         fi
         local newver="$(./pdfScale.sh --version 2>/dev/null)"
         local curver="$(printVersion 3 2>/dev/null)"
@@ -794,9 +826,10 @@ selfUpgrade() {
                 echo "It is basically a miracle or you have came from the future with this version!"
                 echo "BE CAREFUL NOT TO DELETE THE BETA/ALPHA VERSION WITH THIS UPDATE!"
         else
-                cd "$_cwd"
-                echo "An unidentified error has ocurred. Exiting..."
-                exit $EXIT_ERROR
+				exitUpgrade "An unidentified error has ocurred. Exiting..."
+                #cd "$_cwd"
+                #echo "An unidentified error has ocurred. Exiting..."
+                #exit $EXIT_ERROR
         fi
         
         echo $'\n'"Are you sure that you want to replace the current instalation with the downloaded one?"
@@ -806,9 +839,10 @@ selfUpgrade() {
         if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                 echo "Upgrading..."
                 if cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
-                        cd "$_cwd"
-                        echo $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC"
-                        exit $EXIT_SUCCESS
+						exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
+                        #cd "$_cwd"
+                        #echo $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC"
+                        #exit $EXIT_SUCCESS
                 else
                         _answer="no"
                         echo $'\n'"There was an error when copying the new version."
@@ -818,30 +852,36 @@ selfUpgrade() {
                         if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                                 echo "Upgrading with sudo..."
                                 if sudo cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
-                                        cd "$_cwd"
-                                        echo $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC"
-                                        exit $EXIT_SUCCESS
+										exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
+                                        #cd "$_cwd"
+                                        #echo $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC"
+                                        #exit $EXIT_SUCCESS
                                 else
-                                        cd "$_cwd"
-                                        echo "There was an error when copying the new version."
-                                        exit $EXIT_ERROR
+										exitUpgrade "There was an error when copying the new version."
+                                        #cd "$_cwd"
+                                        #echo "There was an error when copying the new version."
+                                        #exit $EXIT_ERROR
                                 fi
                         else
-                                cd "$_cwd"
-                                echo "Exiting..."
-                                exit $EXIT_ERROR
+								exitUpgrade "Exiting...  (cancelled by user)"
+                                #cd "$_cwd"
+                                #echo "Exiting...  (cancelled by user)"
+                                #exit $EXIT_ERROR
                         fi
 
                 fi
-                cd "$_cwd"
-                exit $EXIT_ERROR
+				exitUpgrade "An unidentified error has ocurred. Exiting..."
+                #cd "$_cwd"
+                #exit $EXIT_ERROR
         else
-                cd "$_cwd"
-                echo "Exiting..."
-                exit $EXIT_ERROR
+                exitUpgrade "Exiting...  (cancelled by user)"
+				#cd "$_cwd"
+                #echo "Exiting..."
+                #exit $EXIT_ERROR
         fi
-        cd "$_cwd"
-        exit $EXIT_ERROR
+		exitUpgrade "An unidentified error has ocurred. Exiting..."
+        #cd "$_cwd"
+        #exit $EXIT_ERROR
 }
 
 # Compares versions with x.x.x format
