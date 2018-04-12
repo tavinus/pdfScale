@@ -695,6 +695,7 @@ selfInstall() {
         exit $?
 }
 
+# Tries to download with curl or wget
 getUrl() {
         local url="$1"
         local target="$2"
@@ -791,23 +792,12 @@ selfUpgrade() {
         cd "$TMP_DIR"
         if ! (tar xzf "$TMP_TARGET" 2>/dev/null || gtar xzf "$TMP_TARGET" 2>/dev/null); then
 				exitUpgrade "Extraction error."
-                #cd "$_cwd"
-                #echo "Extraction error."
-                #exit $EXIT_ERROR
         fi
         if ! cd "$TMP_EXTRACTED" 2>/dev/null; then
 				exitUpgrade $'Error when accessing temporary folder\n > '"$TMP_EXTRACTED"
-                #cd "$_cwd"
-                #echo "Error when accessing temporary folder"
-                #echo " > $TMP_EXTRACTED"
-                #exit $EXIT_ERROR
         fi
         if ! chmod +x pdfScale.sh; then
 				exitUpgrade $'Error when setting new pdfScale to executable\n > '"$TMP_EXTRACTED/pdfScale.sh"
-                #cd "$_cwd"
-                #echo "Error when setting new pdfScale to executable"
-                #echo " > $TMP_EXTRACTED/pdfScale.sh"
-                #exit $EXIT_ERROR
         fi
         local newver="$(./pdfScale.sh --version 2>/dev/null)"
         local curver="$(printVersion 3 2>/dev/null)"
@@ -827,9 +817,6 @@ selfUpgrade() {
                 echo "BE CAREFUL NOT TO DELETE THE BETA/ALPHA VERSION WITH THIS UPDATE!"
         else
 				exitUpgrade "An unidentified error has ocurred. Exiting..."
-                #cd "$_cwd"
-                #echo "An unidentified error has ocurred. Exiting..."
-                #exit $EXIT_ERROR
         fi
         
         echo $'\n'"Are you sure that you want to replace the current instalation with the downloaded one?"
@@ -840,9 +827,6 @@ selfUpgrade() {
                 echo "Upgrading..."
                 if cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
 						exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
-                        #cd "$_cwd"
-                        #echo $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC"
-                        #exit $EXIT_SUCCESS
                 else
                         _answer="no"
                         echo $'\n'"There was an error when copying the new version."
@@ -853,35 +837,19 @@ selfUpgrade() {
                                 echo "Upgrading with sudo..."
                                 if sudo cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
 										exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
-                                        #cd "$_cwd"
-                                        #echo $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC"
-                                        #exit $EXIT_SUCCESS
                                 else
 										exitUpgrade "There was an error when copying the new version."
-                                        #cd "$_cwd"
-                                        #echo "There was an error when copying the new version."
-                                        #exit $EXIT_ERROR
                                 fi
                         else
 								exitUpgrade "Exiting...  (cancelled by user)"
-                                #cd "$_cwd"
-                                #echo "Exiting...  (cancelled by user)"
-                                #exit $EXIT_ERROR
                         fi
 
                 fi
 				exitUpgrade "An unidentified error has ocurred. Exiting..."
-                #cd "$_cwd"
-                #exit $EXIT_ERROR
         else
                 exitUpgrade "Exiting...  (cancelled by user)"
-				#cd "$_cwd"
-                #echo "Exiting..."
-                #exit $EXIT_ERROR
         fi
 		exitUpgrade "An unidentified error has ocurred. Exiting..."
-        #cd "$_cwd"
-        #exit $EXIT_ERROR
 }
 
 # Compares versions with x.x.x format
