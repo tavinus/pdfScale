@@ -428,12 +428,12 @@ Since `v2.3.0` *pdfScale* can install itself using the parameter `--install`.
   
 By default it will install to `/usr/local/bin/pdfscale`  
 ```
-pdfscale --install
+./pdfScale.sh --install
 ```
 A custom location can be specified as a parameter.  
 Should contain full path to executable file.  
 ```
-pdfscale --install /opt/pdfscale/pdfscale
+./pdfScale.sh --install /opt/pdfscale/pdfscale
 ``` 
   
 ## Self-Upgrade
