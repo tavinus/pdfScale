@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.3.2"
+VERSION="2.3.4"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -95,6 +95,9 @@ PROJECT_NAME="pdfScale"
 PROJECT_URL="https://github.com/tavinus/$PROJECT_NAME"
 PROJECT_BRANCH='master'
 HTTPS_INSECURE=$FALSE
+ASSUME_YES=$FALSE
+RUN_SELF_INSTALL=$FALSE
+TARGET_LOC="/usr/local/bin/pdfscale"
 
 ########################## EXIT FLAGS ##########################
 
@@ -273,9 +276,9 @@ gsPageScale() {
 
 # Prints GS call for scaling
 gsPrintPageScale() {
-		local _call_str=""
+        local _call_str=""
         # Print Scale page command
-		read -d '' _call_str<< _EOF_
+        read -d '' _call_str<< _EOF_
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
 -dCompatibilityLevel="1.5" -dPDFSETTINGS="$PDF_SETTINGS" \
@@ -289,7 +292,7 @@ gsPrintPageScale() {
 -f "$INFILEPDF" 
 _EOF_
 
-		echo -ne "$_call_str"
+        echo -ne "$_call_str"
 }
 
 # Runs the ghostscript paper resize script
@@ -330,9 +333,9 @@ gsPageResize() {
 # Prints GS call for resizing
 gsPrintPageResize() {
         # Print Resize page command
-				local _call_str=""
+                local _call_str=""
         # Print Scale page command
-		read -d '' _call_str<< _EOF_
+        read -d '' _call_str<< _EOF_
 "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
 -dCompatibilityLevel="1.5" -dPDFSETTINGS="$PDF_SETTINGS" \
@@ -347,7 +350,7 @@ gsPrintPageResize() {
 -f "$INFILEPDF"
 _EOF_
 
-		echo -ne "$_call_str"
+        echo -ne "$_call_str"
 }
 
 # Returns $TRUE if we should use the source paper size, $FALSE otherwise
@@ -546,13 +549,23 @@ getOptions() {
                         shift
                         ;;
                 --install|--self-install)
+                        RUN_SELF_INSTALL=$TRUE
                         shift
-                        selfInstall "$1"
-                        shift
+                        if [[ ${1:0:1} != "-" ]]; then
+                                TARGET_LOC="$1"
+                                shift
+                        fi
                         ;;
                 --upgrade|--self-upgrade)
+                        RUN_SELF_UPGRADE=$TRUE
                         shift
-                        selfUpgrade
+                        ;;
+                --insecure|--no-check-certificate)
+                        HTTPS_INSECURE=$TRUE
+                        shift
+                        ;;
+                --yes|--assume-yes)
+                        ASSUME_YES=$TRUE
                         shift
                         ;;
                 --print-gs-call|--gs-call)
@@ -564,6 +577,9 @@ getOptions() {
                         ;;
             esac
         done
+        
+        shouldInstall && selfInstall "$TARGET_LOC" # WILL EXIT HERE
+        shouldUpgrade && selfUpgrade               # WILL EXIT HERE
 
         isEmpty "${_optArgs[2]}" || initError "Seems like you passed an extra file name?"$'\n'"Invalid option: ${_optArgs[2]}" $EXIT_INVALID_OPTION
 
@@ -598,6 +614,16 @@ getOptions() {
         validateOutFile 
 }
 
+# Returns $TRUE if the install flag is set
+shouldInstall() {
+        return $RUN_SELF_INSTALL
+}
+
+# Returns $TRUE if the upgrade flag is set
+shouldUpgrade() {
+        return $RUN_SELF_UPGRADE
+}
+
 # Install pdfScale
 selfInstall() {
         CURRENT_LOC="$(readlink -f $0)"
@@ -618,19 +644,29 @@ selfInstall() {
         local _answer="NO"
         if isNotDir "$TARGET_FOLDER"; then
                 echo $'\nThe target folder does not exist\n > '"$TARGET_FOLDER"
-                read -p $'\nCreate the target folder? Y/y to continue > ' _answer
-                _answer="$(lowercase $_answer)"
+                if assumeYes; then
+                        echo ''
+                        _answer="y"
+                else
+                        read -p $'\nCreate the target folder? Y/y to continue > ' _answer
+                        _answer="$(lowercase $_answer)"
+                fi
                 if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                         _answer="no"
                         if mkdir -p "$TARGET_FOLDER" 2>/dev/null; then
-                                echo "Folder Created!"
+                                echo " > Folder Created!"
                         else
                                 echo $'\n'"There was an error when trying to create the folder."
-                                read -p $'\nDo you want to try again with sudo (as root)? Y/y to continue > ' _answer
-                                _answer="$(lowercase $_answer)"
+                                if assumeYes; then
+                                        echo $'\nTrying again with sudo, enter password if needed > '
+                                        _answer="y"
+                                else
+                                        read -p $'\nDo you want to try again with sudo (as root)? Y/y to continue > ' _answer
+                                        _answer="$(lowercase $_answer)"
+                                fi
                                 if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                                         NEED_SUDO=$TRUE
-                                        if mkdir -p "$TARGET_FOLDER" 2>/dev/null; then
+                                        if sudo mkdir -p "$TARGET_FOLDER" 2>/dev/null; then
                                                 echo "Folder Created!"
                                         else
                                                 echo "There was an error when trying to create the folder."
@@ -642,19 +678,23 @@ selfInstall() {
                                 fi
                         fi
                 else
-                        echo "Exiting..."
+                        echo "Exiting... (cancelled by user)"
                         exit $EXIT_ERROR
                 fi
         fi
         _answer="no"
         if isFile "$TARGET_LOC"; then
                 echo $'\n'"The target file already exists: $TARGET_LOC"
-                read -p "Y/y to overwrite, anything else to cancel > " _answer
-                _answer="$(lowercase $_answer)"
+                if assumeYes; then
+                        _answer="y"
+                else
+                        read -p "Y/y to overwrite, anything else to cancel > " _answer
+                        _answer="$(lowercase $_answer)"
+                fi
                 if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                         echo "Target will be replaced!"
                 else
-                        echo "Exiting..."
+                        echo "Exiting... (cancelled by user)"
                         exit $EXIT_ERROR
                 fi
         fi
@@ -675,8 +715,13 @@ selfInstall() {
         else
                 _answer="no"
                 echo "There was an error when trying to install pdfScale."
-                read -p $'Do you want to try again with sudo (as root)? Y/y to continue > ' _answer
-                _answer="$(lowercase $_answer)"
+                if assumeYes; then
+                        echo $'\nTrying again with sudo, enter password if needed > '
+                        _answer="y"
+                else
+                        read -p $'Do you want to try again with sudo (as root)? Y/y to continue > ' _answer
+                        _answer="$(lowercase $_answer)"
+                fi
                 if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                         NEED_SUDO=$TRUE
                         if sudo cp "$CURRENT_LOC" "$TARGET_LOC"; then
@@ -688,15 +733,16 @@ selfInstall() {
                                 exit $EXIT_ERROR
                         fi
                 else
-                        echo "Exiting..."
+                        echo "Exiting... (cancelled by user)"
                         exit $EXIT_ERROR
                 fi
         fi
-        exit $?
+        exit $EXIT_ERROR
 }
 
 # Tries to download with curl or wget
 getUrl() {
+        useInsecure && echo $'\nHTTPS Insecure flag is enabled!\nCertificates will be ignored by curl/wget\n'
         local url="$1"
         local target="$2"
         local _stat=""
@@ -711,7 +757,7 @@ getUrl() {
         if isExecutable "$WGET_BIN"; then
                 useInsecure && WGET_BIN="$WGET_BIN --no-check-certificate"
                 echo "Downloading file with wget"
-                _stat="$("$WGET_BIN" -O "$target" "$url" 2>&1)"
+                _stat="$($WGET_BIN -O "$target" "$url" 2>&1)"
                 if [[ $? -eq 0 ]]; then
                         return $TRUE
                 else
@@ -724,7 +770,7 @@ getUrl() {
         elif isExecutable "$CURL_BIN"; then
                 useInsecure && CURL_BIN="$CURL_BIN --insecure"
                 echo "Downloading file with curl"
-                _stat="$("$CURL_BIN" -o "$target" "$url" 2>&1)"
+                _stat="$($CURL_BIN -o "$target" "$url" 2>&1)"
                 if [[ $? -eq 0 ]]; then
                         return $TRUE
                 else
@@ -743,37 +789,37 @@ getUrl() {
 
 # Tries to remove temporary files from upgrade
 clearUpgrade() {
-		echo $'\nCleaning up downloaded files from /tmp'
-		if isFile "$TMP_TARGET"; then
-				echo -n "  Remove $TMP_TARGET > "
-				rm "$TMP_TARGET" 2>/dev/null && echo "Ok" || echo "Fail"
-		else
-				echo "  No temporary tarball was found to remove."
-		fi
-		if isDir "$TMP_EXTRACTED"; then
-				echo -n "  Remove $TMP_EXTRACTED > "
-				rm -rf "$TMP_EXTRACTED" 2>/dev/null && echo "Ok" || echo "Fail"
-		else
-				echo "  No temporary master folder was found to remove."
-		fi
+        echo $'\nCleaning up downloaded files from /tmp'
+        if isFile "$TMP_TARGET"; then
+                echo -n " > $TMP_TARGET > "
+                rm "$TMP_TARGET" 2>/dev/null && echo "Ok" || echo "Fail"
+        else
+                echo " > no temporary tarball was found to remove"
+        fi
+        if isDir "$TMP_EXTRACTED"; then
+                echo -n " > $TMP_EXTRACTED > "
+                rm -rf "$TMP_EXTRACTED" 2>/dev/null && echo "Ok" || echo "Fail"
+        else
+                echo " > no temporary master folder was found to remove"
+        fi
 }
 
 # Exit upgrade with message and status code
 # $1 Mensagem (printed if not empty)
 # $2 Status   (defaults to $EXIT_ERROR)
 exitUpgrade() {
-		isDir "$_cwd" && cd "$_cwd"
-		isNotEmpty "$1" && echo "$1"
-		clearUpgrade
-		isNotEmpty "$2" && exit $2
-		exit $EXIT_ERROR
+        isDir "$_cwd" && cd "$_cwd"
+        isNotEmpty "$1" && echo "$1"
+        clearUpgrade
+        isNotEmpty "$2" && exit $2
+        exit $EXIT_ERROR
 }
 
 # Downloads current version from github's MASTER branch
 selfUpgrade() {
         CURRENT_LOC="$(readlink -f $0)"
         _cwd="$(pwd)"
-		local _cur_tstamp="$(date '+%Y%m%d-%H%M%S')"
+        local _cur_tstamp="$(date '+%Y%m%d-%H%M%S')"
         TMP_DIR='/tmp'
         TMP_TARGET="$TMP_DIR/pdfScale_$_cur_tstamp.tar.gz"
         TMP_EXTRACTED="$TMP_DIR/$PROJECT_NAME-$PROJECT_BRANCH"
@@ -791,13 +837,13 @@ selfUpgrade() {
         echo $'\n'"Extracting compressed file"
         cd "$TMP_DIR"
         if ! (tar xzf "$TMP_TARGET" 2>/dev/null || gtar xzf "$TMP_TARGET" 2>/dev/null); then
-				exitUpgrade "Extraction error."
+                exitUpgrade "Extraction error."
         fi
         if ! cd "$TMP_EXTRACTED" 2>/dev/null; then
-				exitUpgrade $'Error when accessing temporary folder\n > '"$TMP_EXTRACTED"
+                exitUpgrade $'Error when accessing temporary folder\n > '"$TMP_EXTRACTED"
         fi
         if ! chmod +x pdfScale.sh; then
-				exitUpgrade $'Error when setting new pdfScale to executable\n > '"$TMP_EXTRACTED/pdfScale.sh"
+                exitUpgrade $'Error when setting new pdfScale to executable\n > '"$TMP_EXTRACTED/pdfScale.sh"
         fi
         local newver="$(./pdfScale.sh --version 2>/dev/null)"
         local curver="$(printVersion 3 2>/dev/null)"
@@ -816,40 +862,50 @@ selfUpgrade() {
                 echo "It is basically a miracle or you have came from the future with this version!"
                 echo "BE CAREFUL NOT TO DELETE THE BETA/ALPHA VERSION WITH THIS UPDATE!"
         else
-				exitUpgrade "An unidentified error has ocurred. Exiting..."
+                exitUpgrade "An unidentified error has ocurred. Exiting..."
         fi
-        
-        echo $'\n'"Are you sure that you want to replace the current instalation with the downloaded one?"
-        read -p "Y/y to continue, anything else to cancel > " _answer
-        _answer="$(lowercase $_answer)"
+        if assumeYes; then
+                echo $'\n'"Assume yes activated, current version will be replaced with master branch"
+                _answer="y"
+        else
+                echo "whyyy?"
+                echo $'\n'"Are you sure that you want to replace the current installation with the downloaded one?"
+                read -p "Y/y to continue, anything else to cancel > " _answer
+                _answer="$(lowercase $_answer)"
+        fi
         echo
         if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                 echo "Upgrading..."
                 if cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
-						exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
+                        exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
                 else
                         _answer="no"
                         echo $'\n'"There was an error when copying the new version."
-                        echo "Do you want to retry using sudo (as root)?"
-                        read -p "Y/y to continue, anything else to cancel > " _answer
+                        if assumeYes; then
+                                echo $'\nAssume yes activated, retrying with sudo.\nEnter password if needed > \n'
+                                _answer="y"
+                        else
+                                echo "Do you want to retry using sudo (as root)?"
+                                read -p "Y/y to continue, anything else to cancel > " _answer
+                        fi
                         _answer="$(lowercase $_answer)"
                         if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                                 echo "Upgrading with sudo..."
                                 if sudo cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
-										exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
+                                        exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
                                 else
-										exitUpgrade "There was an error when copying the new version."
+                                        exitUpgrade "There was an error when copying the new version."
                                 fi
                         else
-								exitUpgrade "Exiting...  (cancelled by user)"
+                                exitUpgrade "Exiting...  (cancelled by user)"
                         fi
 
                 fi
-				exitUpgrade "An unidentified error has ocurred. Exiting..."
+                exitUpgrade "An unidentified error has ocurred. Exiting..."
         else
                 exitUpgrade "Exiting...  (cancelled by user)"
         fi
-		exitUpgrade "An unidentified error has ocurred. Exiting..."
+        exitUpgrade "An unidentified error has ocurred. Exiting..."
 }
 
 # Compares versions with x.x.x format
@@ -1803,6 +1859,16 @@ useInsecure() {
         return $HTTPS_INSECURE
 }
 
+# Returns $TRUE if we should not ask anything and assume yes as answer
+assumeYes() {
+        return $ASSUME_YES
+}
+
+# Returns $TRUE if we should ask the user for input
+shouldAskUser() {
+        assumeYes && return $FALSE
+        return $TRUE
+}
 
 ###################### PRINTING TO SCREEN ######################
 
@@ -1861,6 +1927,10 @@ Parameters:
  --upgrade, --self-upgrade
              Upgrades itself in-place (same path/name of the pdfScale.sh caller)
              Downloads the master branch tarball and tries to self-upgrade
+ --insecure, --no-check-certificate
+             Use curl/wget without SSL library support
+ --yes, --assume-yes
+             Will answer yes to any prompt on install or upgrade, use with care
  -n, --no-overwrite
              Aborts execution if the output PDF file already exists
              By default, the output file will be overwritten
