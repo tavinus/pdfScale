@@ -415,12 +415,40 @@ sudo yum install imagemagick pdfinfo
 ```
 brew install imagemagick xpdf
 ```
-
+  
 ## Clone using git
 ```
 git clone https://github.com/tavinus/pdfScale.git
 cd ./pdfScale
 ./pdfScale.sh --version
+```
+  
+## Run installer using `curl` or `wget`
+#### wget oneliners
+```bash
+# Normal install with prompts
+wget -q -O /tmp/pdfScale.sh 'https://raw.githubusercontent.com/tavinus/pdfScale/master/pdfScale.sh' && bash /tmp/pdfScale.sh --install
+
+# Automated install with --assume-yes
+wget -q -O /tmp/pdfScale.sh 'https://raw.githubusercontent.com/tavinus/pdfScale/master/pdfScale.sh' && bash /tmp/pdfScale.sh --install --assume-yes
+
+# To ignore SSL, use --no-check-certificate
+wget --no-check-certificate -q -O /tmp/pdfScale.sh 'https://raw.githubusercontent.com/tavinus/pdfScale/master/pdfScale.sh' && bash /tmp/pdfScale.sh --install
+```
+#### curl oneliners
+```bash
+# Normal install with prompts
+curl -s -o /tmp/pdfScale.sh 'https://raw.githubusercontent.com/tavinus/pdfScale/master/pdfScale.sh' && bash /tmp/pdfScale.sh --install
+
+# Automated install with --assume-yes
+curl -s -o /tmp/pdfScale.sh 'https://raw.githubusercontent.com/tavinus/pdfScale/master/pdfScale.sh' && bash /tmp/pdfScale.sh --install --assume-yes
+
+# To ignore SSL, use --insecure
+curl --insecure -s -o /tmp/pdfScale.sh 'https://raw.githubusercontent.com/tavinus/pdfScale/master/pdfScale.sh' && bash /tmp/pdfScale.sh --install
+```
+#### Remove /tmp/pdfScale.sh ater done
+```bash
+rm /tmp/pdfScale.sh
 ```
 
 ## Self-Install
