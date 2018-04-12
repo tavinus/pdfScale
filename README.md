@@ -108,8 +108,8 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 
 ## Help info
 ```
-$ pdfscale --help
-pdfscale v2.3.0
+$ pdfscale -h
+pdfscale v2.3.4
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -123,7 +123,7 @@ Parameters:
  -v, --verbose
              Verbose mode, prints extra information
              Use twice for timestamp
- -h, --help
+ -h, --help  
              Print this help to screen and exits
  -V, --version
              Prints version to screen and exits
@@ -133,11 +133,15 @@ Parameters:
  --upgrade, --self-upgrade
              Upgrades itself in-place (same path/name of the pdfScale.sh caller)
              Downloads the master branch tarball and tries to self-upgrade
+ --insecure, --no-check-certificate
+             Use curl/wget without SSL library support
+ --yes, --assume-yes
+             Will answer yes to any prompt on install or upgrade, use with care
  -n, --no-overwrite
              Aborts execution if the output PDF file already exists
              By default, the output file will be overwritten
  -m, --mode <mode>
-             Paper size detection mode
+             Paper size detection mode 
              Modes: a, adaptive  Default mode, tries all the methods below
                     g, grep      Forces the use of Grep method
                     m, mdls      Forces the use of MacOS Quartz mdls
@@ -159,7 +163,7 @@ Parameters:
              Inverts Width <-> Height of a Resized PDF
              Modes: a, auto     Keeps source orientation, default
                     f, force    Forces flip W <-> H
-                    d, disable  Disables flipping
+                    d, disable  Disables flipping 
  -a, --auto-rotate <mode>
              Setting for GS -dAutoRotatePages, defaults to 'PageByPage'
              Uses text-orientation detection to set Portrait/Landscape
@@ -206,7 +210,7 @@ Scaling Mode:
    size and scaling pre-set to 0.95
  - By not using the resize mode you are using scaling mode
  - Flip-Detection and Auto-Rotation are disabled in Scaling mode,
-   you can use '-r source -s <scale>' to override.
+   you can use '-r source -s <scale>' to override. 
  - Ghostscript placement is from bottom-left position. This means that
    a bottom-left placement has ZERO for both X and Y translations.
 
@@ -229,22 +233,22 @@ Output filename:
    .<PAPERSIZE>.SCALED.pdf is added in mixed mode
 
 Standard Paper Names: (case-insensitive)
- A0            A1            A2            A3            A4
- A4SMALL       A5            A6            A7            A8
- A9            A10           ISOB0         ISOB1         ISOB2
- ISOB3         ISOB4         ISOB5         ISOB6         C0
- C1            C2            C3            C4            C5
- C6            11X17         LEDGER        LEGAL         LETTER
- LETTERSMALL   ARCHE         ARCHD         ARCHC         ARCHB
- ARCHA         JISB0         JISB1         JISB2         JISB3
- JISB4         JISB5         JISB6         FLSA          FLSE
- HALFLETTER    HAGAKI
+ A0            A1            A2            A3            A4            
+ A4SMALL       A5            A6            A7            A8            
+ A9            A10           ISOB0         ISOB1         ISOB2         
+ ISOB3         ISOB4         ISOB5         ISOB6         C0            
+ C1            C2            C3            C4            C5            
+ C6            11X17         LEDGER        LEGAL         LETTER        
+ LETTERSMALL   ARCHE         ARCHD         ARCHC         ARCHB         
+ ARCHA         JISB0         JISB1         JISB2         JISB3         
+ JISB4         JISB5         JISB6         FLSA          FLSE          
+ HALFLETTER    HAGAKI        
 
 Custom Paper Size:
  - Paper size can be set manually in Milimeters, Inches or Points
  - Custom paper definition MUST be quoted into a single parameter
  - Actual size is applied in points (mms and inches are transformed)
- - Measurements: mm, mms,  milimeters
+ - Measurements: mm, mms,  milimeters 
                  pt, pts,  points
                  in, inch, inches
  Use: pdfscale -r 'custom <measurement> <width> <height>'
@@ -419,8 +423,30 @@ cd ./pdfScale
 ./pdfScale.sh --version
 ```
 
-## System Install
-The installer will name the executable as `pdfscale` with no uppercase chars and without the `.sh` extension.  
+## Self-Install
+Since `v2.3.0` *pdfScale* can install itself using the parameter `--install`.  
+  
+By default it will install to `/usr/local/bin/pdfscale`  
+```
+pdfscale --install
+```
+A custom location can be specified as a parameter.  
+Should contain full path to executable file.  
+```
+pdfscale --install /opt/pdfscale/pdfscale
+``` 
+  
+## Self-Upgrade
+Since `v2.3.0` *pdfScale* can upgrade itself using the parameter `--upgrade`.  
+  
+It will try to get the master branch and update itself in-place.    
+```
+pdfscale --upgrade
+```
+More info on the [Self-Upgrade Wiki](https://github.com/tavinus/pdfScale/wiki/Self-Upgrade)
+  
+## Install with `make`
+The `make` installer will name the executable as `pdfscale` with no uppercase chars and without the `.sh` extension.  
 
 If you have `make` installed you can use it to install to `/usr/local/bin/pdfscale` with:  
 ```
