@@ -868,7 +868,6 @@ selfUpgrade() {
                 echo $'\n'"Assume yes activated, current version will be replaced with master branch"
                 _answer="y"
         else
-                echo "whyyy?"
                 echo $'\n'"Are you sure that you want to replace the current installation with the downloaded one?"
                 read -p "Y/y to continue, anything else to cancel > " _answer
                 _answer="$(lowercase $_answer)"
