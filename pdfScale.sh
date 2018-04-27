@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.3.6"
+VERSION="2.3.7"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -1986,7 +1986,7 @@ Parameters:
              Default: 0.0 (zero)
              Options: Positive or negative floating point number
  --yoffset, --ytrans-offset <FloatNumber>
-             Add/Subtract from the Y translation (move top-bottim)
+             Add/Subtract from the Y translation (move top-bottom)
              Default: 0.0 (zero)
              Options: Positive or negative floating point number
  --pdf-settings <gs-pdf-profile>

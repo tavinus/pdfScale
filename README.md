@@ -12,42 +12,50 @@ Better than explaining is showing it:
 #### Checking File Information
 ```
 $ ./pdfScale.sh -i ../input-nup.pdf
-pdfScale.sh v2.1.0 - Paper Sizes
+pdfScale.sh v2.3.7 - Paper Sizes
 ------------+-----------------------------
        File | input-nup.pdf
  Paper Type | A4 Landscape
 ------------+-----------------------------
             |    WIDTH x HEIGHT
-     Points |      842 x 595     
- Milimeters |      297 x 210     
+     Points |      842 x 595
+ Milimeters |      297 x 210
      Inches |     11.7 x 8.3
 ```
 #### Scale by 0.95 (-5%)
 This also shows a very special case of a PDF file that has no `/MediaBox` defined.  
-It is a dumb container of n-up binary PDF pages. So, `grep` fails on this one.
+It is a dumb container of n-up binary PDF pages.  
+`Ggrep` fails, then `PDFInfo` fails (not installed), then ImageMagick does the job.  
+This was on CygWin64 `@` Windows10 x64, MacOS would try `mdls` as well.
 ```
 $ pdfscale -v ../input-nup.pdf
-pdfscale v2.1.0 - Verbose Execution
+pdfscale v2.3.7 - Verbose Execution
    Single Task: Scale PDF Contents
+       Dry-Run: FALSE
     Input File: ../input-nup.pdf
    Output File: ../input-nup.SCALED.pdf
  Get Page Size: Adaptive Enabled
         Method: Grep
                 Failed
-        Method: Mac Quartz mdls
+        Method: PDFInfo
+                Failed
+        Method: ImageMagick's Identify
   Source Width: 842 postscript-points
  Source Height: 595 postscript-points
   Scale Factor: 0.95 (auto)
- Translation X: 22.157230
- Translation Y: 15.657425
+    Vert-Align: CENTER
+     Hor-Align: CENTER
+ Translation X: 22.16 = 22.16 + 0.00 (offset)
+ Translation Y: 15.66 = 15.66 + 0.00 (offset)
    Run Scaling: -5 %
   Final Status: File created successfully
 ```
 #### Resize to A0 and Scale by 1.05 (+5%)
 ```
 $ pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
-pdfscale v2.1.0 - Verbose Execution
+pdfscale v2.3.7 - Verbose Execution
    Mixed Tasks: Resize & Scale
+       Dry-Run: FALSE
     Input File: ../mixsync manual v1-2-3.pdf
    Output File: ../mixsync manual v1-2-3.A0.SCALED.pdf
  Get Page Size: Adaptive Enabled
@@ -61,16 +69,19 @@ pdfscale v2.1.0 - Verbose Execution
      New Width: 3370 postscript-points
     New Height: 2384 postscript-points
   Scale Factor: 1.05
- Translation X: -80.236330
- Translation Y: -56.760656
+    Vert-Align: CENTER
+     Hor-Align: CENTER
+ Translation X: -80.24 = -80.24 + 0.00 (offset)
+ Translation Y: -56.76 = -56.76 + 0.00 (offset)
    Run Scaling: 5 %
   Final Status: File created successfully
 ```
 #### Resize to A2 and disables Auto-Rotation
 ```
 $ pdfscale -v -r A2 -a none ../input.pdf
-pdfscale v2.1.0 - Verbose Execution
+pdfscale v2.3.7 - Verbose Execution
    Single Task: Resize PDF Paper
+       Dry-Run: FALSE
     Input File: ../input.pdf
    Output File: ../input.A2.pdf
  Get Page Size: Adaptive Enabled
@@ -86,30 +97,33 @@ pdfscale v2.1.0 - Verbose Execution
 #### Resize to custom 200x300 mm, disable Flip-Detection and Scale by 0.95 (-5%)
 ```
 $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v1-2-3.pdf
-2017-05-19:08:07:14 | pdfscale v2.1.0 - Verbose Execution
-2017-05-19:08:07:14 |    Mixed Tasks: Resize & Scale
-2017-05-19:08:07:14 |     Input File: ../mixsync manual v1-2-3.pdf
-2017-05-19:08:07:14 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
-2017-05-19:08:07:14 |  Get Page Size: Adaptive Enabled
-2017-05-19:08:07:14 |         Method: Grep
-2017-05-19:08:07:14 |   Source Width: 842 postscript-points
-2017-05-19:08:07:14 |  Source Height: 595 postscript-points
-2017-05-19:08:07:14 |    Auto Rotate: PageByPage
-2017-05-19:08:07:14 |    Flip Detect: Disabled
-2017-05-19:08:07:14 |   Run Resizing: CUSTOM ( 567 x 850 ) pts
-2017-05-19:08:07:14 |      New Width: 567 postscript-points
-2017-05-19:08:07:14 |     New Height: 850 postscript-points
-2017-05-19:08:07:14 |   Scale Factor: 0.95
-2017-05-19:08:07:14 |  Translation X: 14.920605
-2017-05-19:08:07:14 |  Translation Y: 22.367750
-2017-05-19:08:07:14 |    Run Scaling: -5 %
-2017-05-19:08:07:15 |   Final Status: File created successfully
+2018-04-27:18:59:45 | pdfscale v2.3.7 - Verbose Execution
+2018-04-27:18:59:45 |    Mixed Tasks: Resize & Scale
+2018-04-27:18:59:45 |        Dry-Run: FALSE
+2018-04-27:18:59:45 |     Input File: ../mixsync manual v1-2-3.pdf
+2018-04-27:18:59:45 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
+2018-04-27:18:59:45 |  Get Page Size: Adaptive Enabled
+2018-04-27:18:59:45 |         Method: Grep
+2018-04-27:18:59:45 |   Source Width: 842 postscript-points
+2018-04-27:18:59:45 |  Source Height: 595 postscript-points
+2018-04-27:18:59:45 |    Auto Rotate: PageByPage
+2018-04-27:18:59:45 |    Flip Detect: Disabled
+2018-04-27:18:59:45 |   Run Resizing: CUSTOM ( 567 x 850 ) pts
+2018-04-27:18:59:45 |      New Width: 567 postscript-points
+2018-04-27:18:59:45 |     New Height: 850 postscript-points
+2018-04-27:18:59:45 |   Scale Factor: 0.95
+2018-04-27:18:59:45 |     Vert-Align: CENTER
+2018-04-27:18:59:45 |      Hor-Align: CENTER
+2018-04-27:18:59:46 |  Translation X: 14.92 = 14.92 + 0.00 (offset)
+2018-04-27:18:59:46 |  Translation Y: 22.37 = 22.37 + 0.00 (offset)
+2018-04-27:18:59:46 |    Run Scaling: -5 %
+2018-04-27:18:59:46 |   Final Status: File created successfully
 ```
 
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v2.3.4
+pdfscale v2.3.7
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -123,7 +137,7 @@ Parameters:
  -v, --verbose
              Verbose mode, prints extra information
              Use twice for timestamp
- -h, --help  
+ -h, --help
              Print this help to screen and exits
  -V, --version
              Prints version to screen and exits
@@ -141,7 +155,7 @@ Parameters:
              Aborts execution if the output PDF file already exists
              By default, the output file will be overwritten
  -m, --mode <mode>
-             Paper size detection mode 
+             Paper size detection mode
              Modes: a, adaptive  Default mode, tries all the methods below
                     g, grep      Forces the use of Grep method
                     m, mdls      Forces the use of MacOS Quartz mdls
@@ -163,7 +177,7 @@ Parameters:
              Inverts Width <-> Height of a Resized PDF
              Modes: a, auto     Keeps source orientation, default
                     f, force    Forces flip W <-> H
-                    d, disable  Disables flipping 
+                    d, disable  Disables flipping
  -a, --auto-rotate <mode>
              Setting for GS -dAutoRotatePages, defaults to 'PageByPage'
              Uses text-orientation detection to set Portrait/Landscape
@@ -184,7 +198,7 @@ Parameters:
              Default: 0.0 (zero)
              Options: Positive or negative floating point number
  --yoffset, --ytrans-offset <FloatNumber>
-             Add/Subtract from the Y translation (move top-bottim)
+             Add/Subtract from the Y translation (move top-bottom)
              Default: 0.0 (zero)
              Options: Positive or negative floating point number
  --pdf-settings <gs-pdf-profile>
@@ -210,7 +224,7 @@ Scaling Mode:
    size and scaling pre-set to 0.95
  - By not using the resize mode you are using scaling mode
  - Flip-Detection and Auto-Rotation are disabled in Scaling mode,
-   you can use '-r source -s <scale>' to override. 
+   you can use '-r source -s <scale>' to override.
  - Ghostscript placement is from bottom-left position. This means that
    a bottom-left placement has ZERO for both X and Y translations.
 
@@ -233,22 +247,22 @@ Output filename:
    .<PAPERSIZE>.SCALED.pdf is added in mixed mode
 
 Standard Paper Names: (case-insensitive)
- A0            A1            A2            A3            A4            
- A4SMALL       A5            A6            A7            A8            
- A9            A10           ISOB0         ISOB1         ISOB2         
- ISOB3         ISOB4         ISOB5         ISOB6         C0            
- C1            C2            C3            C4            C5            
- C6            11X17         LEDGER        LEGAL         LETTER        
- LETTERSMALL   ARCHE         ARCHD         ARCHC         ARCHB         
- ARCHA         JISB0         JISB1         JISB2         JISB3         
- JISB4         JISB5         JISB6         FLSA          FLSE          
- HALFLETTER    HAGAKI        
+ A0            A1            A2            A3            A4
+ A4SMALL       A5            A6            A7            A8
+ A9            A10           ISOB0         ISOB1         ISOB2
+ ISOB3         ISOB4         ISOB5         ISOB6         C0
+ C1            C2            C3            C4            C5
+ C6            11X17         LEDGER        LEGAL         LETTER
+ LETTERSMALL   ARCHE         ARCHD         ARCHC         ARCHB
+ ARCHA         JISB0         JISB1         JISB2         JISB3
+ JISB4         JISB5         JISB6         FLSA          FLSE
+ HALFLETTER    HAGAKI
 
 Custom Paper Size:
  - Paper size can be set manually in Milimeters, Inches or Points
  - Custom paper definition MUST be quoted into a single parameter
  - Actual size is applied in points (mms and inches are transformed)
- - Measurements: mm, mms,  milimeters 
+ - Measurements: mm, mms,  milimeters
                  pt, pts,  points
                  in, inch, inches
  Use: pdfscale -r 'custom <measurement> <width> <height>'
@@ -283,13 +297,14 @@ Examples:
  pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
  pdfscale -r A4 myPdfFile.pdf
  pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
-```
-
+  
+```  
+  
 ## Standard Paper Tables
 The `-p` parameter prints detailed paper types information
 ```
 $ pdfscale -p
-pdfscale v2.1.0
+pdfscale v2.3.7
 
 Paper Sizes Information
 
