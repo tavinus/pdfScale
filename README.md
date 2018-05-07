@@ -123,7 +123,7 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v2.3.7
+pdfscale v2.3.8
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -192,7 +192,7 @@ Parameters:
  --vert-align, --vertical-alignment <top|center|bottom>
              Where to translate the scaled page
              Default: center
-             Options: top, bootom, center
+             Options: top, bottom, center
  --xoffset, --xtrans-offset <FloatNumber>
              Add/Subtract from the X translation (move left-right)
              Default: 0.0 (zero)

@@ -12,7 +12,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.3.7"
+VERSION="2.3.8"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -1980,7 +1980,7 @@ Parameters:
  --vert-align, --vertical-alignment <top|center|bottom>
              Where to translate the scaled page
              Default: center
-             Options: top, bootom, center
+             Options: top, bottom, center
  --xoffset, --xtrans-offset <FloatNumber>
              Add/Subtract from the X translation (move left-right)
              Default: 0.0 (zero)
