@@ -333,7 +333,7 @@ gsPageResize() {
 # Prints GS call for resizing
 gsPrintPageResize() {
         # Print Resize page command
-                local _call_str=""
+        local _call_str=""
         # Print Scale page command
         read -d '' _call_str<< _EOF_
 "$GSBIN" \
