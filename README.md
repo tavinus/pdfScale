@@ -123,7 +123,7 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v2.3.8
+pdfscale v2.3.9
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -271,7 +271,7 @@ Custom Paper Size:
 Using Source Paper Size: (no-resizing)
  - Wildcard 'source' is used used to keep paper size the same as the input
  - Usefull to run Auto-Rotation without resizing
- - Eg. pdfscale -r source ./input.dpf
+ - Eg. pdfscale -r source ./input.pdf
 
 Options and Parameters Parsing:
  - From v2.1.0 (long-opts) there is no need to pass file names at the end

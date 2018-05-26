@@ -5,14 +5,14 @@
 # Scale PDF to specified percentage of original size.
 #
 # Gustavo Arnosti Neves - 2016 / 07 / 10
-#        Latest Version - 2018 / 04 / 12
+#        Latest Version - 2018 / 05 / 26
 #
 # This script: https://github.com/tavinus/pdfScale
 #    Based on: http://ma.juii.net/blog/scale-page-content-of-pdf-files
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.3.8"
+VERSION="2.3.9"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -2050,7 +2050,7 @@ Custom Paper Size:
 Using Source Paper Size: (no-resizing)
  - Wildcard 'source' is used used to keep paper size the same as the input
  - Usefull to run Auto-Rotation without resizing
- - Eg. $PDFSCALE_NAME -r source ./input.dpf
+ - Eg. $PDFSCALE_NAME -r source ./input.pdf
 
 Options and Parameters Parsing:
  - From v2.1.0 (long-opts) there is no need to pass file names at the end
