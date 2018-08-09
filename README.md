@@ -218,7 +218,7 @@ Parameters:
              Default: 300
  --background-gray <percentage>
              Creates a background with a gray color setting
-             Percentage is a floating point percentage number between 0(white) and 1(black)
+             Percentage is a floating point percentage number between 0(black) and 1(white)
  --background-cmyk <"C M Y K">
              Creates a background with a CMYK color setting
              Must be quoted into a single parameter as in "0.2 0.2 0.2 0.2"
@@ -311,7 +311,6 @@ Examples:
  pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
  pdfscale -r A4 myPdfFile.pdf
  pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
-
 
 ```  
   
