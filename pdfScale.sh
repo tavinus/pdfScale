@@ -13,7 +13,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.4.1"
+VERSION="2.4.2"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -1289,6 +1289,7 @@ parseRGBBackground() {
         exit $EXIT_INVALID_OPTION
 }
 
+
 ################### PDF PAGE SIZE DETECTION ####################
 
 ################################################################
@@ -1840,6 +1841,7 @@ isNotAdaptiveMode() {
 noBackground() {
         [[ "$BACKGROUNDTYPE" == "CMYK" ]] && return $FALSE
         [[ "$BACKGROUNDTYPE" == "RGB" ]] && return $FALSE
+        [[ "$BACKGROUNDTYPE" == "GRAY" ]] && return $FALSE
         return $TRUE
 }
 
@@ -1847,6 +1849,7 @@ noBackground() {
 hasBackground() {
         [[ "$BACKGROUNDTYPE" == "CMYK" ]] && return $TRUE
         [[ "$BACKGROUNDTYPE" == "RGB" ]] && return $TRUE
+        [[ "$BACKGROUNDTYPE" == "GRAY" ]] && return $TRUE
         return $FALSE
 }
 
@@ -1995,6 +1998,7 @@ shouldAskUser() {
         assumeYes && return $FALSE
         return $TRUE
 }
+
 
 ###################### PRINTING TO SCREEN ######################
 
