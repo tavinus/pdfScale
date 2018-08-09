@@ -127,7 +127,7 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v2.4.0
+pdfscale v2.4.1
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -226,8 +226,6 @@ Parameters:
  --background-rgb <"R G B">
              Creates a background with a RGB color setting
              Must be quoted into a single parameter as in "100 100 200"
-             Postscript accepts both percentages or RGB numbers, but not mixed
-             Percentages are floating point numbers between 0 and 1 (1 0.5 0.2)
              RGB numbers are integers between 0 and 255 (255 122 50)
  --dry-run, --simulate
              Just simulate execution. Will not run ghostscript
@@ -313,6 +311,8 @@ Examples:
  pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
  pdfscale -r A4 myPdfFile.pdf
  pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
+
+
 ```  
   
 ## Standard Paper Tables

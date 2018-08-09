@@ -13,7 +13,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.4.0"
+VERSION="2.4.1"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -1259,24 +1259,29 @@ parseCMYKBackground() {
 
 # Just loads the RGB Vars (without testing anything)
 loadRGBVars(){
-        BACKGROUNDCOLOR="$1 $2 $3"
+		local rP="$(rgbToPercentage $1)"
+		local gP="$(rgbToPercentage $2)"
+		local bP="$(rgbToPercentage $3)"
+        BACKGROUNDCOLOR="$rP $gP $bP"
         BACKGROUNDCALL="$BACKGROUNDCOLOR setrgbcolor clippath fill " # the space at the end is important!
         BACKGROUNDTYPE="RGB"
-        BACKGROUNDLOG="$BACKGROUNDTYPE Mode > $BACKGROUNDCOLOR"
+        BACKGROUNDLOG="$BACKGROUNDTYPE Mode > $1($(printf %.2f $rP)) $2($(printf %.2f $gP)) $3($(printf %.2f $bP))"
+}
+
+# Converts 255-based RGB to Percentage
+rgbToPercentage() {
+		local per=$(echo "scale=8; $1 / 255" | "$BCBIN")
+        printf '%.7f' "$per"    # Print rounded conversion
 }
 
 # Parse RGB Background color
 parseRGBBackground() {
-        if isFloatPercentage "$1" && isFloatPercentage "$2" && isFloatPercentage "$3" ; then
-                loadRGBVars "$1" "$2" "$3"
-                return $TRUE
-        fi
         if isRGBInteger "$1" && isRGBInteger "$2" && isRGBInteger "$3" ; then
                 loadRGBVars "$1" "$2" "$3"
                 return $TRUE
         fi
         printError "Invalid RGB Background colors. Need 3 parameters in  RGB order."
-        printError "Numbers can be EITHER percentages between 0 and 1 or RGB integers between 0 and 255."
+        printError "Numbers must be RGB integers between 0 and 255."
         printError "Eg: --background-rgb \"34 123 255\"" 
         printError "  [R] => $1"
         printError "  [G] => $2"
@@ -2123,8 +2128,6 @@ Parameters:
  --background-rgb <\"R G B\">
              Creates a background with a RGB color setting
              Must be quoted into a single parameter as in \"100 100 200\"
-             Postscript accepts both percentages or RGB numbers, but not mixed
-             Percentages are floating point numbers between 0 and 1 (1 0.5 0.2)
              RGB numbers are integers between 0 and 255 (255 122 50)
  --dry-run, --simulate
              Just simulate execution. Will not run ghostscript
