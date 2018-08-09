@@ -5,14 +5,15 @@
 # Scale PDF to specified percentage of original size.
 #
 # Gustavo Arnosti Neves - 2016 / 07 / 10
-#        Latest Version - 2018 / 05 / 26
+#        Latest Version - 2018 / 08 / 09
 #
 # This script: https://github.com/tavinus/pdfScale
-#    Based on: http://ma.juii.net/blog/scale-page-content-of-pdf-files
+# 
+#     Related: http://ma.juii.net/blog/scale-page-content-of-pdf-files
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.3.9"
+VERSION="2.4.0"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -84,6 +85,12 @@ HOR_ALIGN="CENTER"
 ############################# Translation Offset to apply
 XTRANSOFFSET=0.0
 YTRANSOFFSET=0.0
+
+############################# Background/Bleed color creation
+BACKGROUNDTYPE="NONE"       # Should be NONE, CMYK or RGB only
+BACKGROUNDCOLOR=""          # Color parameters for CMYK(4) or RGB(3)
+BACKGROUNDCALL=""           # Actual PS call to be embedded
+BACKGROUNDLOG="No background (default)"
 
 ############################# Execution Flags
 SIMULATE=$FALSE             # Avoid execution
@@ -248,6 +255,8 @@ pageScale() {
 
         local increase=$(echo "scale=0; (($SCALE - 1) * 100)/1" | "$BCBIN")
         vprint "   Run Scaling: $increase %"
+        
+        vprint "    Background: $BACKGROUNDLOG"
 
         GS_RUN_STATUS="$GS_RUN_STATUS""$(gsPageScale 2>&1)"
         GS_CALL_STRING="$GS_CALL_STRING"$'[GS SCALE CALL STARTS]\n'"$(gsPrintPageScale)"$'\n[GS SCALE CALL ENDS]\n'
@@ -269,7 +278,7 @@ gsPageScale() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
 -sOutputFile="$OUTFILEPDF" \
--c "<</BeginPage{$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
+-c "<</BeginPage{$BACKGROUNDCALL$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
 -f "$INFILEPDF" 
         
 }
@@ -288,8 +297,8 @@ gsPrintPageScale() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
 -sOutputFile="$OUTFILEPDF" \
--c "<</BeginPage{$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
--f "$INFILEPDF" 
+-c "<</BeginPage{$BACKGROUNDCALL$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
+-f "$INFILEPDF"
 _EOF_
 
         echo -ne "$_call_str"
@@ -507,6 +516,21 @@ getOptions() {
                 -a|--autorotation|--auto-rotation|--autorotate|--auto-rotate)
                         shift
                         parseAutoRotationMode "$1"
+                        shift
+                        ;;
+                --background-gray)
+                        shift
+                        parseGrayBackground $1
+                        shift
+                        ;;
+                --background-rgb)
+                        shift
+                        parseRGBBackground $1
+                        shift
+                        ;;
+                --background-cmyk)
+                        shift
+                        parseCMYKBackground $1
                         shift
                         ;;
                 --pdf-settings)
@@ -1198,6 +1222,68 @@ parseYTransOffset() {
         exit $EXIT_INVALID_OPTION
 }
 
+# Parse Gray Background color
+parseGrayBackground() {
+        if isFloatPercentage "$1"; then
+                BACKGROUNDCOLOR="$1"
+                BACKGROUNDCALL="$BACKGROUNDCOLOR setgray clippath fill " # the space at the end is important!
+                BACKGROUNDTYPE="GRAY"
+                BACKGROUNDLOG="$GrayColor Mode > $BACKGROUNDCOLOR"
+                return $TRUE
+        fi
+        printError "Invalid Gray Background color."
+        printError "Need 1 floating point number between 0 and 1."
+        printError "Eg: --background-gray \"0.80\""
+        printError "Invalid Param => $1"
+        exit $EXIT_INVALID_OPTION
+}
+
+# Parse CMYK Background color
+parseCMYKBackground() {
+        if isFloatPercentage "$1" && isFloatPercentage "$2" && isFloatPercentage "$3" && isFloatPercentage "$4"; then
+                BACKGROUNDCOLOR="$1 $2 $3 $4"
+                BACKGROUNDCALL="$BACKGROUNDCOLOR setcmykcolor clippath fill " # the space at the end is important!
+                BACKGROUNDTYPE="CMYK"
+                BACKGROUNDLOG="$BACKGROUNDTYPE Mode > $BACKGROUNDCOLOR"
+                return $TRUE
+        fi
+        printError "Invalid CMYK Background colors."
+        printError "Need 4 floating point numbers between 0 and 1 in CMYK order."
+        printError "Eg: --background-cmyk \"C M Y K\""
+        printError "  [C] => $1"
+        printError "  [M] => $2"
+        printError "  [Y] => $3"
+        printError "  [K] => $4"
+        exit $EXIT_INVALID_OPTION
+}
+
+# Just loads the RGB Vars (without testing anything)
+loadRGBVars(){
+        BACKGROUNDCOLOR="$1 $2 $3"
+        BACKGROUNDCALL="$BACKGROUNDCOLOR setrgbcolor clippath fill " # the space at the end is important!
+        BACKGROUNDTYPE="RGB"
+        BACKGROUNDLOG="$BACKGROUNDTYPE Mode > $BACKGROUNDCOLOR"
+}
+
+# Parse RGB Background color
+parseRGBBackground() {
+        if isFloatPercentage "$1" && isFloatPercentage "$2" && isFloatPercentage "$3" ; then
+                loadRGBVars "$1" "$2" "$3"
+                return $TRUE
+        fi
+        if isRGBInteger "$1" && isRGBInteger "$2" && isRGBInteger "$3" ; then
+                loadRGBVars "$1" "$2" "$3"
+                return $TRUE
+        fi
+        printError "Invalid RGB Background colors. Need 3 parameters in  RGB order."
+        printError "Numbers can be EITHER percentages between 0 and 1 or RGB integers between 0 and 255."
+        printError "Eg: --background-rgb \"34 123 255\"" 
+        printError "  [R] => $1"
+        printError "  [G] => $2"
+        printError "  [B] => $3"
+        exit $EXIT_INVALID_OPTION
+}
+
 ################### PDF PAGE SIZE DETECTION ####################
 
 ################################################################
@@ -1362,7 +1448,7 @@ getPageSizeCatGrep() {
         mediaBox="${mediaBox##*/MediaBox}"
         mediaBox="${mediaBox##*[}"
         mediaBox="${mediaBox%%]*}"
-		#echo "mediaBox=$mediaBox"
+        #echo "mediaBox=$mediaBox"
 
         # No page size data available
         if isEmpty "$mediaBox" && isNotAdaptiveMode; then
@@ -1376,26 +1462,26 @@ getPageSizeCatGrep() {
 
         # sanity
         if [[ $mbCount -lt 4 ]] || ! isFloat "${mediaBox[2]}" || ! isFloat "${mediaBox[3]}" || isZero "${mediaBox[2]}" || isZero "${mediaBox[3]}"; then 
-				if isNotAdaptiveMode; then
-						notAdaptiveFailed $'Error when reading the page size!\nThe page size information is invalid!'
-				fi
-				return $FALSE
+                if isNotAdaptiveMode; then
+                        notAdaptiveFailed $'Error when reading the page size!\nThe page size information is invalid!'
+                fi
+                return $FALSE
         fi
 
         # we are done
         PGWIDTH=$(printf '%.0f' "${mediaBox[2]}")  # Get Round Width
         PGHEIGHT=$(printf '%.0f' "${mediaBox[3]}") # Get Round Height
 
-		#echo "PGWIDTH=$PGWIDTH // PGHEIGHT=$PGHEIGHT"
+        #echo "PGWIDTH=$PGWIDTH // PGHEIGHT=$PGHEIGHT"
         return $TRUE
 }
 
 isZero() {
-	[[ "$1" == "0" ]] && return $TRUE
-	[[ "$1" == "0.0" ]] && return $TRUE
-	[[ "$1" == "0.00" ]] && return $TRUE
-	[[ "$1" == "0.000" ]] && return $TRUE
-	return $FALSE
+    [[ "$1" == "0" ]] && return $TRUE
+    [[ "$1" == "0.0" ]] && return $TRUE
+    [[ "$1" == "0.00" ]] && return $TRUE
+    [[ "$1" == "0.000" ]] && return $TRUE
+    return $FALSE
 }
 
 # Prints error message and exits execution
@@ -1745,6 +1831,20 @@ isNotAdaptiveMode() {
 
 ########################## VALIDATORS ##########################
 
+# Returns $TRUE if we don't need to create a background
+noBackground() {
+        [[ "$BACKGROUNDTYPE" == "CMYK" ]] && return $FALSE
+        [[ "$BACKGROUNDTYPE" == "RGB" ]] && return $FALSE
+        return $TRUE
+}
+
+# Returns $TRUE if we need to create a background
+hasBackground() {
+        [[ "$BACKGROUNDTYPE" == "CMYK" ]] && return $TRUE
+        [[ "$BACKGROUNDTYPE" == "RGB" ]] && return $TRUE
+        return $FALSE
+}
+
 # Returns $TRUE if $PGWIDTH OR $PGWIDTH are empty or NOT an Integer, $FALSE otherwise
 pageSizeIsInvalid() {
         if isNotAnInteger "$PGWIDTH" || isNotAnInteger "$PGHEIGHT"; then
@@ -1781,6 +1881,12 @@ isNotAnInteger() {
         esac
 }
 
+# Returns $TRUE if $1 is an integer, $FALSE otherwise
+isRGBInteger() {
+        isAnInteger "$1" && [[ $1 -ge 0 ]] && [[ $1 -le 255 ]] && return $TRUE 
+        return $FALSE
+}
+
 # Returns $TRUE if $1 is a floating point number (or an integer), $FALSE otherwise
 isFloat() {
         [[ -n "$1" && "$1" =~ ^-?[0-9]*([.][0-9]+)?$ ]] && return $TRUE
@@ -1790,6 +1896,13 @@ isFloat() {
 # Returns $TRUE if $1 is a floating point number bigger than zero, $FALSE otherwise
 isFloatBiggerThanZero() {
         isFloat "$1" && [[ (( $1 > 0 )) ]] && return $TRUE
+        return $FALSE
+}
+
+# Returns $TRUE if $1 is a floating point number between 0 and 1, $FALSE otherwise
+isFloatPercentage() {
+        [[ -n "$1" && "$1" =~ ^-?[0]*([.][0-9]+)?$ ]] && return $TRUE
+        [[ "$1" == "1" ]] && return $TRUE
         return $FALSE
 }
 
@@ -2000,6 +2113,19 @@ Parameters:
  --image-resolution <dpi>
              Resolution in DPI of color and grayscale images in output
              Default: 300
+ --background-gray <percentage>
+             Creates a background with a gray color setting
+             Percentage is a floating point percentage number between 0(white) and 1(black)
+ --background-cmyk <\"C M Y K\">
+             Creates a background with a CMYK color setting
+             Must be quoted into a single parameter as in \"0.2 0.2 0.2 0.2\"
+             Each color parameter is a floating point percentage number (between 0 and 1)
+ --background-rgb <\"R G B\">
+             Creates a background with a RGB color setting
+             Must be quoted into a single parameter as in \"100 100 200\"
+             Postscript accepts both percentages or RGB numbers, but not mixed
+             Percentages are floating point numbers between 0 and 1 (1 0.5 0.2)
+             RGB numbers are integers between 0 and 255 (255 122 50)
  --dry-run, --simulate
              Just simulate execution. Will not run ghostscript
  --print-gs-call, --gs-call
@@ -2062,8 +2188,7 @@ Options and Parameters Parsing:
 
 Additional Notes:
  - File and folder names with spaces should be quoted or escaped
- - The scaling is centered and using a scale bigger than 1.0 may
-   result on cropping parts of the PDF
+ - Using a scale bigger than 1.0 may result on cropping parts of the PDF
  - For detailed paper types information, use: $PDFSCALE_NAME -p
 
 Examples:

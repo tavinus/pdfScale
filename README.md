@@ -29,7 +29,7 @@ It is a dumb container of n-up binary PDF pages.
 This was on CygWin64 `@` Windows10 x64, MacOS would try `mdls` as well.
 ```
 $ pdfscale -v ../input-nup.pdf
-pdfscale v2.3.7 - Verbose Execution
+pdfscale v2.4.0 - Verbose Execution
    Single Task: Scale PDF Contents
        Dry-Run: FALSE
     Input File: ../input-nup.pdf
@@ -48,12 +48,13 @@ pdfscale v2.3.7 - Verbose Execution
  Translation X: 22.16 = 22.16 + 0.00 (offset)
  Translation Y: 15.66 = 15.66 + 0.00 (offset)
    Run Scaling: -5 %
+    Background: No background (default)
   Final Status: File created successfully
 ```
 #### Resize to A0 and Scale by 1.05 (+5%)
 ```
 $ pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
-pdfscale v2.3.7 - Verbose Execution
+pdfscale v2.4.0 - Verbose Execution
    Mixed Tasks: Resize & Scale
        Dry-Run: FALSE
     Input File: ../mixsync manual v1-2-3.pdf
@@ -74,12 +75,13 @@ pdfscale v2.3.7 - Verbose Execution
  Translation X: -80.24 = -80.24 + 0.00 (offset)
  Translation Y: -56.76 = -56.76 + 0.00 (offset)
    Run Scaling: 5 %
+    Background: No background (default)
   Final Status: File created successfully
 ```
 #### Resize to A2 and disables Auto-Rotation
 ```
 $ pdfscale -v -r A2 -a none ../input.pdf
-pdfscale v2.3.7 - Verbose Execution
+pdfscale v2.4.0 - Verbose Execution
    Single Task: Resize PDF Paper
        Dry-Run: FALSE
     Input File: ../input.pdf
@@ -97,33 +99,35 @@ pdfscale v2.3.7 - Verbose Execution
 #### Resize to custom 200x300 mm, disable Flip-Detection and Scale by 0.95 (-5%)
 ```
 $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v1-2-3.pdf
-2018-04-27:18:59:45 | pdfscale v2.3.7 - Verbose Execution
-2018-04-27:18:59:45 |    Mixed Tasks: Resize & Scale
-2018-04-27:18:59:45 |        Dry-Run: FALSE
-2018-04-27:18:59:45 |     Input File: ../mixsync manual v1-2-3.pdf
-2018-04-27:18:59:45 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
-2018-04-27:18:59:45 |  Get Page Size: Adaptive Enabled
-2018-04-27:18:59:45 |         Method: Grep
-2018-04-27:18:59:45 |   Source Width: 842 postscript-points
-2018-04-27:18:59:45 |  Source Height: 595 postscript-points
-2018-04-27:18:59:45 |    Auto Rotate: PageByPage
-2018-04-27:18:59:45 |    Flip Detect: Disabled
-2018-04-27:18:59:45 |   Run Resizing: CUSTOM ( 567 x 850 ) pts
-2018-04-27:18:59:45 |      New Width: 567 postscript-points
-2018-04-27:18:59:45 |     New Height: 850 postscript-points
-2018-04-27:18:59:45 |   Scale Factor: 0.95
-2018-04-27:18:59:45 |     Vert-Align: CENTER
-2018-04-27:18:59:45 |      Hor-Align: CENTER
-2018-04-27:18:59:46 |  Translation X: 14.92 = 14.92 + 0.00 (offset)
-2018-04-27:18:59:46 |  Translation Y: 22.37 = 22.37 + 0.00 (offset)
-2018-04-27:18:59:46 |    Run Scaling: -5 %
-2018-04-27:18:59:46 |   Final Status: File created successfully
+2018-08-09:04:56:39 | pdfscale v2.4.0 - Verbose Execution
+2018-08-09:04:56:39 |    Mixed Tasks: Resize & Scale
+2018-08-09:04:56:39 |        Dry-Run: FALSE
+2018-08-09:04:56:39 |     Input File: ../mixsync manual v1-2-3.pdf
+2018-08-09:04:56:39 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
+2018-08-09:04:56:39 |  Get Page Size: Adaptive Enabled
+2018-08-09:04:56:39 |         Method: Grep
+2018-08-09:04:56:39 |   Source Width: 842 postscript-points
+2018-08-09:04:56:39 |  Source Height: 595 postscript-points
+2018-08-09:04:56:40 |    Auto Rotate: PageByPage
+2018-08-09:04:56:40 |    Flip Detect: Disabled
+2018-08-09:04:56:40 |   Run Resizing: CUSTOM ( 567 x 850 ) pts
+2018-08-09:04:56:40 |      New Width: 567 postscript-points
+2018-08-09:04:56:40 |     New Height: 850 postscript-points
+2018-08-09:04:56:40 |   Scale Factor: 0.95
+2018-08-09:04:56:40 |     Vert-Align: CENTER
+2018-08-09:04:56:40 |      Hor-Align: CENTER
+2018-08-09:04:56:40 |  Translation X: 14.92 = 14.92 + 0.00 (offset)
+2018-08-09:04:56:40 |  Translation Y: 22.37 = 22.37 + 0.00 (offset)
+2018-08-09:04:56:40 |    Run Scaling: -5 %
+2018-08-09:04:56:40 |     Background: No background (default)
+2018-08-09:04:56:40 |   Final Status: File created successfully
+
 ```
 
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v2.3.9
+pdfscale v2.4.0
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -212,6 +216,19 @@ Parameters:
  --image-resolution <dpi>
              Resolution in DPI of color and grayscale images in output
              Default: 300
+ --background-gray <percentage>
+             Creates a background with a gray color setting
+             Percentage is a floating point percentage number between 0(white) and 1(black)
+ --background-cmyk <"C M Y K">
+             Creates a background with a CMYK color setting
+             Must be quoted into a single parameter as in "0.2 0.2 0.2 0.2"
+             Each color parameter is a floating point percentage number (between 0 and 1)
+ --background-rgb <"R G B">
+             Creates a background with a RGB color setting
+             Must be quoted into a single parameter as in "100 100 200"
+             Postscript accepts both percentages or RGB numbers, but not mixed
+             Percentages are floating point numbers between 0 and 1 (1 0.5 0.2)
+             RGB numbers are integers between 0 and 255 (255 122 50)
  --dry-run, --simulate
              Just simulate execution. Will not run ghostscript
  --print-gs-call, --gs-call
@@ -283,8 +300,7 @@ Options and Parameters Parsing:
 
 Additional Notes:
  - File and folder names with spaces should be quoted or escaped
- - The scaling is centered and using a scale bigger than 1.0 may
-   result on cropping parts of the PDF
+ - Using a scale bigger than 1.0 may result on cropping parts of the PDF
  - For detailed paper types information, use: pdfscale -p
 
 Examples:
@@ -297,7 +313,6 @@ Examples:
  pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
  pdfscale -r A4 myPdfFile.pdf
  pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
-  
 ```  
   
 ## Standard Paper Tables
