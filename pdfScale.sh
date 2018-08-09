@@ -1259,9 +1259,9 @@ parseCMYKBackground() {
 
 # Just loads the RGB Vars (without testing anything)
 loadRGBVars(){
-		local rP="$(rgbToPercentage $1)"
-		local gP="$(rgbToPercentage $2)"
-		local bP="$(rgbToPercentage $3)"
+        local rP="$(rgbToPercentage $1)"
+        local gP="$(rgbToPercentage $2)"
+        local bP="$(rgbToPercentage $3)"
         BACKGROUNDCOLOR="$rP $gP $bP"
         BACKGROUNDCALL="$BACKGROUNDCOLOR setrgbcolor clippath fill " # the space at the end is important!
         BACKGROUNDTYPE="RGB"
@@ -1270,7 +1270,7 @@ loadRGBVars(){
 
 # Converts 255-based RGB to Percentage
 rgbToPercentage() {
-		local per=$(echo "scale=8; $1 / 255" | "$BCBIN")
+        local per=$(echo "scale=8; $1 / 255" | "$BCBIN")
         printf '%.7f' "$per"    # Print rounded conversion
 }
 
@@ -2120,7 +2120,7 @@ Parameters:
              Default: 300
  --background-gray <percentage>
              Creates a background with a gray color setting
-             Percentage is a floating point percentage number between 0(white) and 1(black)
+             Percentage is a floating point percentage number between 0(black) and 1(white)
  --background-cmyk <\"C M Y K\">
              Creates a background with a CMYK color setting
              Must be quoted into a single parameter as in \"0.2 0.2 0.2 0.2\"
