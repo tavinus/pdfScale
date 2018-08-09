@@ -6,7 +6,10 @@ In `scaling mode`, the PDF paper size does not change, just the elements are sca
 In `resize mode`, the PDF paper will be changed and fit-to-page will be applied.  
 In `mixed mode`, the PDF will first be `resized` then `scaled` with two Ghostscript calls.  
 A temporary file is used in `mixed mode`, at the target location.  
-
+  
+If you want to support this project, you can give me a cup of coffee :coffee:  
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RRJATYHXV8JQY)  
+  
 ## Example Runs
 Better than explaining is showing it:  
 #### Checking File Information
