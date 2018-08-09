@@ -13,7 +13,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.4.2"
+VERSION="2.4.3"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -2123,14 +2123,14 @@ Parameters:
              Resolution in DPI of color and grayscale images in output
              Default: 300
  --background-gray <percentage>
-             Creates a background with a gray color setting
+             Creates a background with a gray color setting on PDF scaling
              Percentage is a floating point percentage number between 0(black) and 1(white)
  --background-cmyk <\"C M Y K\">
-             Creates a background with a CMYK color setting
+             Creates a background with a CMYK color setting on PDF scaling
              Must be quoted into a single parameter as in \"0.2 0.2 0.2 0.2\"
              Each color parameter is a floating point percentage number (between 0 and 1)
  --background-rgb <\"R G B\">
-             Creates a background with a RGB color setting
+             Creates a background with a RGB color setting on PDF scaling
              Must be quoted into a single parameter as in \"100 100 200\"
              RGB numbers are integers between 0 and 255 (255 122 50)
  --dry-run, --simulate
@@ -2185,6 +2185,10 @@ Using Source Paper Size: (no-resizing)
  - Usefull to run Auto-Rotation without resizing
  - Eg. $PDFSCALE_NAME -r source ./input.pdf
 
+Backgrounding: (paint a background)
+ - Backgrounding only happens when scaling
+ - Use a scale of 1.0 to force mixed mode and add background while resizing
+ 
 Options and Parameters Parsing:
  - From v2.1.0 (long-opts) there is no need to pass file names at the end
  - Anything that is not a short-option is case-insensitive
