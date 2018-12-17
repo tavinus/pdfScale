@@ -8,8 +8,8 @@ In `mixed mode`, the PDF will first be `resized` then `scaled` with two Ghostscr
 A temporary file is used in `mixed mode`, at the target location.  
   
 ---------------------------------------------- 
-#### If you want to support this project, you can give me a cup of coffee :coffee:  
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RRJATYHXV8JQY)  
+#### If you want to support this project, you can do it here :coffee:  
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=HP344TKTWXFXE&source=url)  
 
 ----------------------------------------------  
   
