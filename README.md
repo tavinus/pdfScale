@@ -195,6 +195,11 @@ Parameters:
                     n, none        Retains orientation of each page
                     a, all         Rotates all pages (or none) depending
                                    on a kind of "majority decision"
+ --fit-page <mode>
+             Use of GS option dPDFFitPage, used by default
+             This option is only valid in resize mode
+             Modes: f, fit      Fit page
+                    n, no       Do not fit page
  --hor-align, --horizontal-alignment <left|center|right>
              Where to translate the scaled page
              Default: center

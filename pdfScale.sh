@@ -56,6 +56,7 @@ CUSTOM_RESIZE_PAPER=$FALSE  # If we are using a custom-defined paper
 FLIP_DETECTION=$TRUE        # If we should run the Flip-detection
 FLIP_FORCE=$FALSE           # If we should force Flipping
 AUTO_ROTATION='/PageByPage' # GS call auto-rotation setting
+FIT_PAGE='-dPDFFitPage'     # GS call resize fit page setting
 PGWIDTH=""                  # Input PDF Page Width
 PGHEIGHT=""                 # Input PDF Page Height
 RESIZE_WIDTH=""             # Resized PDF Page Width
@@ -333,7 +334,7 @@ gsPageResize() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
 -dAutoRotatePages=$AUTO_ROTATION \
--dFIXEDMEDIA -dPDFFitPage \
+-dFIXEDMEDIA $FIT_PAGE \
 -sOutputFile="$OUTFILEPDF" \
 -f "$INFILEPDF"
         return $?
@@ -354,7 +355,7 @@ gsPrintPageResize() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
 -dAutoRotatePages=$AUTO_ROTATION \
--dFIXEDMEDIA -dPDFFitPage \
+-dFIXEDMEDIA $FIT_PAGE \
 -sOutputFile="$OUTFILEPDF" \
 -f "$INFILEPDF"
 _EOF_
@@ -516,6 +517,11 @@ getOptions() {
                 -a|--autorotation|--auto-rotation|--autorotate|--auto-rotate)
                         shift
                         parseAutoRotationMode "$1"
+                        shift
+                        ;;
+                --fit-page)
+                        shift
+                        parseFitPageMode "$1"
                         shift
                         ;;
                 --background-gray)
@@ -1068,6 +1074,23 @@ parseAutoRotationMode() {
                         ;;
                 *)
                         initError "Invalid Auto Rotation Mode: \"$1\"" $EXIT_INVALID_OPTION
+                        return $FALSE
+                        ;;
+        esac
+}
+
+# Parses and validates the resize fit page
+parseFitPageMode() {
+        local param="$(lowercase $1)"
+        case "${param}" in
+                n|no)
+                        FIT_PAGE=''
+                        ;;
+                f|fit)
+                        FIT_PAGE='-dPDFFitPage'
+                        ;;
+                *)
+                        initError "Invalid Resize Fit Page Mode: \"$1\"" $EXIT_INVALID_OPTION
                         return $FALSE
                         ;;
         esac
@@ -2095,6 +2118,11 @@ Parameters:
                     n, none        Retains orientation of each page
                     a, all         Rotates all pages (or none) depending
                                    on a kind of \"majority decision\"
+ --fit-page <mode>
+             Use of GS option dPDFFitPage, used by default
+             This option is only valid in resize mode
+             Modes: f, fit      Fit page
+                    n, no       Do not fit page
  --hor-align, --horizontal-alignment <left|center|right>
              Where to translate the scaled page
              Default: center
