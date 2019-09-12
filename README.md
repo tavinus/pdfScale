@@ -197,8 +197,8 @@ Parameters:
                                    on a kind of "majority decision"
  --fit-page <mode>
              Use of GS option dPDFFitPage, used by default
-             This option is only valid in resize mode
-             Modes: y, yes      Fit page
+             This option is only used in resize mode
+             Modes: y, yes      Fit page (default)
                     n, no       Do not fit page
  --hor-align, --horizontal-alignment <left|center|right>
              Where to translate the scaled page

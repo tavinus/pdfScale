@@ -1,19 +1,31 @@
 #!/usr/bin/env bash
 
+################################################################
+#
 # pdfScale.sh
 #
 # Scale PDF to specified percentage of original size.
+# Manipulate PDFs using Ghostscript.
+# Scale, Resize and Split PDFs.
+# Writen for Bash.
 #
 # Gustavo Arnosti Neves - 2016 / 07 / 10
-#        Latest Version - 2018 / 08 / 09
+#        Latest Version - 2019 / 09 / 12
 #
 # This script: https://github.com/tavinus/pdfScale
-# 
-#     Related: http://ma.juii.net/blog/scale-page-content-of-pdf-files
-#         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
+#
+# Humble Beginnings References
+# - http://ma.juii.net/blog/scale-page-content-of-pdf-files
+# - https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
+#
+# THIS SOFTWARE IS FREE - HAVE FUN WITH IT
+# I hope this can be of help to people. Thanks to the people
+# that helped and donated. It has been a long run with this
+# script. I wish you all the best! -]
+#
+################################################################
 
-
-VERSION="2.4.5"
+VERSION="2.4.7"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -414,12 +426,12 @@ shouldFlip() {
 
 # Loads external dependencies and checks for errors
 initDeps() {
-        GREPBIN="$(which grep 2>/dev/null)"
-        GSBIN="$(which gs 2>/dev/null)"
-        BCBIN="$(which bc 2>/dev/null)"
-        IDBIN=$(which identify 2>/dev/null)
-        MDLSBIN="$(which mdls 2>/dev/null)"
-        PDFINFOBIN="$(which pdfinfo 2>/dev/null)"
+        GREPBIN="$(command -v grep 2>/dev/null)"
+        GSBIN="$(command -v gs 2>/dev/null)"
+        BCBIN="$(command -v bc 2>/dev/null)"
+        IDBIN=$(command -v identify 2>/dev/null)
+        MDLSBIN="$(command -v mdls 2>/dev/null)"
+        PDFINFOBIN="$(command -v pdfinfo 2>/dev/null)"
         
         vprint "Checking for basename, grep, ghostscript and bcmath"
         basename "" >/dev/null 2>&1 || printDependency 'basename'
@@ -519,7 +531,7 @@ getOptions() {
                         parseAutoRotationMode "$1"
                         shift
                         ;;
-                --fit-page)
+                --fit-page|--fit-to-page)
                         shift
                         parseFitPageMode "$1"
                         shift
@@ -782,8 +794,8 @@ getUrl() {
                 echo "TARGET > $target"
                 exit $EXIT_INVALID_OPTION
         fi
-        WGET_BIN="$(which wget 2>/dev/null)"
-        CURL_BIN="$(which curl 2>/dev/null)"
+        WGET_BIN="$(command -v wget 2>/dev/null)"
+        CURL_BIN="$(command -v curl 2>/dev/null)"
         if isExecutable "$WGET_BIN"; then
                 useInsecure && WGET_BIN="$WGET_BIN --no-check-certificate"
                 echo "Downloading file with wget"
@@ -1087,7 +1099,7 @@ parseFitPageMode() {
                         FIT_PAGE=''
                         ;;
                 y|yes|f|fit)
-                        FIT_PAGE='-dPDFFitPage'
+                        FIT_PAGE='-dPDFFitPage' # this is redundant -.0 ---->> VAR=$VAR
                         ;;
                 *)
                         initError "Invalid Resize Fit Page Mode: \"$1\"" $EXIT_INVALID_OPTION
@@ -2056,8 +2068,9 @@ vPrintScaleFactor() {
 # Prints help info
 printHelp() {
         printVersion 3
-        local paperList="$(printPaperNames)"
-        echo "
+        #local paperList="$(printPaperNames)"
+#        echo "
+        printf "%s" "
 Usage: $PDFSCALE_NAME <inFile.pdf>
        $PDFSCALE_NAME -i <inFile.pdf>
        $PDFSCALE_NAME [-v] [-s <factor>] [-m <page-detection>] <inFile.pdf> [outfile.pdf]
@@ -2118,10 +2131,10 @@ Parameters:
                     n, none        Retains orientation of each page
                     a, all         Rotates all pages (or none) depending
                                    on a kind of \"majority decision\"
- --fit-page <mode>
+ --fit-to-page <mode>
              Use of GS option dPDFFitPage, used by default
              This option is only valid in resize mode
-             Modes: y, yes      Fit page
+             Modes: y, yes      Fit page (default)
                     n, no       Do not fit page
  --hor-align, --horizontal-alignment <left|center|right>
              Where to translate the scaled page
@@ -2196,7 +2209,16 @@ Output filename:
    .<PAPERSIZE>.SCALED.pdf is added in mixed mode
 
 Standard Paper Names: (case-insensitive)
-$paperList
+ A0            A1            A2            A3            A4
+ A4SMALL       A5            A6            A7            A8
+ A9            A10           ISOB0         ISOB1         ISOB2
+ ISOB3         ISOB4         ISOB5         ISOB6         C0
+ C1            C2            C3            C4            C5
+ C6            11X17         LEDGER        LEGAL         LETTER
+ LETTERSMALL   ARCHE         ARCHD         ARCHC         ARCHB
+ ARCHA         JISB0         JISB1         JISB2         JISB3
+ JISB4         JISB5         JISB6         FLSA          FLSE
+ HALFLETTER    HAGAKI
 
 Custom Paper Size:
  - Paper size can be set manually in Milimeters, Inches or Points
