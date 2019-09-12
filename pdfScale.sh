@@ -13,7 +13,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.4.3"
+VERSION="2.4.4"
 
 
 ###################### EXTERNAL PROGRAMS #######################
