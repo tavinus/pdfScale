@@ -25,7 +25,7 @@
 #
 ################################################################
 
-VERSION="2.4.7"
+VERSION="2.4.8"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -323,6 +323,9 @@ pageResize() {
         isResizePaperSource && { RESIZE_WIDTH=$PGWIDTH; RESIZE_HEIGHT=$PGHEIGHT; }
         # Get new paper sizes if not custom or source paper
         isNotCustomPaper && ! isResizePaperSource && getGSPaperSize "$RESIZE_PAPER_TYPE"
+		local fpStatus="Enabled (default)"
+		isEmpty $FIT_PAGE && fpStatus="Disabled (manual)"
+        vprint "   Fit To Page: $fpStatus"
         vprint "   Auto Rotate: $(basename $AUTO_ROTATION)"
         runFlipDetect
         vprint "  Run Resizing: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
@@ -531,9 +534,10 @@ getOptions() {
                         parseAutoRotationMode "$1"
                         shift
                         ;;
-                --fit-page|--fit-to-page)
-                        shift
-                        parseFitPageMode "$1"
+                --no-fit-page|--no-fit-to-page|--disable-fit-to-page|--disable-fit-page)
+                        #shift
+                        #parseFitPageMode "$1"
+						FIT_PAGE=''
                         shift
                         ;;
                 --background-gray)
@@ -1091,7 +1095,7 @@ parseAutoRotationMode() {
         esac
 }
 
-# Parses and validates the resize fit page
+# Parses and validates the resize fit page (DEPRECATED)
 parseFitPageMode() {
         local param="$(lowercase $1)"
         case "${param}" in
@@ -2131,11 +2135,8 @@ Parameters:
                     n, none        Retains orientation of each page
                     a, all         Rotates all pages (or none) depending
                                    on a kind of \"majority decision\"
- --fit-to-page <mode>
-             Use of GS option dPDFFitPage, used by default
-             This option is only valid in resize mode
-             Modes: y, yes      Fit page (default)
-                    n, no       Do not fit page
+ --no-fit-to-page
+             Disables GS option dPDFFitPage (used when resizing)
  --hor-align, --horizontal-alignment <left|center|right>
              Where to translate the scaled page
              Default: center
