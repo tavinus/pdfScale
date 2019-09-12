@@ -13,7 +13,7 @@
 #         And: https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
 
 
-VERSION="2.4.4"
+VERSION="2.4.5"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -1086,7 +1086,7 @@ parseFitPageMode() {
                 n|no)
                         FIT_PAGE=''
                         ;;
-                f|fit)
+                y|yes|f|fit)
                         FIT_PAGE='-dPDFFitPage'
                         ;;
                 *)
@@ -2121,7 +2121,7 @@ Parameters:
  --fit-page <mode>
              Use of GS option dPDFFitPage, used by default
              This option is only valid in resize mode
-             Modes: f, fit      Fit page
+             Modes: y, yes      Fit page
                     n, no       Do not fit page
  --hor-align, --horizontal-alignment <left|center|right>
              Where to translate the scaled page

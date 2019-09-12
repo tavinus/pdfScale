@@ -133,7 +133,7 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 ## Help info
 ```
 $ pdfscale -h
-pdfscale v2.4.3
+pdfscale v2.4.5
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -198,7 +198,7 @@ Parameters:
  --fit-page <mode>
              Use of GS option dPDFFitPage, used by default
              This option is only valid in resize mode
-             Modes: f, fit      Fit page
+             Modes: y, yes      Fit page
                     n, no       Do not fit page
  --hor-align, --horizontal-alignment <left|center|right>
              Where to translate the scaled page
