@@ -4,7 +4,6 @@
 #
 # pdfScale.sh
 #
-# Scale PDF to specified percentage of original size.
 # Manipulate PDFs using Ghostscript.
 # Scale, Resize and Split PDFs.
 # Writen for Bash.
