@@ -132,8 +132,8 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 
 ## Help info
 ```
-$ pdfscale -h
-pdfscale v2.4.8
+$ pdfscale --help
+pdfscale v2.4.9
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -217,6 +217,12 @@ Parameters:
              Ghostscript PDF Profile to use in -dPDFSETTINGS
              Default: printer
              Options: screen, ebook, printer, prepress, default
+ --print-mode <mode>
+             Setting for GS -dPrinted, loads options for screen or printer
+             Defaults to nothing, which uses the print profile for files
+             The screen profile preserves URLs, but loses print annotations
+             Modes: s, screen   Use screen options > '-dPrinted=false'
+                    p, printer  Use print options  > '-dPrinted'
  --image-downsample <gs-downsample-method>
              Ghostscript Image Downsample Method
              Default: bicubic
@@ -323,8 +329,6 @@ Examples:
  pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
  pdfscale -r A4 myPdfFile.pdf
  pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
-
-
 ```  
   
 ## Standard Paper Tables

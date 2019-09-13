@@ -24,7 +24,7 @@
 #
 ################################################################
 
-VERSION="2.4.8"
+VERSION="2.4.9"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -68,6 +68,7 @@ FLIP_DETECTION=$TRUE        # If we should run the Flip-detection
 FLIP_FORCE=$FALSE           # If we should force Flipping
 AUTO_ROTATION='/PageByPage' # GS call auto-rotation setting
 FIT_PAGE='-dPDFFitPage'     # GS call resize fit page setting
+DPRINTED=""                 # Print to screen or printer ? -dPrinted=false
 PGWIDTH=""                  # Input PDF Page Width
 PGHEIGHT=""                 # Input PDF Page Height
 RESIZE_WIDTH=""             # Resized PDF Page Width
@@ -213,6 +214,7 @@ initMain() {
         vPrintFileInfo
         getPageSize
         vPrintPageSizes ' Source'
+	vShowPrintMode
 }
 
 # Prints PDF Info and exits with $EXIT_SUCCESS, but only if $JUST_IDENTIFY is $TRUE
@@ -289,6 +291,7 @@ gsPageScale() {
 -dColorConversionStrategy=/LeaveColorUnchanged \
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
+$DPRINTED \
 -sOutputFile="$OUTFILEPDF" \
 -c "<</BeginPage{$BACKGROUNDCALL$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
 -f "$INFILEPDF" 
@@ -308,6 +311,7 @@ gsPrintPageScale() {
 -dColorConversionStrategy=/LeaveColorUnchanged \
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
+$DPRINTED \
 -sOutputFile="$OUTFILEPDF" \
 -c "<</BeginPage{$BACKGROUNDCALL$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
 -f "$INFILEPDF"
@@ -348,7 +352,7 @@ gsPageResize() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
 -dAutoRotatePages=$AUTO_ROTATION \
--dFIXEDMEDIA $FIT_PAGE \
+-dFIXEDMEDIA $FIT_PAGE $DPRINTED \
 -sOutputFile="$OUTFILEPDF" \
 -f "$INFILEPDF"
         return $?
@@ -369,7 +373,7 @@ gsPrintPageResize() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
 -dAutoRotatePages=$AUTO_ROTATION \
--dFIXEDMEDIA $FIT_PAGE \
+-dFIXEDMEDIA $FIT_PAGE $DPRINTED \
 -sOutputFile="$OUTFILEPDF" \
 -f "$INFILEPDF"
 _EOF_
@@ -533,10 +537,13 @@ getOptions() {
                         parseAutoRotationMode "$1"
                         shift
                         ;;
-                --no-fit-page|--no-fit-to-page|--disable-fit-to-page|--disable-fit-page)
-                        #shift
-                        #parseFitPageMode "$1"
-						FIT_PAGE=''
+                --printmode|--print-mode)
+                        shift
+                        parsePrintMode "$1"
+                        shift
+                        ;;
+                --no-fit-page|--no-fit-to-page|--disable-fit-to-page|--disable-fit-page|--nofitpage|--nofittopage|--disablefittopage|--disablefitpage)
+			FIT_PAGE=''
                         shift
                         ;;
                 --background-gray)
@@ -1094,18 +1101,18 @@ parseAutoRotationMode() {
         esac
 }
 
-# Parses and validates the resize fit page (DEPRECATED)
-parseFitPageMode() {
+# Parses and validates the Print Mode (dPrinted parameter)
+parsePrintMode() {
         local param="$(lowercase $1)"
         case "${param}" in
-                n|no)
-                        FIT_PAGE=''
+                s|screen)
+                        DPRINTED='-dPrinted=false'
                         ;;
-                y|yes|f|fit)
-                        FIT_PAGE='-dPDFFitPage' # this is redundant -.0 ---->> VAR=$VAR
+                p|print|printer)
+                        DPRINTED='-dPrinted'
                         ;;
                 *)
-                        initError "Invalid Resize Fit Page Mode: \"$1\"" $EXIT_INVALID_OPTION
+                        initError "Invalid Print Mode (not s,screen,p,print): \"$1\"" $EXIT_INVALID_OPTION
                         return $FALSE
                         ;;
         esac
@@ -2068,6 +2075,18 @@ vPrintScaleFactor() {
         vprint "  Scale Factor: $scaleMsg"
 }
 
+# Prints -dPrinted info to verbose log
+vShowPrintMode() {
+	local pMode
+	pMode='Print ( -dPrinted )'
+	if [[ -z "$DPRINTED" ]]; then
+		pMode='Print ( auto/empty )'
+	elif [[ "$DPRINTED" = '-dPrinted=false' ]]; then
+		pMode='Screen ( -dPrinted=false )'
+	fi
+	vprint "    Print Mode: $pMode"
+}
+
 # Prints help info
 printHelp() {
         printVersion 3
@@ -2156,6 +2175,12 @@ Parameters:
              Ghostscript PDF Profile to use in -dPDFSETTINGS
              Default: printer
              Options: screen, ebook, printer, prepress, default
+ --print-mode <mode>
+             Setting for GS -dPrinted, loads options for screen or printer
+             Defaults to nothing, which uses the print profile for files
+             The screen profile preserves URLs, but loses print annotations
+             Modes: s, screen   Use screen options > '-dPrinted=false'
+                    p, printer  Use print options  > '-dPrinted'
  --image-downsample <gs-downsample-method>
              Ghostscript Image Downsample Method
              Default: bicubic
