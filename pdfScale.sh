@@ -20,7 +20,7 @@
 #
 ################################################################
 
-VERSION="2.5.2"
+VERSION="2.5.3"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -768,6 +768,7 @@ selfInstall() {
         fi
         if [[ $NEED_SUDO -eq $TRUE ]]; then
                 if sudo cp "$CURRENT_LOC" "$TARGET_LOC"; then
+                        sudo chmod +x "$TARGET_LOC"
                         echo $'\nSuccess! Program installed!'
                         echo " > $TARGET_LOC"
                         exit $EXIT_SUCCESS
@@ -777,6 +778,7 @@ selfInstall() {
                 fi
         fi
         if cp "$CURRENT_LOC" "$TARGET_LOC"; then
+                chmod +x "$TARGET_LOC"
                 echo $'\nSuccess! Program installed!'
                 echo " > $TARGET_LOC"
                 exit $EXIT_SUCCESS
@@ -793,6 +795,7 @@ selfInstall() {
                 if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                         NEED_SUDO=$TRUE
                         if sudo cp "$CURRENT_LOC" "$TARGET_LOC"; then
+                                sudo chmod +x "$TARGET_LOC"
                                 echo $'\nSuccess! Program installed!'
                                 echo " > $TARGET_LOC"
                                 exit $EXIT_SUCCESS
@@ -945,6 +948,7 @@ selfUpgrade() {
         if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                 echo "Upgrading..."
                 if cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
+                        chmod +x "$CURRENT_LOC"
                         exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
                 else
                         _answer="no"
@@ -960,6 +964,7 @@ selfUpgrade() {
                         if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                                 echo "Upgrading with sudo..."
                                 if sudo cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
+                                        sudo chmod +x "$CURRENT_LOC"
                                         exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
                                 else
                                         exitUpgrade "There was an error when copying the new version."
