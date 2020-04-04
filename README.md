@@ -344,6 +344,8 @@ Examples:
  pdfscale -m pdfinfo -s 0.80 -v myPdfFile.pdf
  pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
  pdfscale -r A4 myPdfFile.pdf
+ pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
+  
 ```  
   
 ## Standard Paper Tables
