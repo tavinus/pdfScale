@@ -9,7 +9,7 @@
 # Writen for Bash.
 #
 # Gustavo Arnosti Neves - 2016 / 07 / 10
-#        Latest Version - 2020 / 04 / 03
+#        Latest Version - 2020 / 04 / 04
 #
 # This app: https://github.com/tavinus/pdfScale
 #
@@ -20,7 +20,7 @@
 #
 ################################################################
 
-VERSION="2.5.1"
+VERSION="2.5.2"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -838,7 +838,7 @@ getUrl() {
         elif isExecutable "$CURL_BIN"; then
                 useInsecure && CURL_BIN="$CURL_BIN --insecure"
                 echo "Downloading file with curl"
-                _stat="$($CURL_BIN -o "$target" "$url" 2>&1)"
+                _stat="$($CURL_BIN -o "$target" -L "$url" 2>&1)"
                 if [[ $? -eq 0 ]]; then
                         return $TRUE
                 else
