@@ -143,7 +143,7 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 ## Help info
 ```
 $ pdfscale --help
-pdfscale v2.4.9
+pdfscale v2.5.1
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -192,6 +192,12 @@ Parameters:
              Triggers the Resize Paper Mode, disables auto-scaling of 0.95
              Resize PDF and fit-to-page
              <paper> can be: source, custom or a valid std paper name, read below
+ -c, --cropbox <paper>
+             Resets Cropboxes on all pages to a specific paper size
+             Only applies to resize mode
+             <paper> can be: full | fullsize - Uses the same size as the main paper/mediabox
+                             custom          - Define a custom cropbox size in inches, mm or points
+                             std paper name  - Uses a paper size name (eg. a4, letter, etc)
  -f, --flip-detect <mode>
              Flip Detection Mode, defaults to 'auto'
              Inverts Width <-> Height of a Resized PDF
@@ -339,6 +345,7 @@ Examples:
  pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
  pdfscale -r A4 myPdfFile.pdf
  pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
+  
 ```  
   
 ## Standard Paper Tables

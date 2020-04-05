@@ -9,13 +9,9 @@
 # Writen for Bash.
 #
 # Gustavo Arnosti Neves - 2016 / 07 / 10
-#        Latest Version - 2019 / 09 / 12
+#        Latest Version - 2020 / 04 / 04
 #
-# This script: https://github.com/tavinus/pdfScale
-#
-# Humble Beginnings References
-# - http://ma.juii.net/blog/scale-page-content-of-pdf-files
-# - https://gist.github.com/MichaelJCole/86e4968dbfc13256228a
+# This app: https://github.com/tavinus/pdfScale
 #
 # THIS SOFTWARE IS FREE - HAVE FUN WITH IT
 # I hope this can be of help to people. Thanks to the people
@@ -24,7 +20,7 @@
 #
 ################################################################
 
-VERSION="2.4.9"
+VERSION="2.5.3"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -64,6 +60,8 @@ AUTOMATIC_SCALING=$TRUE     # Default scaling in $SCALE, disabled in resize mode
 MODE=""                     # Which page size detection to use
 RESIZE_PAPER_TYPE=""        # Pre-defined paper to use
 CUSTOM_RESIZE_PAPER=$FALSE  # If we are using a custom-defined paper
+CROPBOX_PAPER_TYPE=""       # Pre-defined paper to use for cropboxes
+CUSTOM_CROPBOX_PAPER=$FALSE # If we are using a custom-defined cropbox
 FLIP_DETECTION=$TRUE        # If we should run the Flip-detection
 FLIP_FORCE=$FALSE           # If we should force Flipping
 AUTO_ROTATION='/PageByPage' # GS call auto-rotation setting
@@ -109,6 +107,7 @@ BACKGROUNDLOG="No background (default)"
 SIMULATE=$FALSE             # Avoid execution
 PRINT_GS_CALL=$FALSE        # Print GS Call to stdout
 GS_CALL_STRING=""           # Buffer
+RESIZECOMMANDS=""           # command to run on resize call
 
 ############################# Project Info
 PROJECT_NAME="pdfScale"
@@ -332,6 +331,16 @@ pageResize() {
         vprint "   Auto Rotate: $(basename $AUTO_ROTATION)"
         runFlipDetect
         vprint "  Run Resizing: $(uppercase "$RESIZE_PAPER_TYPE") ( "$RESIZE_WIDTH" x "$RESIZE_HEIGHT" ) pts"
+        if shouldSetCropbox; then
+                if [[ $CROPBOX_PAPER_TYPE == 'fullsize' ]]; then
+                        CROPBOX_WIDTH=$RESIZE_WIDTH
+                        CROPBOX_HEIGHT=$RESIZE_HEIGHT
+                elif [[ $CROPBOX_PAPER_TYPE != 'custom' ]]; then
+                        getCropboxPaperSize "$CROPBOX_PAPER_TYPE"
+                fi
+                RESIZECOMMANDS='<</EndPage {0 eq {[/CropBox [0 0 '"$CROPBOX_WIDTH $CROPBOX_HEIGHT"'] /PAGE pdfmark true}{false}ifelse}>> setpagedevice'
+                vprint " Cropbox Reset: $(uppercase "$CROPBOX_PAPER_TYPE") ( "$CROPBOX_WIDTH" x "$CROPBOX_HEIGHT" ) pts"
+        fi
         GS_RUN_STATUS="$GS_RUN_STATUS""$(gsPageResize 2>&1)"
         GS_CALL_STRING="$GS_CALL_STRING"$'[GS RESIZE CALL STARTS]\n'"$(gsPrintPageResize)"$'\n[GS RESIZE CALL ENDS]\n'
         return $?
@@ -342,6 +351,7 @@ gsPageResize() {
         if isDryRun; then
                 return $TRUE
         fi
+
         # Change page size
         "$GSBIN" \
 -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dSAFER \
@@ -353,7 +363,7 @@ gsPageResize() {
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
 -dAutoRotatePages=$AUTO_ROTATION \
 -dFIXEDMEDIA $FIT_PAGE $DPRINTED \
--sOutputFile="$OUTFILEPDF" \
+-sOutputFile="$OUTFILEPDF" -c "$RESIZECOMMANDS" \
 -f "$INFILEPDF"
         return $?
 }
@@ -374,7 +384,7 @@ gsPrintPageResize() {
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
 -dAutoRotatePages=$AUTO_ROTATION \
 -dFIXEDMEDIA $FIT_PAGE $DPRINTED \
--sOutputFile="$OUTFILEPDF" \
+-sOutputFile="$OUTFILEPDF" -c "$RESIZECOMMANDS" \
 -f "$INFILEPDF"
 _EOF_
 
@@ -521,6 +531,11 @@ getOptions() {
                 -r|--resize)
                         shift
                         parsePaperResize "$1"
+                        shift
+                        ;;
+                -c|--cropbox)
+                        shift
+                        parseCropbox "$1"
                         shift
                         ;;
                 -p|--printpapers|--print-papers|--listpapers|--list-papers)
@@ -678,7 +693,8 @@ shouldUpgrade() {
 
 # Install pdfScale
 selfInstall() {
-        CURRENT_LOC="$(readlink -f $0)"
+        #CURRENT_LOC="$(readlink -f $0)"
+        CURRENT_LOC="$(readlinkf $0)"
         TARGET_LOC="$1"
         isEmpty "$TARGET_LOC" && TARGET_LOC="/usr/local/bin/pdfscale"
         VERBOSE=0
@@ -752,6 +768,7 @@ selfInstall() {
         fi
         if [[ $NEED_SUDO -eq $TRUE ]]; then
                 if sudo cp "$CURRENT_LOC" "$TARGET_LOC"; then
+                        sudo chmod +x "$TARGET_LOC"
                         echo $'\nSuccess! Program installed!'
                         echo " > $TARGET_LOC"
                         exit $EXIT_SUCCESS
@@ -761,6 +778,7 @@ selfInstall() {
                 fi
         fi
         if cp "$CURRENT_LOC" "$TARGET_LOC"; then
+                chmod +x "$TARGET_LOC"
                 echo $'\nSuccess! Program installed!'
                 echo " > $TARGET_LOC"
                 exit $EXIT_SUCCESS
@@ -777,6 +795,7 @@ selfInstall() {
                 if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                         NEED_SUDO=$TRUE
                         if sudo cp "$CURRENT_LOC" "$TARGET_LOC"; then
+                                sudo chmod +x "$TARGET_LOC"
                                 echo $'\nSuccess! Program installed!'
                                 echo " > $TARGET_LOC"
                                 exit $EXIT_SUCCESS
@@ -822,7 +841,7 @@ getUrl() {
         elif isExecutable "$CURL_BIN"; then
                 useInsecure && CURL_BIN="$CURL_BIN --insecure"
                 echo "Downloading file with curl"
-                _stat="$($CURL_BIN -o "$target" "$url" 2>&1)"
+                _stat="$($CURL_BIN -o "$target" -L "$url" 2>&1)"
                 if [[ $? -eq 0 ]]; then
                         return $TRUE
                 else
@@ -869,7 +888,8 @@ exitUpgrade() {
 
 # Downloads current version from github's MASTER branch
 selfUpgrade() {
-        CURRENT_LOC="$(readlink -f $0)"
+        #CURRENT_LOC="$(readlink -f $0)"
+        CURRENT_LOC="$(readlinkf $0)"
         _cwd="$(pwd)"
         local _cur_tstamp="$(date '+%Y%m%d-%H%M%S')"
         TMP_DIR='/tmp'
@@ -928,6 +948,7 @@ selfUpgrade() {
         if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                 echo "Upgrading..."
                 if cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
+                        chmod +x "$CURRENT_LOC"
                         exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
                 else
                         _answer="no"
@@ -943,6 +964,7 @@ selfUpgrade() {
                         if [[ "$_answer" = "y" || "$_answer" = "yes" ]]; then
                                 echo "Upgrading with sudo..."
                                 if sudo cp "./pdfScale.sh" "$CURRENT_LOC" 2>/dev/null; then
+                                        sudo chmod +x "$CURRENT_LOC"
                                         exitUpgrade $'\n'"Success! Upgrade finished!"$'\n'" > $CURRENT_LOC" $EXIT_SUCCESS
                                 else
                                         exitUpgrade "There was an error when copying the new version."
@@ -1335,6 +1357,43 @@ parseRGBBackground() {
 }
 
 
+
+
+# Validades the a paper resize CLI option and sets the paper to $CROPBOX_PAPER_TYPE
+parseCropbox() {
+        isEmpty "$1" && initError 'Invalid Cropbox: (empty)' $EXIT_INVALID_PAPER_SIZE
+        local lowercasePaper="$(lowercase $1)"
+        local customPaper=($lowercasePaper)
+        if [[ "$customPaper" = 'full' || "$customPaper" = 'fullsize' || "$customPaper" = 'mediabox' ]]; then
+                CROPBOX_PAPER_TYPE='fullsize'
+        elif [[ "${customPaper[0]}" = 'custom' ]]; then
+                if isNotValidMeasure "${customPaper[1]}" || ! isFloatBiggerThanZero "${customPaper[2]}" || ! isFloatBiggerThanZero "${customPaper[3]}"; then
+                        initError "Invalid Custom Paper Definition!"$'\n'"Use: --cropbox 'custom <measurement> <width> <height>'"$'\n'"Measurements: mm, in, pts" $EXIT_INVALID_OPTION
+                fi
+                CROPBOX_PAPER_TYPE="custom"
+                CUSTOM_CROPBOX_PAPER=$TRUE
+                if isMilimeter "${customPaper[1]}"; then
+                        CROPBOX_WIDTH="$(milimetersToPoints "${customPaper[2]}")"
+                        CROPBOX_HEIGHT="$(milimetersToPoints "${customPaper[3]}")"
+                elif isInch "${customPaper[1]}"; then
+                        CROPBOX_WIDTH="$(inchesToPoints "${customPaper[2]}")"
+                        CROPBOX_HEIGHT="$(inchesToPoints "${customPaper[3]}")"
+                elif isPoint "${customPaper[1]}"; then
+                        CROPBOX_WIDTH="${customPaper[2]}"
+                        CROPBOX_HEIGHT="${customPaper[3]}"
+                else
+                        initError "Invalid Custom Paper Definition!"$'\n'"Use: --cropbox 'custom <measurement> <width> <height>'"$'\n'"Measurements: mm, in, pts" $EXIT_INVALID_OPTION
+                fi
+        else
+                isPaperName "$lowercasePaper" || initError "Invalid Paper Type: $1" $EXIT_INVALID_PAPER_SIZE
+                CROPBOX_PAPER_TYPE="$lowercasePaper"
+                
+        fi
+        RESIZECOMMANDS='<</EndPage {0 eq {[/CropBox [0 0 '"$CROPBOX_WIDTH $CROPBOX_HEIGHT"'] /PAGE pdfmark true}{false}ifelse}>> setpagedevice'
+}
+
+
+
 ################### PDF PAGE SIZE DETECTION ####################
 
 ################################################################
@@ -1494,7 +1553,8 @@ getPageSizeCatGrep() {
         # /MediaBox[ 0 0 595.28 841.89 ]
 
         # Get MediaBox data if possible
-        local mediaBox="$("$GREPBIN" -a -e '/MediaBox' -m 1 "$INFILEPDF" 2>/dev/null)"
+        #local mediaBox="$("$GREPBIN" -a -e '/MediaBox' -m 1 "$INFILEPDF" 2>/dev/null)"
+        local mediaBox="$(strings "$INFILEPDF" | "$GREPBIN" -a -e '/MediaBox' -m 1 2>/dev/null)"
 
         mediaBox="${mediaBox##*/MediaBox}"
         mediaBox="${mediaBox##*[}"
@@ -1639,6 +1699,19 @@ getGSPaperSize() {
 }
 
 # Gets a paper size in points and sets it to RESIZE_WIDTH and RESIZE_HEIGHT
+getCropboxPaperSize() {
+        isEmpty "$sizesall" && getPaperInfo
+        while read l; do 
+                local cols=($l)
+                if [[ "$1" == ${cols[0]} ]]; then
+                        CROPBOX_WIDTH=${cols[5]}
+                        CROPBOX_HEIGHT=${cols[6]}
+                        return $TRUE
+                fi
+        done <<< "$sizesAll"
+}
+
+# Gets a paper size in points and sets it to RESIZE_WIDTH and RESIZE_HEIGHT
 getGSPaperName() {
         local w="$(printf "%.0f" $1)"
         local h="$(printf "%.0f" $2)"
@@ -1772,6 +1845,17 @@ isNotCustomPaper() {
         return $TRUE
 }
 
+# Returns $TRUE if a custom paper is being used, $FALSE otherwise
+isCustomCropbox() {
+        return $CUSTOM_CROPBOX_PAPER
+}
+
+# Returns $FALSE if a custom paper is being used, $TRUE otherwise
+isNotCustomCropbox() {
+        isCustomCropbox && return $FALSE
+        return $TRUE
+}
+
 
 ######################### CONVERSIONS ##########################
 
@@ -1859,6 +1943,12 @@ isManualScaledMode() {
 # Returns true if we are resizing a paper (ignores scaling), false otherwise
 isResizeMode() {
         isEmpty $RESIZE_PAPER_TYPE && return $FALSE
+        return $TRUE
+}
+
+# Returns true if we are reseting the cropboxes (ignores scaling), false otherwise
+shouldSetCropbox() {
+        isEmpty $CROPBOX_PAPER_TYPE && return $FALSE
         return $TRUE
 }
 
@@ -2140,6 +2230,12 @@ Parameters:
              Triggers the Resize Paper Mode, disables auto-scaling of $SCALE
              Resize PDF and fit-to-page
              <paper> can be: source, custom or a valid std paper name, read below
+ -c, --cropbox <paper>
+             Resets Cropboxes on all pages to a specific paper size
+             Only applies to resize mode
+             <paper> can be: full | fullsize - Uses the same size as the main paper/mediabox
+                             custom          - Define a custom cropbox size in inches, mm or points
+                             std paper name  - Uses a paper size name (eg. a4, letter, etc)
  -f, --flip-detect <mode>
              Flip Detection Mode, defaults to 'auto'
              Inverts Width <-> Height of a Resized PDF
@@ -2332,6 +2428,124 @@ initError() {
 printError() {
         echo >&2 "$@"
 }
+
+
+
+##############################################################################
+## REALPATH IMPLEMENTATION
+## https://github.com/mkropat/sh-realpath/blob/master/realpath.sh
+
+realpath() {
+    canonicalize_path "$(resolve_symlinks "$1")"
+}
+
+resolve_symlinks() {
+    _resolve_symlinks "$1"
+}
+
+_resolve_symlinks() {
+    _assert_no_path_cycles "$@" || return
+
+    local dir_context path
+    path=$(readlink -- "$1")
+    if [ $? -eq 0 ]; then
+        dir_context=$(dirname -- "$1")
+        _resolve_symlinks "$(_prepend_dir_context_if_necessary "$dir_context" "$path")" "$@"
+    else
+        printf '%s\n' "$1"
+    fi
+}
+
+_prepend_dir_context_if_necessary() {
+    if [ "$1" = . ]; then
+        printf '%s\n' "$2"
+    else
+        _prepend_path_if_relative "$1" "$2"
+    fi
+}
+
+_prepend_path_if_relative() {
+    case "$2" in
+        /* ) printf '%s\n' "$2" ;;
+         * ) printf '%s\n' "$1/$2" ;;
+    esac
+}
+
+_assert_no_path_cycles() {
+    local target path
+
+    target=$1
+    shift
+
+    for path in "$@"; do
+        if [ "$path" = "$target" ]; then
+            return 1
+        fi
+    done
+}
+
+canonicalize_path() {
+    if [ -d "$1" ]; then
+        _canonicalize_dir_path "$1"
+    else
+        _canonicalize_file_path "$1"
+    fi
+}
+
+_canonicalize_dir_path() {
+    (cd "$1" 2>/dev/null && pwd -P)
+}
+
+_canonicalize_file_path() {
+    local dir file
+    dir=$(dirname -- "$1")
+    file=$(basename -- "$1")
+    (cd "$dir" 2>/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file")
+}
+
+
+##############################################################################
+## READLINK -F IMPLEMENTATION
+## Running a native bash readlink -f substitute
+
+# Resolve symlinks
+function tracelink() {
+        local link="$1"
+        while [ -L "$link" ]; do
+                lastLink="$link"
+                link=$(/bin/ls -ldq "$link")
+                link="${link##* -> }"
+                link=$(realpath "$link")
+                [ "$link" == "$lastlink" ] && echo -e "ERROR: link loop or inexistent target detected on $link" 1>&2 && break
+        done
+        echo -n "$link"
+}
+
+# Traverse path
+function abspath() {
+        pushd . > /dev/null;
+        if [ -d "$1" ]; then
+                cd "$1";
+                dirs -l +0;
+        else
+                cd "`dirname \"$1\"`";
+                cur_dir=`dirs -l +0`;
+                if [ "$cur_dir" == "/" ]; then
+                        echo -n "$cur_dir`basename \"$1\"`";
+                else
+                        echo -n "$cur_dir/`basename \"$1\"`";
+                fi;
+        fi;
+        popd > /dev/null;
+}
+
+# Uses tracelink and abspath to emulate readlink -f
+function readlinkf() {
+        echo -n "$(tracelink "$(abspath "$1")")"
+}
+
+
+
 
 
 ########################## EXECUTION ###########################
