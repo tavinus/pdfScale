@@ -42,10 +42,16 @@ LC_NUMERIC="C"
 TRUE=0                     # Silly stuff
 FALSE=1
 
+SCALE_DEFAULT="default"
+SCALE_MANUAL="manual"
+SCALE_AUTO="auto"
+
+MAX_AUTO_SCALE=0.9            # Max auto scaling factor is 100%
+DEFAULT_SCALE=0.95            # Default scaling factor is 95%
 
 ########################### GLOBALS ############################
 
-SCALE="0.95"                   # scaling factor (0.95 = 95%, e.g.)
+SCALE=$DEFAULT_SCALE           # Scaling factor (0.95 = 95%, e.g.)
 VERBOSE=0                      # verbosity Level
 PDFSCALE_NAME="$(basename $0)" # simplified name of this script
 OSNAME="$(uname 2>/dev/null)"  # Check where we are running
@@ -56,7 +62,7 @@ OUTFILEPDF=""               # Output PDF file name
 JUST_IDENTIFY=$FALSE        # Flag to just show PDF info
 ABORT_ON_OVERWRITE=$FALSE   # Flag to abort if OUTFILEPDF already exists
 ADAPTIVEMODE=$TRUE          # Automatically try to guess best mode
-AUTOMATIC_SCALING=$TRUE     # Default scaling in $SCALE, disabled in resize mode
+SCALE_MODE=$SCALE_DEFAULT   # Default scaling in $SCALE, disabled in resize mode
 MODE=""                     # Which page size detection to use
 RESIZE_PAPER_TYPE=""        # Pre-defined paper to use
 CUSTOM_RESIZE_PAPER=$FALSE  # If we are using a custom-defined paper
@@ -159,6 +165,7 @@ main() {
                 OUTFILEPDF="$tempFile"                      # set output to tmp file
                 pageResize                                  # resize to tmp file
                 finalRet=$?
+                setPageScale                                    # set the page scale if needed
                 INFILEPDF="$tempFile"                       # get tmp file as input
                 OUTFILEPDF="$outputFile"                    # reset final target
                 PGWIDTH=$RESIZE_WIDTH                       # we already know the new page size
@@ -179,8 +186,7 @@ main() {
         else
                 initMain "   Single Task: Scale PDF Contents"
                 local scaleMode=""
-                isManualScaledMode && scaleMode='(manual)' || scaleMode='(auto)'
-                vPrintScaleFactor "$SCALE $scaleMode"
+                vPrintScaleFactor
                 pageScale
                 finalRet=$?
         fi
@@ -213,7 +219,7 @@ initMain() {
         vPrintFileInfo
         getPageSize
         vPrintPageSizes ' Source'
-	vShowPrintMode
+        vShowPrintMode
 }
 
 # Prints PDF Info and exits with $EXIT_SUCCESS, but only if $JUST_IDENTIFY is $TRUE
@@ -237,6 +243,19 @@ printPDFSizes() {
         return $EXIT_SUCCESS
 }
 
+# Compute the page scale if needed
+setPageScale() {
+        if [ "$SCALE" = auto ]; then
+                if isCustomScaleMode; then
+                        XSCALE=$(echo "scale=6; $PGWIDTH/$RESIZE_WIDTH" | "$BCBIN")
+                        YSCALE=$(echo "scale=6; $PGHEIGHT/$RESIZE_HEIGHT" | "$BCBIN")
+                        SCALE=$(echo "scale=6; if ($XSCALE < $YSCALE) $XSCALE; if ($YSCALE < $XSCALE) $YSCALE" | "$BCBIN")
+                        SCALE=$(echo "scale=6; if ($SCALE < $MAX_AUTO_SCALE) $SCALE; if ($MAX_AUTO_SCALE < $SCALE) $MAX_AUTO_SCALE" | "$BCBIN")
+                else
+                        SCALE=$DEFAULT_SCALE
+                fi
+        fi
+}
 
 ###################### GHOSTSCRIPT CALLS #######################
 
@@ -325,8 +344,8 @@ pageResize() {
         isResizePaperSource && { RESIZE_WIDTH=$PGWIDTH; RESIZE_HEIGHT=$PGHEIGHT; }
         # Get new paper sizes if not custom or source paper
         isNotCustomPaper && ! isResizePaperSource && getGSPaperSize "$RESIZE_PAPER_TYPE"
-		local fpStatus="Enabled (default)"
-		isEmpty $FIT_PAGE && fpStatus="Disabled (manual)"
+                local fpStatus="Enabled (default)"
+                isEmpty $FIT_PAGE && fpStatus="Disabled (manual)"
         vprint "   Fit To Page: $fpStatus"
         vprint "   Auto Rotate: $(basename $AUTO_ROTATION)"
         runFlipDetect
@@ -558,7 +577,7 @@ getOptions() {
                         shift
                         ;;
                 --no-fit-page|--no-fit-to-page|--disable-fit-to-page|--disable-fit-page|--nofitpage|--nofittopage|--disablefittopage|--disablefitpage)
-			FIT_PAGE=''
+                        FIT_PAGE=''
                         shift
                         ;;
                 --background-gray)
@@ -1032,14 +1051,22 @@ isDryRun() {
 
 # Parses and validates the scaling factor
 parseScale() {
-        AUTOMATIC_SCALING=$FALSE
-        if ! isFloatBiggerThanZero "$1"; then
-                printError "Invalid factor: $1"
-                printError "The factor must be a floating point number greater than 0"
-                printError "Example: for 80% use 0.8"
-                exit $EXIT_INVALID_SCALE
-        fi
-        SCALE="$1"
+        case "$1" in
+                auto)
+                        SCALE_MODE=$SCALE_AUTO
+                        SCALE="$1"
+                        ;;
+                *)
+                        SCALE_MODE=$SCALE_MANUAL
+                        if ! isFloatBiggerThanZero "$1"; then
+                                printError "Invalid factor: $1"
+                                printError "The factor must be a floating point number greater than 0"
+                                printError "Example: for 80% use 0.8"
+                                exit $EXIT_INVALID_SCALE
+                        fi
+                        SCALE="$1"
+                        ;;
+        esac
 }
 
 # Parse a forced mode of operation
@@ -1934,9 +1961,9 @@ pointsToInches() {
 
 ######################## MODE-DETECTION ########################
 
-# Returns $TRUE if the scale was set manually, $FALSE if we are using automatic scaling
-isManualScaledMode() {
-        [[ $AUTOMATIC_SCALING -eq $TRUE ]] && return $FALSE
+# Returns $TRUE if the scale was set manually, $FALSE if we are using default scaling
+isCustomScaleMode() {
+        [[ $SCALE_MODE = $SCALE_DEFAULT ]] && return $FALSE
         return $TRUE
 }
 
@@ -1954,7 +1981,7 @@ shouldSetCropbox() {
 
 # Returns true if we are resizing a paper and the scale was manually set
 isMixedMode() {
-        isResizeMode && isManualScaledMode && return $TRUE
+        isResizeMode && isCustomScaleMode && return $TRUE
         return $FALSE
 }
 
@@ -2160,21 +2187,21 @@ vPrintFileInfo() {
 
 # Prints the scale factor to screen, or custom message
 vPrintScaleFactor() {
-        local scaleMsg="$SCALE"
+        local scaleMsg="$SCALE ($SCALE_MODE)"
         isNotEmpty "$1" && scaleMsg="$1"
         vprint "  Scale Factor: $scaleMsg"
 }
 
 # Prints -dPrinted info to verbose log
 vShowPrintMode() {
-	local pMode
-	pMode='Print ( -dPrinted )'
-	if [[ -z "$DPRINTED" ]]; then
-		pMode='Print ( auto/empty )'
-	elif [[ "$DPRINTED" = '-dPrinted=false' ]]; then
-		pMode='Screen ( -dPrinted=false )'
-	fi
-	vprint "    Print Mode: $pMode"
+        local pMode
+        pMode='Print ( -dPrinted )'
+        if [[ -z "$DPRINTED" ]]; then
+                pMode='Print ( auto/empty )'
+        elif [[ "$DPRINTED" = '-dPrinted=false' ]]; then
+                pMode='Screen ( -dPrinted=false )'
+        fi
+        vprint "    Print Mode: $pMode"
 }
 
 # Prints help info
@@ -2224,8 +2251,9 @@ Parameters:
  -s, --scale <factor>
              Changes the scaling factor or forces mixed mode
              Defaults: $SCALE (scale mode) / Disabled (resize mode)
-             MUST be a number bigger than zero
-             Eg. -s 0.8 for 80% of the original size
+             MUST be a number bigger than zero, or auto
+             Auto scale is the ratio of input size / resize size (mixed mode) or $DEFAULT_SCALE (scale mode)
+             Eg. -s 0.8 for 80% of the original size, -s auto for auto scale
  -r, --resize <paper>
              Triggers the Resize Paper Mode, disables auto-scaling of $SCALE
              Resize PDF and fit-to-page
