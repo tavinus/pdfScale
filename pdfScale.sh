@@ -20,7 +20,7 @@
 #
 ################################################################
 
-VERSION="2.5.3"
+VERSION="2.5.4"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -1628,11 +1628,11 @@ ledger 17.0 11.0 432 279 1224 792
 legal 8.5 14.0 216 356 612 1008
 letter 8.5 11.0 216 279 612 792
 lettersmall 8.5 11.0 216 279 612 792
-archE 36.0 48.0 914 1219 2592 3456
-archD 24.0 36.0 610 914 1728 2592
-archC 18.0 24.0 457 610 1296 1728
-archB 12.0 18.0 305 457 864 1296
-archA 9.0 12.0 229 305 648 864"
+arche 36.0 48.0 914 1219 2592 3456
+archd 24.0 36.0 610 914 1728 2592
+archc 18.0 24.0 457 610 1296 1728
+archb 12.0 18.0 305 457 864 1296
+archa 9.0 12.0 229 305 648 864"
 
         sizesISO="\
 a0 33.1 46.8 841 1189 2384 3370
@@ -1738,7 +1738,7 @@ getGSPaperName() {
 # Loads an array with paper names to memory
 getPaperNames() {
         paperNames=(a0 a1 a2 a3 a4 a4small a5 a6 a7 a8 a9 a10 isob0 isob1 isob2 isob3 isob4 isob5 isob6 c0 c1 c2 c3 c4 c5 c6 \
-11x17 ledger legal letter lettersmall archE archD archC archB archA \
+11x17 ledger legal letter lettersmall arche archd archc archb archa \
 jisb0 jisb1 jisb2 jisb3 jisb4 jisb5 jisb6 \
 flsa flse halfletter hagaki)
 }
