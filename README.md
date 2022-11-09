@@ -142,8 +142,8 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 
 ## Help info
 ```
-$ pdfscale --help
-pdfscale v2.5.1
+$ pdfscale -h
+pdfscale v2.6.0
 
 Usage: pdfscale <inFile.pdf>
        pdfscale -i <inFile.pdf>
@@ -186,8 +186,9 @@ Parameters:
  -s, --scale <factor>
              Changes the scaling factor or forces mixed mode
              Defaults: 0.95 (scale mode) / Disabled (resize mode)
-             MUST be a number bigger than zero
-             Eg. -s 0.8 for 80% of the original size
+             MUST be a number bigger than zero, or auto
+             Auto scale is the ratio of input size / resize size (mixed mode) or 0.95 (scale mode)
+             Eg. -s 0.8 for 80% of the original size, -s auto for auto scale
  -r, --resize <paper>
              Triggers the Resize Paper Mode, disables auto-scaling of 0.95
              Resize PDF and fit-to-page
