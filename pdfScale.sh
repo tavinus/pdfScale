@@ -9,7 +9,7 @@
 # Writen for Bash.
 #
 # Gustavo Arnosti Neves - 2016 / 07 / 10
-#        Latest Version - 2020 / 04 / 04
+#        Latest Version - 2023 / 01 / 26
 #
 # This app: https://github.com/tavinus/pdfScale
 #
@@ -20,7 +20,7 @@
 #
 ################################################################
 
-VERSION="2.5.7"
+VERSION="2.5.8"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -2042,7 +2042,7 @@ isFloat() {
 
 # Returns $TRUE if $1 is a floating point number bigger than zero, $FALSE otherwise
 isFloatBiggerThanZero() {
-        isFloat "$1" && [[ (( $1 > 0 )) ]] && return $TRUE
+        isFloat "$1" && [[ "$1" =~ ^0*[1-9] || "$1" =~ ^0*[.]0*[1-9] ]] && return $TRUE
         return $FALSE
 }
 
