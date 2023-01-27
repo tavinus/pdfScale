@@ -20,7 +20,7 @@
 #
 ################################################################
 
-VERSION="2.5.5"
+VERSION="2.5.6"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -45,11 +45,11 @@ FALSE=1
 
 ########################### GLOBALS ############################
 
-SCALE="0.95"                   # scaling factor (0.95 = 95%, e.g.)
-VERBOSE=0                      # verbosity Level
-PDFSCALE_NAME="$(basename $0)" # simplified name of this script
-OSNAME="$(uname 2>/dev/null)"  # Check where we are running
-GS_RUN_STATUS=""               # Holds GS error messages, signals errors
+SCALE="0.95"                     # scaling factor (0.95 = 95%, e.g.)
+VERBOSE=0                        # verbosity Level
+PDFSCALE_NAME="$(basename "$0")" # simplified name of this script
+OSNAME="$(uname 2>/dev/null)"    # Check where we are running
+GS_RUN_STATUS=""                 # Holds GS error messages, signals errors
 
 INFILEPDF=""                # Input PDF file name
 OUTFILEPDF=""               # Output PDF file name
