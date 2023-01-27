@@ -20,7 +20,7 @@
 #
 ################################################################
 
-VERSION="2.5.6"
+VERSION="2.5.7"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -230,7 +230,7 @@ printPDFSizes() {
                 printf '%s\n' "------------+-----------------------------"
                 printf '%s\n' "            |    WIDTH x HEIGHT"
                 printf "     Points | %+8s x %-8s\n" "$PGWIDTH" "$PGHEIGHT"
-                printf " Milimeters | %+8s x %-8s\n" "$(pointsToMilimeters $PGWIDTH)" "$(pointsToMilimeters $PGHEIGHT)"
+                printf " Millimeters | %+8s x %-8s\n" "$(pointsToMillimeters $PGWIDTH)" "$(pointsToMillimeters $PGHEIGHT)"
                 printf "     Inches | %+8s x %-8s\n" "$(pointsToInches $PGWIDTH)" "$(pointsToInches $PGHEIGHT)"
                 exit $EXIT_SUCCESS
         fi
@@ -1158,8 +1158,8 @@ parsePaperResize() {
                 RESIZE_PAPER_TYPE="custom"
                 CUSTOM_RESIZE_PAPER=$TRUE
                 if isMilimeter "${customPaper[1]}"; then
-                        RESIZE_WIDTH="$(milimetersToPoints "${customPaper[2]}")"
-                        RESIZE_HEIGHT="$(milimetersToPoints "${customPaper[3]}")"
+                        RESIZE_WIDTH="$(millimetersToPoints "${customPaper[2]}")"
+                        RESIZE_HEIGHT="$(millimetersToPoints "${customPaper[3]}")"
                 elif isInch "${customPaper[1]}"; then
                         RESIZE_WIDTH="$(inchesToPoints "${customPaper[2]}")"
                         RESIZE_HEIGHT="$(inchesToPoints "${customPaper[3]}")"
@@ -1377,8 +1377,8 @@ parseCropbox() {
                 CROPBOX_PAPER_TYPE="custom"
                 CUSTOM_CROPBOX_PAPER=$TRUE
                 if isMilimeter "${customPaper[1]}"; then
-                        CROPBOX_WIDTH="$(milimetersToPoints "${customPaper[2]}")"
-                        CROPBOX_HEIGHT="$(milimetersToPoints "${customPaper[3]}")"
+                        CROPBOX_WIDTH="$(millimetersToPoints "${customPaper[2]}")"
+                        CROPBOX_HEIGHT="$(millimetersToPoints "${customPaper[3]}")"
                 elif isInch "${customPaper[1]}"; then
                         CROPBOX_WIDTH="$(inchesToPoints "${customPaper[2]}")"
                         CROPBOX_HEIGHT="$(inchesToPoints "${customPaper[3]}")"
@@ -1822,7 +1822,7 @@ isNotValidMeasure() {
 
 # Returns $TRUE if $1 is a valid milimeter string, $FALSE otherwise
 isMilimeter() {
-        [[ "$1" = 'mm' || "$1" = 'milimeters' || "$1" = 'milimeter' ]] && return $TRUE
+        [[ "$1" = 'mm' || "$1" = 'millimeters' || "$1" = 'milimeter' ]] && return $TRUE
         return $FALSE
 }
 
@@ -1912,7 +1912,7 @@ uppercase() {
 }
 
 # Prints the postscript points rounded equivalent from $1 mm
-milimetersToPoints() {
+millimetersToPoints() {
         local pts=$(echo "scale=8; $1 * 72 / 25.4" | "$BCBIN")
         printf '%.0f' "$pts"    # Print rounded conversion
 }
@@ -1924,7 +1924,7 @@ inchesToPoints() {
 }
 
 # Prints the mm equivalent from $1 postscript points
-pointsToMilimeters() {
+pointsToMillimeters() {
         local pts=$(echo "scale=8; $1 / 72 * 25.4" | "$BCBIN")
         printf '%.0f' "$pts"    # Print rounded conversion
 }
@@ -2346,18 +2346,18 @@ Standard Paper Names: (case-insensitive)
  HALFLETTER    HAGAKI
 
 Custom Paper Size:
- - Paper size can be set manually in Milimeters, Inches or Points
+ - Paper size can be set manually in Millimeters, Inches or Points
  - Custom paper definition MUST be quoted into a single parameter
  - Actual size is applied in points (mms and inches are transformed)
- - Measurements: mm, mms,  milimeters 
+ - Measurements: mm, mms,  millimeters 
                  pt, pts,  points
                  in, inch, inches
  Use: $PDFSCALE_NAME -r 'custom <measurement> <width> <height>'
  Ex:  $PDFSCALE_NAME -r 'custom mm 300 300'
 
 Using Source Paper Size: (no-resizing)
- - Wildcard 'source' is used used to keep paper size the same as the input
- - Usefull to run Auto-Rotation without resizing
+ - Wildcard 'source' is used to keep paper size the same as the input
+ - Useful to run Auto-Rotation without resizing
  - Eg. $PDFSCALE_NAME -r source ./input.pdf
 
 Backgrounding: (paint a background)
