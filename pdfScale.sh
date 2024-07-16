@@ -9,7 +9,7 @@
 # Writen for Bash.
 #
 # Gustavo Arnosti Neves - 2016 / 07 / 10
-#        Latest Version - 2023 / 01 / 26
+#        Latest Version - 2024 / 07 / 16
 #
 # This app: https://github.com/tavinus/pdfScale
 #
@@ -18,9 +18,11 @@
 # that helped and donated. It has been a long run with this
 # script. I wish you all the best! -]
 #
+# Ver 2.5.9 Added MIT License
+#
 ################################################################
 
-VERSION="2.5.8"
+VERSION="2.5.9"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -108,6 +110,7 @@ SIMULATE=$FALSE             # Avoid execution
 PRINT_GS_CALL=$FALSE        # Print GS Call to stdout
 GS_CALL_STRING=""           # Buffer
 RESIZECOMMANDS=""           # command to run on resize call
+GSNEWPDF=""                 # for -dNEWDPF flag
 
 ############################# Project Info
 PROJECT_NAME="pdfScale"
@@ -291,8 +294,7 @@ gsPageScale() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
 $DPRINTED \
--sOutputFile="$OUTFILEPDF" \
--dNEWPDF=false \
+-sOutputFile="$OUTFILEPDF" $GSNEWPDF \
 -c "<</BeginPage{$BACKGROUNDCALL$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
 -f "$INFILEPDF" 
         
@@ -312,8 +314,7 @@ gsPrintPageScale() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
 $DPRINTED \
--sOutputFile="$OUTFILEPDF" \
--dNEWPDF=false \
+-sOutputFile="$OUTFILEPDF" $GSNEWPDF \
 -c "<</BeginPage{$BACKGROUNDCALL$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
 -f "$INFILEPDF"
 _EOF_
@@ -364,8 +365,7 @@ gsPageResize() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
 -dAutoRotatePages=$AUTO_ROTATION \
--dFIXEDMEDIA $FIT_PAGE $DPRINTED \
--dNEWPDF=false \
+-dFIXEDMEDIA $FIT_PAGE $DPRINTED $GSNEWPDF \
 -sOutputFile="$OUTFILEPDF" -c "$RESIZECOMMANDS" \
 -f "$INFILEPDF"
         return $?
@@ -386,8 +386,7 @@ gsPrintPageResize() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
 -dAutoRotatePages=$AUTO_ROTATION \
--dFIXEDMEDIA $FIT_PAGE $DPRINTED \
--dNEWPDF=false \
+-dFIXEDMEDIA $FIT_PAGE $DPRINTED $GSNEWPDF \
 -sOutputFile="$OUTFILEPDF" -c "$RESIZECOMMANDS" \
 -f "$INFILEPDF"
 _EOF_
@@ -530,6 +529,10 @@ getOptions() {
                 -m|--mode|--paperdetect|--paper-detect|--pagesizemode|--page-size-mode)
                         shift
                         parseMode "$1"
+                        shift
+                        ;;
+                --newpdf|--dnewpdf)
+                        GSNEWPDF="-dNEWPDF=false"
                         shift
                         ;;
                 -r|--resize)
@@ -2299,6 +2302,7 @@ Parameters:
              Creates a background with a RGB color setting on PDF scaling
              Must be quoted into a single parameter as in \"100 100 200\"
              RGB numbers are integers between 0 and 255 (255 122 50)
+ --newpdf    Uses the -dNEWPDF flag in the GS Call (deprecated in new versions of GS)
  --dry-run, --simulate
              Just simulate execution. Will not run ghostscript
  --print-gs-call, --gs-call
