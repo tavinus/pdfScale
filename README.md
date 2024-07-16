@@ -133,16 +133,16 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 
 ## Help info
 ```
-$ pdfscale --help
-pdfscale v2.5.1
+$ ./pdfScale.sh --help
+pdfScale.sh v2.5.9
 
-Usage: pdfscale <inFile.pdf>
-       pdfscale -i <inFile.pdf>
-       pdfscale [-v] [-s <factor>] [-m <page-detection>] <inFile.pdf> [outfile.pdf]
-       pdfscale [-v] [-r <paper>] [-f <flip-detection>] [-a <auto-rotation>] <inFile.pdf> [outfile.pdf]
-       pdfscale -p
-       pdfscale -h
-       pdfscale -V
+Usage: pdfScale.sh <inFile.pdf>
+       pdfScale.sh -i <inFile.pdf>
+       pdfScale.sh [-v] [-s <factor>] [-m <page-detection>] <inFile.pdf> [outfile.pdf]
+       pdfScale.sh [-v] [-r <paper>] [-f <flip-detection>] [-a <auto-rotation>] <inFile.pdf> [outfile.pdf]
+       pdfScale.sh -p
+       pdfScale.sh -h
+       pdfScale.sh -V
 
 Parameters:
  -v, --verbose
@@ -248,6 +248,7 @@ Parameters:
              Creates a background with a RGB color setting on PDF scaling
              Must be quoted into a single parameter as in "100 100 200"
              RGB numbers are integers between 0 and 255 (255 122 50)
+ --newpdf    Uses the -dNEWPDF flag in the GS Call (deprecated in new versions of GS)
  --dry-run, --simulate
              Just simulate execution. Will not run ghostscript
  --print-gs-call, --gs-call
@@ -295,19 +296,19 @@ Standard Paper Names: (case-insensitive)
  HALFLETTER    HAGAKI
 
 Custom Paper Size:
- - Paper size can be set manually in Milimeters, Inches or Points
+ - Paper size can be set manually in Millimeters, Inches or Points
  - Custom paper definition MUST be quoted into a single parameter
  - Actual size is applied in points (mms and inches are transformed)
- - Measurements: mm, mms,  milimeters
+ - Measurements: mm, mms,  millimeters
                  pt, pts,  points
                  in, inch, inches
- Use: pdfscale -r 'custom <measurement> <width> <height>'
- Ex:  pdfscale -r 'custom mm 300 300'
+ Use: pdfScale.sh -r 'custom <measurement> <width> <height>'
+ Ex:  pdfScale.sh -r 'custom mm 300 300'
 
 Using Source Paper Size: (no-resizing)
- - Wildcard 'source' is used used to keep paper size the same as the input
- - Usefull to run Auto-Rotation without resizing
- - Eg. pdfscale -r source ./input.pdf
+ - Wildcard 'source' is used to keep paper size the same as the input
+ - Useful to run Auto-Rotation without resizing
+ - Eg. pdfScale.sh -r source ./input.pdf
 
 Backgrounding: (paint a background)
  - Backgrounding only happens when scaling
@@ -324,18 +325,18 @@ Options and Parameters Parsing:
 Additional Notes:
  - File and folder names with spaces should be quoted or escaped
  - Using a scale bigger than 1.0 may result on cropping parts of the PDF
- - For detailed paper types information, use: pdfscale -p
+ - For detailed paper types information, use: pdfScale.sh -p
 
 Examples:
- pdfscale myPdfFile.pdf
- pdfscale -i '/home/My Folder/My PDF File.pdf'
- pdfscale myPdfFile.pdf "My Scaled Pdf"
- pdfscale -v -v myPdfFile.pdf
- pdfscale -s 0.85 myPdfFile.pdf My\ Scaled\ Pdf.pdf
- pdfscale -m pdfinfo -s 0.80 -v myPdfFile.pdf
- pdfscale -v -v -m i -s 0.7 myPdfFile.pdf
- pdfscale -r A4 myPdfFile.pdf
- pdfscale -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
+ pdfScale.sh myPdfFile.pdf
+ pdfScale.sh -i '/home/My Folder/My PDF File.pdf'
+ pdfScale.sh myPdfFile.pdf "My Scaled Pdf"
+ pdfScale.sh -v -v myPdfFile.pdf
+ pdfScale.sh -s 0.85 myPdfFile.pdf My\ Scaled\ Pdf.pdf
+ pdfScale.sh -m pdfinfo -s 0.80 -v myPdfFile.pdf
+ pdfScale.sh -v -v -m i -s 0.7 myPdfFile.pdf
+ pdfScale.sh -r A4 myPdfFile.pdf
+ pdfScale.sh -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
   
 ```  
   
