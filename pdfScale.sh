@@ -22,7 +22,7 @@
 #
 ################################################################
 
-VERSION="2.5.9"
+VERSION="2.6.0"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -227,14 +227,14 @@ printPDFSizes() {
                 getPageSize || initError "Could not get pagesize!"
                 local paperType="$(getGSPaperName $PGWIDTH $PGHEIGHT)"
                 isEmpty "$paperType" && paperType="Custom Paper Size"
-                printf '%s\n' "------------+-----------------------------"
-                printf "       File | %s\n" "$(basename "$INFILEPDF")"
-                printf " Paper Type | %s\n" "$paperType"
-                printf '%s\n' "------------+-----------------------------"
-                printf '%s\n' "            |    WIDTH x HEIGHT"
-                printf "     Points | %+8s x %-8s\n" "$PGWIDTH" "$PGHEIGHT"
+                printf '%s\n' "-------------+-----------------------------"
+                printf "        File | %s\n" "$(basename "$INFILEPDF")"
+                printf "  Paper Type | %s\n" "$paperType"
+                printf '%s\n' "-------------+-----------------------------"
+                printf '%s\n' "             |    WIDTH x HEIGHT"
+                printf "      Points | %+8s x %-8s\n" "$PGWIDTH" "$PGHEIGHT"
                 printf " Millimeters | %+8s x %-8s\n" "$(pointsToMillimeters $PGWIDTH)" "$(pointsToMillimeters $PGHEIGHT)"
-                printf "     Inches | %+8s x %-8s\n" "$(pointsToInches $PGWIDTH)" "$(pointsToInches $PGHEIGHT)"
+                printf "      Inches | %+8s x %-8s\n" "$(pointsToInches $PGWIDTH)" "$(pointsToInches $PGHEIGHT)"
                 exit $EXIT_SUCCESS
         fi
         return $EXIT_SUCCESS
@@ -446,6 +446,7 @@ shouldFlip() {
 # Loads external dependencies and checks for errors
 initDeps() {
         GREPBIN="$(command -v grep 2>/dev/null)"
+        STRINGSBIN="$(command -v strings 2>/dev/null)"
         GSBIN="$(command -v gs 2>/dev/null)"
         BCBIN="$(command -v bc 2>/dev/null)"
         IDBIN=$(command -v identify 2>/dev/null)
@@ -455,6 +456,7 @@ initDeps() {
         vprint "Checking for basename, grep, ghostscript and bcmath"
         basename "" >/dev/null 2>&1 || printDependency 'basename'
         isNotAvailable "$GREPBIN" && printDependency 'grep'
+        isNotAvailable "$STRINGSBIN" && printDependency 'strings (binutils)'
         isNotAvailable "$GSBIN" && printDependency 'ghostscript'
         isNotAvailable "$BCBIN" && printDependency 'bc'
         return $TRUE
@@ -1073,6 +1075,11 @@ parseMode() {
                         MODE="PDFINFO"
                         return $TRUE
                         ;;
+                s|gs|ghostscript|ps|postscript)
+                        ADAPTIVEMODE=$FALSE
+                        MODE="GS"
+                        return $TRUE
+                        ;;
                 a|auto|automatic|adaptive)
                         ADAPTIVEMODE=$TRUE
                         MODE=""
@@ -1427,6 +1434,9 @@ getPageSize() {
                 elif [[ $MODE = "IDENTIFY" ]]; then
                         vprint "        Method: ImageMagick's Identify"
                         getPageSizeImagemagick
+                elif [[ $MODE = "GS" ]]; then
+                        vprint "        Method: Ghostscript PS Script"
+                        getPageSizeGS
                 else
                         printError "Error! Invalid Mode: $MODE"
                         printError "Aborting execution..."
@@ -1439,25 +1449,31 @@ getPageSize() {
         vprint "        Method: Grep"
         getPageSizeCatGrep
         if pageSizeIsInvalid && [[ $OSNAME = "Darwin" ]]; then
-                vprint "                Failed"
+                vprint "                Failed, trying next option"
                 vprint "        Method: Mac Quartz mdls"
                 getPageSizeMdls
         fi
 
         if pageSizeIsInvalid; then
-                vprint "                Failed"
+                vprint "                Failed, trying next option"
                 vprint "        Method: PDFInfo"
                 getPageSizePdfInfo
         fi
 
         if pageSizeIsInvalid; then
-                vprint "                Failed"
+                vprint "                Failed, trying next option"
                 vprint "        Method: ImageMagick's Identify"
                 getPageSizeImagemagick
         fi
 
         if pageSizeIsInvalid; then
-                vprint "                Failed"
+                vprint "                Failed, trying next option"
+                vprint "        Method: Ghostscript PS Script"
+                getPageSizeGS
+        fi
+
+        if pageSizeIsInvalid; then
+                vprint "                Failed all options"
                 printError "Error when detecting PDF paper size!"
                 printError "All methods of detection failed"
                 printError "You may want to install pdfinfo or imagemagick"
@@ -1552,6 +1568,37 @@ getPageSizePdfInfo() {
         return $TRUE
 }
 
+# Gets page size using Ghostscript and a PS script
+getPageSizeGS() {
+        # Get MediaBox size using Ghostscript
+        local mediaBox="$("$GSBIN" -dNOSAFER -dNODISPLAY -dBATCH -dQUIET -sFileName="$INFILEPDF" -c 'FileName (r) file runpdfbegin 1 pdfgetpage /MediaBox get {=print ( ) print} forall')"
+
+        # No page size data available
+        if isEmpty "$mediaBox" && isNotAdaptiveMode; then
+                notAdaptiveFailed "There is no MediaBox in the pdf document!"
+        elif isEmpty "$mediaBox" && isAdaptiveMode; then
+                return $FALSE
+        fi
+
+        mediaBox=($mediaBox)        # make it an array
+        mbCount=${#mediaBox[@]}     # array size
+
+        # sanity
+        if [[ $mbCount -lt 4 ]] || ! isFloat "${mediaBox[2]}" || ! isFloat "${mediaBox[3]}" || isZero "${mediaBox[2]}" || isZero "${mediaBox[3]}"; then 
+                if isNotAdaptiveMode; then
+                        notAdaptiveFailed $'Error when reading the page size!\nThe page size information is invalid!'
+                fi
+                return $FALSE
+        fi
+
+        # we are done
+        PGWIDTH=$(printf '%.0f' "${mediaBox[2]}")  # Get Round Width
+        PGHEIGHT=$(printf '%.0f' "${mediaBox[3]}") # Get Round Height
+
+        #echo "PGWIDTH=$PGWIDTH // PGHEIGHT=$PGHEIGHT"
+        return $TRUE
+}
+
 # Gets page size using cat and grep
 getPageSizeCatGrep() {
         # get MediaBox info from PDF file using grep, these are all possible
@@ -1561,7 +1608,7 @@ getPageSizeCatGrep() {
 
         # Get MediaBox data if possible
         #local mediaBox="$("$GREPBIN" -a -e '/MediaBox' -m 1 "$INFILEPDF" 2>/dev/null)"
-        local mediaBox="$(strings "$INFILEPDF" | "$GREPBIN" -a -e '/MediaBox' -m 1 2>/dev/null)"
+        local mediaBox="$("$STRINGSBIN" "$INFILEPDF" | "$GREPBIN" -a -e '/MediaBox' -m 1 2>/dev/null)"
 
         mediaBox="${mediaBox##*/MediaBox}"
         mediaBox="${mediaBox##*[}"
@@ -2226,6 +2273,7 @@ Parameters:
                     m, mdls      Forces the use of MacOS Quartz mdls
                     p, pdfinfo   Forces the use of PDFInfo
                     i, identify  Forces the use of ImageMagick's Identify
+                    s, gs        Forces the use of Ghostscript (PS script)
  -i, --info <file>
              Prints <file> Paper Size information to screen and exits
  -s, --scale <factor>
