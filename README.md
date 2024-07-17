@@ -134,7 +134,7 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 ## Help info
 ```
 $ ./pdfScale.sh --help
-pdfScale.sh v2.5.9
+pdfScale.sh v2.6.0
 
 Usage: pdfScale.sh <inFile.pdf>
        pdfScale.sh -i <inFile.pdf>
@@ -172,6 +172,7 @@ Parameters:
                     m, mdls      Forces the use of MacOS Quartz mdls
                     p, pdfinfo   Forces the use of PDFInfo
                     i, identify  Forces the use of ImageMagick's Identify
+                    s, gs        Forces the use of Ghostscript (PS script)
  -i, --info <file>
              Prints <file> Paper Size information to screen and exits
  -s, --scale <factor>
