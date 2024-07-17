@@ -413,7 +413,6 @@ Examples:
  pdfScale.sh -v -v -m i -s 0.7 myPdfFile.pdf
  pdfScale.sh -r A4 myPdfFile.pdf
  pdfScale.sh -v -v -r "custom mm 252 356" -s 0.9 -f "../input file.pdf" "../my new pdf"
-  
 ```  
   
 ## Standard Paper Tables
