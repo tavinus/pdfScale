@@ -18,58 +18,77 @@ A temporary file is used in `mixed mode`, at the target location.
 Better than explaining is showing it:  
 #### Checking File Information
 ```
-$ ./pdfScale.sh -i ../input-nup.pdf
-pdfScale.sh v2.3.7 - Paper Sizes
-------------+-----------------------------
-       File | input-nup.pdf
- Paper Type | A4 Landscape
-------------+-----------------------------
-            |    WIDTH x HEIGHT
-     Points |      842 x 595
- Milimeters |      297 x 210
-     Inches |     11.7 x 8.3
+$ ./pdfScale.sh -i test.pdf
+pdfScale.sh v2.6.2 - Paper Sizes
+-------------+-----------------------------
+        File | test.pdf
+  Paper Type | A4 Portrait
+       Pages | 4
+-------------+-----------------------------
+  FIRST PAGE |    WIDTH x HEIGHT
+      Points |      595 x 842
+ Millimeters |      210 x 297
+      Inches |      8.3 x 11.7
+-------------+-----------------------------
+   ALL PAGES |    WIDTH x HEIGHT (pts)
+           1 |      595 x 842
+           2 |      595 x 842
+           3 |      595 x 842
+           4 |      595 x 842
+-------------+-----------------------------
+
 ```
 #### Scale by 0.95 (-5%)
 This also shows a very special case of a PDF file that has no `/MediaBox` defined.  
 It is a dumb container of n-up binary PDF pages.  
-`Ggrep` fails, then `PDFInfo` fails (not installed), then ImageMagick does the job.  
-This was on CygWin64 `@` Windows10 x64, MacOS would try `mdls` as well.
+`Ggrep` fails, then `PDFInfo` fails (not installed), then ImageMagick fails (not installed) and then the Ghostscript PS script does the job .  
+This was on CygWin64 `@` Windows11 x64, MacOS would try `mdls` as well.
 ```
-$ pdfscale -v ../input-nup.pdf
-pdfscale v2.4.0 - Verbose Execution
+$ ./pdfScale.sh -v ../input-nup.pdf
+pdfScale.sh v2.6.2 - Verbose Execution
    Single Task: Scale PDF Contents
        Dry-Run: FALSE
     Input File: ../input-nup.pdf
    Output File: ../input-nup.SCALED.pdf
+   Explode PDF: Disabled
  Get Page Size: Adaptive Enabled
         Method: Grep
-                Failed
+                Failed, trying next method
         Method: PDFInfo
-                Failed
+                Failed, trying next method
         Method: ImageMagick's Identify
+                Failed, trying next method
+        Method: Ghostscript PS Script
+    Page Range: None (all pages)
   Source Width: 842 postscript-points
  Source Height: 595 postscript-points
+    Print Mode: Print ( auto/empty )
   Scale Factor: 0.95 (auto)
+ Scale Percent: -5%
     Vert-Align: CENTER
      Hor-Align: CENTER
  Translation X: 22.16 = 22.16 + 0.00 (offset)
  Translation Y: 15.66 = 15.66 + 0.00 (offset)
-   Run Scaling: -5 %
     Background: No background (default)
   Final Status: File created successfully
+
 ```
 #### Resize to A0 and Scale by 1.05 (+5%)
 ```
-$ pdfscale -v -r a0 -s 1.05 ../mixsync\ manual\ v1-2-3.pdf
-pdfscale v2.4.0 - Verbose Execution
+$ ./pdfScale.sh -v -r a0 -s 1.05 ../mixsync_manual_v1-2-3.pdf
+pdfScale.sh v2.6.2 - Verbose Execution
    Mixed Tasks: Resize & Scale
        Dry-Run: FALSE
-    Input File: ../mixsync manual v1-2-3.pdf
-   Output File: ../mixsync manual v1-2-3.A0.SCALED.pdf
+    Input File: ../mixsync_manual_v1-2-3.pdf
+   Output File: ../mixsync_manual_v1-2-3.A0.SCALED.pdf
+   Explode PDF: Disabled
  Get Page Size: Adaptive Enabled
         Method: Grep
+    Page Range: None (all pages)
   Source Width: 842 postscript-points
  Source Height: 595 postscript-points
+    Print Mode: Print ( auto/empty )
+   Fit To Page: Enabled (default)
    Auto Rotate: PageByPage
    Flip Detect: Wrong orientation detected!
                 Inverting Width <-> Height
@@ -77,64 +96,74 @@ pdfscale v2.4.0 - Verbose Execution
      New Width: 3370 postscript-points
     New Height: 2384 postscript-points
   Scale Factor: 1.05
+ Scale Percent: +5%
     Vert-Align: CENTER
      Hor-Align: CENTER
  Translation X: -80.24 = -80.24 + 0.00 (offset)
  Translation Y: -56.76 = -56.76 + 0.00 (offset)
-   Run Scaling: 5 %
     Background: No background (default)
   Final Status: File created successfully
+
 ```
 #### Resize to A2 and disables Auto-Rotation
 ```
-$ pdfscale -v -r A2 -a none ../input.pdf
-pdfscale v2.4.0 - Verbose Execution
+$ ./pdfScale.sh -v -r A2 -a none ../input.pdf
+pdfScale.sh v2.6.2 - Verbose Execution
    Single Task: Resize PDF Paper
        Dry-Run: FALSE
     Input File: ../input.pdf
    Output File: ../input.A2.pdf
+   Explode PDF: Disabled
  Get Page Size: Adaptive Enabled
         Method: Grep
+    Page Range: None (all pages)
   Source Width: 595 postscript-points
  Source Height: 842 postscript-points
+    Print Mode: Print ( auto/empty )
   Scale Factor: Disabled (resize only)
+   Fit To Page: Enabled (default)
    Auto Rotate: None
    Flip Detect: No change needed
   Run Resizing: A2 ( 1191 x 1684 ) pts
   Final Status: File created successfully
+
 ```
 #### Resize to custom 200x300 mm, disable Flip-Detection and Scale by 0.95 (-5%)
 ```
-$ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v1-2-3.pdf
-2018-08-09:04:56:39 | pdfscale v2.4.0 - Verbose Execution
-2018-08-09:04:56:39 |    Mixed Tasks: Resize & Scale
-2018-08-09:04:56:39 |        Dry-Run: FALSE
-2018-08-09:04:56:39 |     Input File: ../mixsync manual v1-2-3.pdf
-2018-08-09:04:56:39 |    Output File: ../mixsync manual v1-2-3.CUSTOM.SCALED.pdf
-2018-08-09:04:56:39 |  Get Page Size: Adaptive Enabled
-2018-08-09:04:56:39 |         Method: Grep
-2018-08-09:04:56:39 |   Source Width: 842 postscript-points
-2018-08-09:04:56:39 |  Source Height: 595 postscript-points
-2018-08-09:04:56:40 |    Auto Rotate: PageByPage
-2018-08-09:04:56:40 |    Flip Detect: Disabled
-2018-08-09:04:56:40 |   Run Resizing: CUSTOM ( 567 x 850 ) pts
-2018-08-09:04:56:40 |      New Width: 567 postscript-points
-2018-08-09:04:56:40 |     New Height: 850 postscript-points
-2018-08-09:04:56:40 |   Scale Factor: 0.95
-2018-08-09:04:56:40 |     Vert-Align: CENTER
-2018-08-09:04:56:40 |      Hor-Align: CENTER
-2018-08-09:04:56:40 |  Translation X: 14.92 = 14.92 + 0.00 (offset)
-2018-08-09:04:56:40 |  Translation Y: 22.37 = 22.37 + 0.00 (offset)
-2018-08-09:04:56:40 |    Run Scaling: -5 %
-2018-08-09:04:56:40 |     Background: No background (default)
-2018-08-09:04:56:40 |   Final Status: File created successfully
+$ ./pdfScale.sh  -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync_manual_v1-2-3.pdf
+2024-07-17:14:43:15 | pdfScale.sh v2.6.2 - Verbose Execution
+2024-07-17:14:43:15 |    Mixed Tasks: Resize & Scale
+2024-07-17:14:43:15 |        Dry-Run: FALSE
+2024-07-17:14:43:15 |     Input File: ../mixsync_manual_v1-2-3.pdf
+2024-07-17:14:43:15 |    Output File: ../mixsync_manual_v1-2-3.CUSTOM.SCALED.pdf
+2024-07-17:14:43:15 |    Explode PDF: Disabled
+2024-07-17:14:43:15 |  Get Page Size: Adaptive Enabled
+2024-07-17:14:43:15 |         Method: Grep
+2024-07-17:14:43:15 |     Page Range: None (all pages)
+2024-07-17:14:43:16 |   Source Width: 842 postscript-points
+2024-07-17:14:43:16 |  Source Height: 595 postscript-points
+2024-07-17:14:43:16 |     Print Mode: Print ( auto/empty )
+2024-07-17:14:43:16 |    Fit To Page: Enabled (default)
+2024-07-17:14:43:16 |    Auto Rotate: PageByPage
+2024-07-17:14:43:16 |    Flip Detect: Disabled
+2024-07-17:14:43:16 |   Run Resizing: CUSTOM ( 567 x 850 ) pts
+2024-07-17:14:43:16 |      New Width: 567 postscript-points
+2024-07-17:14:43:16 |     New Height: 850 postscript-points
+2024-07-17:14:43:16 |   Scale Factor: 0.95
+2024-07-17:14:43:16 |  Scale Percent: -5%
+2024-07-17:14:43:16 |     Vert-Align: CENTER
+2024-07-17:14:43:16 |      Hor-Align: CENTER
+2024-07-17:14:43:16 |  Translation X: 14.92 = 14.92 + 0.00 (offset)
+2024-07-17:14:43:16 |  Translation Y: 22.37 = 22.37 + 0.00 (offset)
+2024-07-17:14:43:16 |     Background: No background (default)
+2024-07-17:14:43:17 |   Final Status: File created successfully
 
 ```
 
 ## Help info
 ```
 $ ./pdfScale.sh -h
-pdfScale.sh v2.6.1
+pdfScale.sh v2.6.2
 
 Usage: pdfScale.sh <inFile.pdf>
        pdfScale.sh -i <inFile.pdf>
@@ -178,6 +207,9 @@ Parameters:
              Prints <file> Paper Size information to screen and exits
  -e, --explode
              Explode (split) outuput PDF into many files (one per page)
+ --range, --page-range <page-list>
+             Defines the page range to be processed, using the -sPageList notation
+             Read below for more information on valid page ranges
  -s, --scale <factor>
              Changes the scaling factor or forces mixed mode
              Defaults: 0.95 (scale mode) / Disabled (resize mode)
@@ -276,6 +308,20 @@ Resize Paper Mode:
 Mixed Mode:
  - In mixed mode both the -s option and -r option must be specified
  - The PDF will be first resized then scaled
+
+Page Ranges:
+ - Please refer to the Ghostscript manual on '-sPageList' for more info and examples.
+ - May cause execution warnings from Ghostscript if the PDF refences pages that were
+   removed. The output file should still be created, but with broken internal links.
+ - Using a range with an inexistant page will raise a warning from Ghostscript and
+   may also generate blank pages.
+ - Single page number | ex: --range 2
+ - Interval           | ex: --range 2-4
+ - List of pages      | ex: --range 1,3,6
+ - From page to end   | ex: --range 3-
+ - odd/even specifier | ex: --range odd
+ - odd/even range     | ex: --range even:1-4
+ - mixed entries      | ex: --range 1,3-5,8-
 
 Output filename:
  - Having the extension .pdf on the output file name is optional,
@@ -454,7 +500,8 @@ It will try the following methods in sequence:
  2. Failed AND MacOS ? Try `mdls`
  3. Failed ? Try `pdfinfo`
  4. Failed ? Try ImageMagick's `identify`
- 5. Failed ? `Exit` with error message
+ 5. Failed ? Try Ghostscript with a PS script
+ 6. Failed ? `Exit` with error message
 
 The `grep` method will fail on PDFs without a `/MediaBox`.   
 You may install any of the optionals to be used in that case.  

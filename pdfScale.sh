@@ -22,7 +22,7 @@
 #
 ################################################################
 
-VERSION="2.6.1"
+VERSION="2.6.2"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -75,6 +75,8 @@ PGHEIGHT=""                 # Input PDF Page Height
 RESIZE_WIDTH=""             # Resized PDF Page Width
 RESIZE_HEIGHT=""            # Resized PDF Page Height
 PAGE_RANGE=""               # Pages to be processed (feeds -sPageList)
+PAGE_COUNT=""               # To store the PDF page count
+PAGE_SIZES=()               # To list all page sizes
 
 ############################# Image resolution (dpi) 
 IMAGE_RESOLUTION=300        # 300 is /Printer default
@@ -148,7 +150,7 @@ EXIT_INVALID_IMAGE_RESOLUTION=51
 
 # Main function called at the end
 main() {
-        isJustIdentify && printPDFSizes  # may exit here
+        isJustIdentify && printPDFSizes  # will exit here
         local finalRet=$EXIT_ERROR
 
         if isMixedMode; then
@@ -170,6 +172,7 @@ main() {
                 PGHEIGHT=$RESIZE_HEIGHT                     # from the last command (Resize)
                 vPrintPageSizes '    New'
                 vPrintScaleFactor
+                PAGE_RANGE=""                               # reset page range, we already got the pages
                 pageScale                                   # scale the resized pdf
                 finalRet=$(($finalRet+$?))
                                                             # remove tmp file
@@ -196,9 +199,12 @@ main() {
                 else
                         vprint "  Final Status: File created successfully"
                 fi
+        elif [[ $finalRet -eq $EXIT_SUCCESS ]] && isNotEmpty "$GS_RUN_STATUS"; then
+                vprint "  Final Status: Succeeded with Warnings"
+                printError "-------------------------------------------------"$'\n'"Ghostscript Debug Info:"$'\n'"$GS_RUN_STATUS"
         else
                 vprint "  Final Status: Error detected. Exit status: $finalRet"
-                printError "PdfScale: ERROR!"$'\n'"Ghostscript Debug Info:"$'\n'"$GS_RUN_STATUS"
+                printError "-------------------------------------------------"$'\n'"Ghostscript Debug Info:"$'\n'"$GS_RUN_STATUS"
         fi
         
         if isNotEmpty "$GS_CALL_STRING" && shouldPrintGSCall; then
@@ -218,8 +224,9 @@ initMain() {
         vPrintFileInfo
         local exp="Disabled"
         isExplodeMode && local exp="Enabled"
-        vprint "  Explode Mode: $exp"
+        vprint "   Explode PDF: $exp"
         getPageSize
+        vPrintRange
         vPrintPageSizes ' Source'
 	vShowPrintMode
 }
@@ -231,14 +238,26 @@ printPDFSizes() {
         getPageSize || initError "Could not get pagesize!"
         local paperType="$(getGSPaperName $PGWIDTH $PGHEIGHT)"
         isEmpty "$paperType" && paperType="Custom Paper Size"
+        getPageCountAndSizes
         printf '%s\n' "-------------+-----------------------------"
         printf "        File | %s\n" "$(basename "$INFILEPDF")"
         printf "  Paper Type | %s\n" "$paperType"
+        printf "       Pages | %s\n" "$PAGE_COUNT"
         printf '%s\n' "-------------+-----------------------------"
-        printf '%s\n' "             |    WIDTH x HEIGHT"
+        printf '%s\n' "  FIRST PAGE |    WIDTH x HEIGHT"
         printf "      Points | %+8s x %-8s\n" "$PGWIDTH" "$PGHEIGHT"
         printf " Millimeters | %+8s x %-8s\n" "$(pointsToMillimeters $PGWIDTH)" "$(pointsToMillimeters $PGHEIGHT)"
         printf "      Inches | %+8s x %-8s\n" "$(pointsToInches $PGWIDTH)" "$(pointsToInches $PGHEIGHT)"
+        printf '%s\n' "-------------+-----------------------------"
+        printf '%s\n' "   ALL PAGES |    WIDTH x HEIGHT (pts)"
+        local t=0
+        local wh=()
+        for l in "${PAGE_SIZES[@]}" ; do
+                wh=($l)
+                printf " %+11s | %+8s x %-8s\n" $((t+1)) ${wh[0]} ${wh[1]}
+                ((t++))
+        done
+        printf '%s\n' "-------------+-----------------------------"
         exit $EXIT_SUCCESS
 }
 
@@ -252,6 +271,7 @@ pageScale() {
         CENTERYTRANS=$(echo "scale=6; 0.5*(1.0-$SCALE)/$SCALE*$PGHEIGHT" | "$BCBIN")
         BXTRANS=$CENTERXTRANS
         BYTRANS=$CENTERYTRANS
+
         if [[ "$VERT_ALIGN" = "TOP" ]]; then
             BYTRANS=$(echo "scale=6; 2*$CENTERYTRANS" | "$BCBIN")
         elif [[ "$VERT_ALIGN" = "BOTTOM" ]]; then
@@ -262,17 +282,18 @@ pageScale() {
         elif [[ "$HOR_ALIGN" = "RIGHT" ]]; then
             BXTRANS=$(echo "scale=6; 2*$CENTERXTRANS" | "$BCBIN")
         fi
-        vprint "    Vert-Align: $VERT_ALIGN"
-        vprint "     Hor-Align: $HOR_ALIGN"
 
         XTRANS=$(echo "scale=6; $BXTRANS + $XTRANSOFFSET" | "$BCBIN")
         YTRANS=$(echo "scale=6; $BYTRANS + $YTRANSOFFSET" | "$BCBIN")
 
+        local increase=$(echo "scale=0; (($SCALE - 1) * 100)/1" | "$BCBIN")
+        [[ $increase -gt 0 ]] && increase="+$increase"
+
+        vprint " Scale Percent: $increase%"
+        vprint "    Vert-Align: $VERT_ALIGN"
+        vprint "     Hor-Align: $HOR_ALIGN"
         vprint "$(printf ' Translation X: %.2f = %.2f + %.2f (offset)' $XTRANS $BXTRANS $XTRANSOFFSET)"
         vprint "$(printf ' Translation Y: %.2f = %.2f + %.2f (offset)' $YTRANS $BYTRANS $YTRANSOFFSET)"
-
-        local increase=$(echo "scale=0; (($SCALE - 1) * 100)/1" | "$BCBIN")
-        vprint "   Run Scaling: $increase %"
         
         vprint "    Background: $BACKGROUNDLOG"
 
@@ -296,7 +317,7 @@ gsPageScale() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
 $DPRINTED \
--sOutputFile="$OUTFILEPDF" $GSNEWPDF \
+-sOutputFile="$OUTFILEPDF" $GSNEWPDF $PAGE_RANGE \
 -c "<</BeginPage{$BACKGROUNDCALL$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
 -f "$INFILEPDF" 
         
@@ -316,7 +337,7 @@ gsPrintPageScale() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$PGWIDTH -dDEVICEHEIGHTPOINTS=$PGHEIGHT \
 $DPRINTED \
--sOutputFile="$OUTFILEPDF" $GSNEWPDF \
+-sOutputFile="$OUTFILEPDF" $GSNEWPDF $PAGE_RANGE \
 -c "<</BeginPage{$BACKGROUNDCALL$SCALE $SCALE scale $XTRANS $YTRANS translate}>> setpagedevice" \
 -f "$INFILEPDF"
 _EOF_
@@ -367,7 +388,7 @@ gsPageResize() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
 -dAutoRotatePages=$AUTO_ROTATION \
--dFIXEDMEDIA $FIT_PAGE $DPRINTED $GSNEWPDF \
+-dFIXEDMEDIA $FIT_PAGE $DPRINTED $GSNEWPDF $PAGE_RANGE \
 -sOutputFile="$OUTFILEPDF" -c "$RESIZECOMMANDS" \
 -f "$INFILEPDF"
         return $?
@@ -388,7 +409,7 @@ gsPrintPageResize() {
 -dSubsetFonts=true -dEmbedAllFonts=true \
 -dDEVICEWIDTHPOINTS=$RESIZE_WIDTH -dDEVICEHEIGHTPOINTS=$RESIZE_HEIGHT \
 -dAutoRotatePages=$AUTO_ROTATION \
--dFIXEDMEDIA $FIT_PAGE $DPRINTED $GSNEWPDF \
+-dFIXEDMEDIA $FIT_PAGE $DPRINTED $GSNEWPDF $PAGE_RANGE \
 -sOutputFile="$OUTFILEPDF" -c "$RESIZECOMMANDS" \
 -f "$INFILEPDF"
 _EOF_
@@ -527,6 +548,12 @@ getOptions() {
                         ;;
                 -e|--explode|--split)
                         EXPLODE_MODE=$TRUE
+                        shift
+                        ;;
+                --range|--page-range|--pagerange|--page-list|--pagelist)
+                        shift
+                        isEmpty "$1" && initError "Invalid (empty) Page Range!" $EXIT_INVALID_OPTION
+                        PAGE_RANGE="-sPageList=$1"
                         shift
                         ;;
                 -s|--scale|--setscale|--set-scale)
@@ -1001,6 +1028,7 @@ selfUpgrade() {
 # Compares versions with x.x.x format
 isBiggerVersion() {
         local OIFS=$IFS
+
         IFS='.'
         local _first=($1)
         local _second=($2)
@@ -1021,6 +1049,7 @@ isBiggerVersion() {
         fi
         
         IFS=$OIFS
+
         return $_ret
 }
 
@@ -1028,8 +1057,8 @@ isBiggerVersion() {
 validateOutFile() {
         local _tgtDir="$(dirname "$OUTFILEPDF")"
         isDir "$_tgtDir" || initError "Output directory does not exist!"$'\n'"Target Dir: $_tgtDir" $EXIT_NOWRITE_PERMISSION
-        isAbortOnOverwrite && isFile "$OUTFILEPDF" && initError $'Output file already exists and --no-overwrite was used!\nRemove the "-n" or "--no-overwrite" option if you want to overwrite the file\n'"Target File: $OUTFILEPDF" $EXIT_NOWRITE_PERMISSION
-        isTouchable "$OUTFILEPDF" || initError "Could not get write permission for output file!"$'\n'"Target File: $OUTFILEPDF"$'\nPermission Denied' $EXIT_NOWRITE_PERMISSION
+        isNotExplodeMode && isAbortOnOverwrite && isFile "$OUTFILEPDF" && initError $'Output file already exists and --no-overwrite was used!\nRemove the "-n" or "--no-overwrite" option if you want to overwrite the file\n'"Target File: $OUTFILEPDF" $EXIT_NOWRITE_PERMISSION
+        isNotExplodeMode && isNotTouchable "$OUTFILEPDF" && initError "Could not get write permission for output file!"$'\n'"Target File: $OUTFILEPDF"$'\nPermission Denied' $EXIT_NOWRITE_PERMISSION
 }
 
 # Returns $TRUE if we should not overwrite $OUTFILEPDF, $FALSE otherwise
@@ -1416,6 +1445,33 @@ parseCropbox() {
 
 
 
+################## PDF PAGE COUNT DETECTION ####################
+
+# Gets page count from Ghostscript
+getPageCount() {
+        PAGE_COUNT="$("$GSBIN" -dNOSAFER -dNODISPLAY -dBATCH -dQUIET -sFileName="$INFILEPDF" -c 'FileName (r) file runpdfbegin pdfpagecount = quit' 2>/dev/null)"
+}
+
+# Gets page count and page sizes for all pages
+getPageCountAndSizes() {
+        local _info="$("$GSBIN" -dNOSAFER -dNODISPLAY -dBATCH -dQUIET -sFileName="$INFILEPDF" -c 'FileName (r) file runpdfbegin pdfpagecount =print (\n) print 1 1 pdfpagecount {pdfgetpage /MediaBox get {=print ( ) print} forall (\n) print} for quit' 2>/dev/null)"
+        local t=0
+        local p=()
+        readarray -t _infoarr <<< "$_info"
+        PAGE_SIZES=()
+        for l in "${_infoarr[@]}" ; do
+                if [[ $t -eq 0 ]]; then
+                        PAGE_COUNT=$l
+                else
+                        p=($l)
+                        PAGE_SIZES+=( "${p[2]} ${p[3]}" )
+                fi
+                ((t++))
+        done
+}
+
+
+
 ################### PDF PAGE SIZE DETECTION ####################
 
 ################################################################
@@ -1457,25 +1513,25 @@ getPageSize() {
         vprint "        Method: Grep"
         getPageSizeCatGrep
         if pageSizeIsInvalid && [[ $OSNAME = "Darwin" ]]; then
-                vprint "                Failed, trying next option"
+                vprint "                Failed, trying next method"
                 vprint "        Method: Mac Quartz mdls"
                 getPageSizeMdls
         fi
 
         if pageSizeIsInvalid; then
-                vprint "                Failed, trying next option"
+                vprint "                Failed, trying next method"
                 vprint "        Method: PDFInfo"
                 getPageSizePdfInfo
         fi
 
         if pageSizeIsInvalid; then
-                vprint "                Failed, trying next option"
+                vprint "                Failed, trying next method"
                 vprint "        Method: ImageMagick's Identify"
                 getPageSizeImagemagick
         fi
 
         if pageSizeIsInvalid; then
-                vprint "                Failed, trying next option"
+                vprint "                Failed, trying next method"
                 vprint "        Method: Ghostscript PS Script"
                 getPageSizeGS
         fi
@@ -1579,7 +1635,7 @@ getPageSizePdfInfo() {
 # Gets page size using Ghostscript and a PS script
 getPageSizeGS() {
         # Get MediaBox size using Ghostscript
-        local mediaBox="$("$GSBIN" -dNOSAFER -dNODISPLAY -dBATCH -dQUIET -sFileName="$INFILEPDF" -c 'FileName (r) file runpdfbegin 1 pdfgetpage /MediaBox get {=print ( ) print} forall')"
+        local mediaBox="$("$GSBIN" -dNOSAFER -dNODISPLAY -dBATCH -dQUIET -sFileName="$INFILEPDF" -c 'FileName (r) file runpdfbegin 1 pdfgetpage /MediaBox get {=print ( ) print} forall' 2>/dev/null)"
 
         # No page size data available
         if isEmpty "$mediaBox" && isNotAdaptiveMode; then
@@ -1672,11 +1728,6 @@ notAdaptiveFailed() {
         exit $EXIT_INVALID_PAGE_SIZE_DETECTED
 }
 
-# Verbose print of the Width and Height (Source or New) to screen
-vPrintPageSizes() {
-        vprint " $1 Width: $PGWIDTH postscript-points"
-        vprint "$1 Height: $PGHEIGHT postscript-points"
-}
 
 
 #################### GHOSTSCRIPT PAPER INFO ####################
@@ -2152,13 +2203,16 @@ isNotDir() {
         return $TRUE;
 }
 
-# Returns 0 if succeded, other integer otherwise
+# Returns $TRUE if we could touch the file, $FALSE otherwise
 isTouchable() {
-        if touch "$1" 2>/dev/null; then
-                rm "$1" 2>/dev/null
-                return $EXIT_SUCCESS
-        fi
-        RETURN $EXIT_ERROR
+        touch "$1" 2>/dev/null && return $TRUE
+        return $FALSE
+}
+
+# Returns $TRUE if we could NOT touch the file, $FALSE otherwise
+isNotTouchable() {
+        isTouchable "$1" && return $FALSE
+        return $TRUE
 }
 
 # Returns $TRUE if $1 has a .pdf extension, false otherwsie
@@ -2241,6 +2295,23 @@ printVersion() {
         fi
 }
 
+# Print page range verbose information
+vPrintRange() {
+        local range="None (all pages)"
+        if isNotEmpty "$PAGE_RANGE"; then
+                local rangeP=(${PAGE_RANGE//=/ })
+                range="${rangeP[1]}"
+        fi
+        vprint "    Page Range: $range"
+}
+
+# Verbose print of the Width and Height (Source or New) to screen
+vPrintPageSizes() {
+        vprint " $1 Width: $PGWIDTH postscript-points"
+        vprint "$1 Height: $PGHEIGHT postscript-points"
+}
+
+
 # Prints input, output file info, if verbosing
 vPrintFileInfo() {
         vprint "    Input File: $INFILEPDF"
@@ -2314,6 +2385,9 @@ Parameters:
              Prints <file> Paper Size information to screen and exits
  -e, --explode
              Explode (split) outuput PDF into many files (one per page)
+ --range, --page-range <page-list>
+             Defines the page range to be processed, using the -sPageList notation
+             Read below for more information on valid page ranges
  -s, --scale <factor>
              Changes the scaling factor or forces mixed mode
              Defaults: $SCALE (scale mode) / Disabled (resize mode)
@@ -2412,6 +2486,20 @@ Resize Paper Mode:
 Mixed Mode:
  - In mixed mode both the -s option and -r option must be specified
  - The PDF will be first resized then scaled
+
+Page Ranges:
+ - Please refer to the Ghostscript manual on '-sPageList' for more info and examples.
+ - May cause execution warnings from Ghostscript if the PDF refences pages that were
+   removed. The output file should still be created, but with broken internal links.
+ - Using a range with an inexistant page will raise a warning from Ghostscript and
+   may also generate blank pages.
+ - Single page number | ex: --range 2
+ - Interval           | ex: --range 2-4
+ - List of pages      | ex: --range 1,3,6
+ - From page to end   | ex: --range 3-
+ - odd/even specifier | ex: --range odd
+ - odd/even range     | ex: --range even:1-4
+ - mixed entries      | ex: --range 1,3-5,8-
 
 Output filename:
  - Having the extension .pdf on the output file name is optional,
