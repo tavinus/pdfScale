@@ -38,10 +38,14 @@ pdfScale.sh v2.6.2 - Paper Sizes
 -------------+-----------------------------
 ```
 #### Scale by 0.95 (-5%)
-This also shows a very special case of a PDF file that has no `/MediaBox` defined.  
-It is a dumb container of n-up binary PDF pages.  
-`Ggrep` fails, then `PDFInfo` fails (not installed), then ImageMagick fails (not installed) and then the Ghostscript PS script does the job .  
-This was on CygWin64 `@` Windows11 x64, MacOS would try `mdls` as well.
+This also shows a very special case of a PDF file that has no `/MediaBox` defined. It is a dumb container of n-up binary PDF pages.  
+  
+ 1. `Ggrep` fails, then 
+ 2. `PDFInfo` fails (not installed), then 
+ 3. `ImageMagick` fails (not installed), then 
+ 4. The Ghostscript PS script does the job  
+   
+*This was on CygWin64 `@` Windows11 x64, MacOS would try `mdls` as well.*
 ```
 $ ./pdfScale.sh -v ../input-nup.pdf
 pdfScale.sh v2.6.2 - Verbose Execution
