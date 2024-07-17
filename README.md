@@ -36,7 +36,6 @@ pdfScale.sh v2.6.2 - Paper Sizes
            3 |      595 x 842
            4 |      595 x 842
 -------------+-----------------------------
-
 ```
 #### Scale by 0.95 (-5%)
 This also shows a very special case of a PDF file that has no `/MediaBox` defined.  
@@ -71,7 +70,6 @@ pdfScale.sh v2.6.2 - Verbose Execution
  Translation Y: 15.66 = 15.66 + 0.00 (offset)
     Background: No background (default)
   Final Status: File created successfully
-
 ```
 #### Resize to A0 and Scale by 1.05 (+5%)
 ```
@@ -103,7 +101,6 @@ pdfScale.sh v2.6.2 - Verbose Execution
  Translation Y: -56.76 = -56.76 + 0.00 (offset)
     Background: No background (default)
   Final Status: File created successfully
-
 ```
 #### Resize to A3, Scale by 1.11 (+11%) and Explode the results
 *Exploding (splitting) will create a PDF file for each page, with the `.Page#.pdf` suffix*  
@@ -135,7 +132,6 @@ pdfScale.sh v2.6.2 - Verbose Execution
  Translation Y: -59.01 = -59.01 + 0.00 (offset)
     Background: No background (default)
   Final Status: File created successfully
-
 ```
 #### Resize to A2 and disables Auto-Rotation
 ```
@@ -158,7 +154,6 @@ pdfScale.sh v2.6.2 - Verbose Execution
    Flip Detect: No change needed
   Run Resizing: A2 ( 1191 x 1684 ) pts
   Final Status: File created successfully
-
 ```
 #### Resize to custom 200x300 mm, disable Flip-Detection and Scale by 0.95 (-5%)
 ```
@@ -189,7 +184,6 @@ $ ./pdfScale.sh  -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync_manu
 2024-07-17:14:43:16 |  Translation Y: 22.37 = 22.37 + 0.00 (offset)
 2024-07-17:14:43:16 |     Background: No background (default)
 2024-07-17:14:43:17 |   Final Status: File created successfully
-
 ```
 
 ## Help info
