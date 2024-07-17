@@ -22,7 +22,7 @@
 #
 ################################################################
 
-VERSION="2.6.0"
+VERSION="2.6.1"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -36,12 +36,12 @@ MDLSBIN=""                     # MacOS mdls Binary
 
 ##################### ENVIRONMENT SET-UP #######################
 
-LC_MEASUREMENT="C"         # To make sure our numbers have .decimals
-LC_ALL="C"                 # Some languages use , as decimal token
+LC_MEASUREMENT="C"     # To make sure our numbers have .decimals
+LC_ALL="C"             # Some languages use , as decimal token
 LC_CTYPE="C"
 LC_NUMERIC="C"
 
-TRUE=0                     # Silly stuff
+TRUE=0                 # Silly stuff
 FALSE=1
 
 
@@ -57,7 +57,8 @@ INFILEPDF=""                # Input PDF file name
 OUTFILEPDF=""               # Output PDF file name
 JUST_IDENTIFY=$FALSE        # Flag to just show PDF info
 ABORT_ON_OVERWRITE=$FALSE   # Flag to abort if OUTFILEPDF already exists
-ADAPTIVEMODE=$TRUE          # Automatically try to guess best mode
+EXPLODE_MODE=$FALSE         # Turn explode mode (split) on or off
+ADAPTIVE_MODE=$TRUE         # Automatically try to guess best mode
 AUTOMATIC_SCALING=$TRUE     # Default scaling in $SCALE, disabled in resize mode
 MODE=""                     # Which page size detection to use
 RESIZE_PAPER_TYPE=""        # Pre-defined paper to use
@@ -73,6 +74,7 @@ PGWIDTH=""                  # Input PDF Page Width
 PGHEIGHT=""                 # Input PDF Page Height
 RESIZE_WIDTH=""             # Resized PDF Page Width
 RESIZE_HEIGHT=""            # Resized PDF Page Height
+PAGE_RANGE=""               # Pages to be processed (feeds -sPageList)
 
 ############################# Image resolution (dpi) 
 IMAGE_RESOLUTION=300        # 300 is /Printer default
@@ -146,7 +148,7 @@ EXIT_INVALID_IMAGE_RESOLUTION=51
 
 # Main function called at the end
 main() {
-        printPDFSizes  # may exit here
+        isJustIdentify && printPDFSizes  # may exit here
         local finalRet=$EXIT_ERROR
 
         if isMixedMode; then
@@ -154,7 +156,7 @@ main() {
                 local tempFile=""
                 local tempSuffix="$RANDOM$RANDOM""_TEMP_$RANDOM$RANDOM.pdf"
                 outputFile="$OUTFILEPDF"                    # backup outFile name
-                tempFile="${OUTFILEPDF%.pdf}.$tempSuffix"   # set a temp file name
+                tempFile="${INFILEPDF%.pdf}.$tempSuffix"    # set a temp file name
                 if isFile "$tempFile"; then
                         printError $'Error! Temporary file name already exists!\n'"File: $tempFile"$'\nAborting execution to avoid overwriting the file.\nPlease Try again...'
                         exit $EXIT_TEMP_FILE_EXISTS
@@ -214,6 +216,9 @@ initMain() {
         isDryRun && sim="TRUE (Simulating)"
         vprint "       Dry-Run: $sim"
         vPrintFileInfo
+        local exp="Disabled"
+        isExplodeMode && local exp="Enabled"
+        vprint "  Explode Mode: $exp"
         getPageSize
         vPrintPageSizes ' Source'
 	vShowPrintMode
@@ -221,23 +226,20 @@ initMain() {
 
 # Prints PDF Info and exits with $EXIT_SUCCESS, but only if $JUST_IDENTIFY is $TRUE
 printPDFSizes() {
-        if [[ $JUST_IDENTIFY -eq $TRUE ]]; then
-                VERBOSE=0
-                printVersion 3 " - Paper Sizes"
-                getPageSize || initError "Could not get pagesize!"
-                local paperType="$(getGSPaperName $PGWIDTH $PGHEIGHT)"
-                isEmpty "$paperType" && paperType="Custom Paper Size"
-                printf '%s\n' "-------------+-----------------------------"
-                printf "        File | %s\n" "$(basename "$INFILEPDF")"
-                printf "  Paper Type | %s\n" "$paperType"
-                printf '%s\n' "-------------+-----------------------------"
-                printf '%s\n' "             |    WIDTH x HEIGHT"
-                printf "      Points | %+8s x %-8s\n" "$PGWIDTH" "$PGHEIGHT"
-                printf " Millimeters | %+8s x %-8s\n" "$(pointsToMillimeters $PGWIDTH)" "$(pointsToMillimeters $PGHEIGHT)"
-                printf "      Inches | %+8s x %-8s\n" "$(pointsToInches $PGWIDTH)" "$(pointsToInches $PGHEIGHT)"
-                exit $EXIT_SUCCESS
-        fi
-        return $EXIT_SUCCESS
+        VERBOSE=0
+        printVersion 3 " - Paper Sizes"
+        getPageSize || initError "Could not get pagesize!"
+        local paperType="$(getGSPaperName $PGWIDTH $PGHEIGHT)"
+        isEmpty "$paperType" && paperType="Custom Paper Size"
+        printf '%s\n' "-------------+-----------------------------"
+        printf "        File | %s\n" "$(basename "$INFILEPDF")"
+        printf "  Paper Type | %s\n" "$paperType"
+        printf '%s\n' "-------------+-----------------------------"
+        printf '%s\n' "             |    WIDTH x HEIGHT"
+        printf "      Points | %+8s x %-8s\n" "$PGWIDTH" "$PGHEIGHT"
+        printf " Millimeters | %+8s x %-8s\n" "$(pointsToMillimeters $PGWIDTH)" "$(pointsToMillimeters $PGHEIGHT)"
+        printf "      Inches | %+8s x %-8s\n" "$(pointsToInches $PGWIDTH)" "$(pointsToInches $PGHEIGHT)"
+        exit $EXIT_SUCCESS
 }
 
 
@@ -523,6 +525,10 @@ getOptions() {
                         JUST_IDENTIFY=$TRUE
                         shift
                         ;;
+                -e|--explode|--split)
+                        EXPLODE_MODE=$TRUE
+                        shift
+                        ;;
                 -s|--scale|--setscale|--set-scale)
                         shift
                         parseScale "$1"
@@ -659,7 +665,7 @@ getOptions() {
 
         isEmpty "${_optArgs[2]}" || initError "Seems like you passed an extra file name?"$'\n'"Invalid option: ${_optArgs[2]}" $EXIT_INVALID_OPTION
 
-        if [[ $JUST_IDENTIFY -eq $TRUE ]]; then
+        if isJustIdentify; then
                 isEmpty "${_optArgs[1]}" || initError "Seems like you passed an extra file name?"$'\n'"Invalid option: ${_optArgs[1]}" $EXIT_INVALID_OPTION
                 VERBOSE=0      # remove verboseness if present
         fi
@@ -673,20 +679,22 @@ getOptions() {
 
         checkDeps
 
-        if [[ $JUST_IDENTIFY -eq $TRUE ]]; then
+        if isJustIdentify; then
                 return $TRUE    # no need to get output file, so return already
         fi
 
         _tgtFile="${_optArgs[1]}"
         local _autoName="${INFILEPDF%.*}" # remove possible stupid extension, like .pDF
+        local _exSuffix=""
+        isExplodeMode && _exSuffix='.Page%d'
         if isMixedMode; then
-                isEmpty "$_tgtFile" && OUTFILEPDF="${_autoName}.$(uppercase $RESIZE_PAPER_TYPE).SCALED.pdf"
+                isEmpty "$_tgtFile" && OUTFILEPDF="${_autoName}.$(uppercase $RESIZE_PAPER_TYPE).SCALED$_exSuffix.pdf"
         elif isResizeMode; then
-                isEmpty "$_tgtFile" && OUTFILEPDF="${_autoName}.$(uppercase $RESIZE_PAPER_TYPE).pdf"
+                isEmpty "$_tgtFile" && OUTFILEPDF="${_autoName}.$(uppercase $RESIZE_PAPER_TYPE)$_exSuffix.pdf"
         else
-                isEmpty "$_tgtFile" && OUTFILEPDF="${_autoName}.SCALED.pdf"
+                isEmpty "$_tgtFile" && OUTFILEPDF="${_autoName}.SCALED$_exSuffix.pdf"
         fi
-        isNotEmpty "$_tgtFile" && OUTFILEPDF="${_tgtFile%.pdf}.pdf"
+        isNotEmpty "$_tgtFile" && OUTFILEPDF="${_tgtFile%.pdf}$_exSuffix.pdf"
         validateOutFile 
 }
 
@@ -1056,32 +1064,32 @@ parseMode() {
         local param="$(lowercase $1)"
         case "${param}" in
                 c|catgrep|'cat+grep'|grep|g)
-                        ADAPTIVEMODE=$FALSE
+                        ADAPTIVE_MODE=$FALSE
                         MODE="CATGREP"
                         return $TRUE
                         ;;
                 i|imagemagick|identify)
-                        ADAPTIVEMODE=$FALSE
+                        ADAPTIVE_MODE=$FALSE
                         MODE="IDENTIFY"
                         return $TRUE
                         ;;
                 m|mdls|quartz|mac)
-                        ADAPTIVEMODE=$FALSE
+                        ADAPTIVE_MODE=$FALSE
                         MODE="MDLS"
                         return $TRUE
                         ;;
                 p|pdfinfo)
-                        ADAPTIVEMODE=$FALSE
+                        ADAPTIVE_MODE=$FALSE
                         MODE="PDFINFO"
                         return $TRUE
                         ;;
                 s|gs|ghostscript|ps|postscript)
-                        ADAPTIVEMODE=$FALSE
+                        ADAPTIVE_MODE=$FALSE
                         MODE="GS"
                         return $TRUE
                         ;;
                 a|auto|automatic|adaptive)
-                        ADAPTIVEMODE=$TRUE
+                        ADAPTIVE_MODE=$TRUE
                         MODE=""
                         return $TRUE
                         ;;
@@ -2014,7 +2022,7 @@ isMixedMode() {
 
 # Return $TRUE if adaptive mode is enabled, $FALSE otherwise
 isAdaptiveMode() {
-        return $ADAPTIVEMODE
+        return $ADAPTIVE_MODE
 }
 
 # Return $TRUE if adaptive mode is disabled, $FALSE otherwise
@@ -2022,6 +2030,29 @@ isNotAdaptiveMode() {
         isAdaptiveMode && return $FALSE
         return $TRUE
 }
+
+# Return $TRUE if explode mode is enabled, $FALSE otherwise
+isExplodeMode() {
+        return $EXPLODE_MODE
+}
+
+# Return $TRUE if explode mode is disabled, $FALSE otherwise
+isNotExplodeMode() {
+        isExplodeMode && return $FALSE
+        return $TRUE
+}
+
+# Return $TRUE if we should just print PDF info, $FALSE otherwise
+isJustIdentify() {
+        return $JUST_IDENTIFY
+}
+
+# Return $TRUE if we are not just printing PDF info, $FALSE otherwise
+isNotJustIdentify() {
+        isJustIdentify && return $FALSE
+        return $TRUE
+}
+
 
 
 ########################## VALIDATORS ##########################
@@ -2123,7 +2154,11 @@ isNotDir() {
 
 # Returns 0 if succeded, other integer otherwise
 isTouchable() {
-        touch "$1" 2>/dev/null
+        if touch "$1" 2>/dev/null; then
+                rm "$1" 2>/dev/null
+                return $EXIT_SUCCESS
+        fi
+        RETURN $EXIT_ERROR
 }
 
 # Returns $TRUE if $1 has a .pdf extension, false otherwsie
@@ -2266,6 +2301,7 @@ Parameters:
  -n, --no-overwrite
              Aborts execution if the output PDF file already exists
              By default, the output file will be overwritten
+             Does NOT work if using --explode
  -m, --mode <mode>
              Paper size detection mode 
              Modes: a, adaptive  Default mode, tries all the methods below
@@ -2276,6 +2312,8 @@ Parameters:
                     s, gs        Forces the use of Ghostscript (PS script)
  -i, --info <file>
              Prints <file> Paper Size information to screen and exits
+ -e, --explode
+             Explode (split) outuput PDF into many files (one per page)
  -s, --scale <factor>
              Changes the scaling factor or forces mixed mode
              Defaults: $SCALE (scale mode) / Disabled (resize mode)

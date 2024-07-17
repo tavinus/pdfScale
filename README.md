@@ -133,8 +133,8 @@ $ pdfscale -v -v -r 'custom mm 200 300' -f disable -s 0.95 ../mixsync\ manual\ v
 
 ## Help info
 ```
-$ ./pdfScale.sh --help
-pdfScale.sh v2.6.0
+$ ./pdfScale.sh -h
+pdfScale.sh v2.6.1
 
 Usage: pdfScale.sh <inFile.pdf>
        pdfScale.sh -i <inFile.pdf>
@@ -165,6 +165,7 @@ Parameters:
  -n, --no-overwrite
              Aborts execution if the output PDF file already exists
              By default, the output file will be overwritten
+             Does NOT work if using --explode
  -m, --mode <mode>
              Paper size detection mode
              Modes: a, adaptive  Default mode, tries all the methods below
@@ -175,6 +176,8 @@ Parameters:
                     s, gs        Forces the use of Ghostscript (PS script)
  -i, --info <file>
              Prints <file> Paper Size information to screen and exits
+ -e, --explode
+             Explode (split) outuput PDF into many files (one per page)
  -s, --scale <factor>
              Changes the scaling factor or forces mixed mode
              Defaults: 0.95 (scale mode) / Disabled (resize mode)
