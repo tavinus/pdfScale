@@ -105,6 +105,38 @@ pdfScale.sh v2.6.2 - Verbose Execution
   Final Status: File created successfully
 
 ```
+#### Resize to A3, Scale by 1.11 (+11%) and Explode the results
+*Exploding (splitting) will create a PDF file for each page, with the `.Page#.pdf` suffix*  
+```
+$ ./pdfScale.sh -v -s 1.11 -r A3 -e ../mixsync_manual_v1-4-2.pdf
+pdfScale.sh v2.6.2 - Verbose Execution
+   Mixed Tasks: Resize & Scale
+       Dry-Run: FALSE
+    Input File: ../mixsync_manual_v1-4-2.pdf
+   Output File: ../mixsync_manual_v1-4-2.A3.SCALED.Page%d.pdf
+   Explode PDF: Enabled
+ Get Page Size: Adaptive Enabled
+        Method: Grep
+    Page Range: None (all pages)
+  Source Width: 595 postscript-points
+ Source Height: 842 postscript-points
+    Print Mode: Print ( auto/empty )
+   Fit To Page: Enabled (default)
+   Auto Rotate: PageByPage
+   Flip Detect: No change needed
+  Run Resizing: A3 ( 842 x 1191 ) pts
+     New Width: 842 postscript-points
+    New Height: 1191 postscript-points
+  Scale Factor: 1.11
+ Scale Percent: +11%
+    Vert-Align: CENTER
+     Hor-Align: CENTER
+ Translation X: -41.72 = -41.72 + 0.00 (offset)
+ Translation Y: -59.01 = -59.01 + 0.00 (offset)
+    Background: No background (default)
+  Final Status: File created successfully
+
+```
 #### Resize to A2 and disables Auto-Rotation
 ```
 $ ./pdfScale.sh -v -r A2 -a none ../input.pdf
