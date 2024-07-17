@@ -548,7 +548,6 @@ brew install imagemagick xpdf
 ```
   
 ## Windows
-
 - The script should work fine in cygwin.
 - If you are using msys/git for windows, and the script exits with a 'file not found' error,
 - try running `export MSYS_NO_PATHCONV=1`
