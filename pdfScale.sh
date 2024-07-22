@@ -22,7 +22,7 @@
 #
 ################################################################
 
-VERSION="2.6.2"
+VERSION="2.6.3"
 
 
 ###################### EXTERNAL PROGRAMS #######################
@@ -77,6 +77,7 @@ RESIZE_HEIGHT=""            # Resized PDF Page Height
 PAGE_RANGE=""               # Pages to be processed (feeds -sPageList)
 PAGE_COUNT=""               # To store the PDF page count
 PAGE_SIZES=()               # To list all page sizes
+EXPLODE_SUFFIX='.Page%d'    # Suffix for exploded pages
 
 ############################# Image resolution (dpi) 
 IMAGE_RESOLUTION=300        # 300 is /Printer default
@@ -157,8 +158,9 @@ main() {
                 initMain "   Mixed Tasks: Resize & Scale"
                 local tempFile=""
                 local tempSuffix="$RANDOM$RANDOM""_TEMP_$RANDOM$RANDOM.pdf"
-                outputFile="$OUTFILEPDF"                    # backup outFile name
-                tempFile="${INFILEPDF%.pdf}.$tempSuffix"    # set a temp file name
+                outputFile="$OUTFILEPDF"                            # backup outFile name
+                tempFile="${OUTFILEPDF%.pdf}"                       # set temp file, remove .pdf extension
+                tempFile="${tempFile%$EXPLODE_SUFFIX}.$tempSuffix"  # remove explode and add temp suffix
                 if isFile "$tempFile"; then
                         printError $'Error! Temporary file name already exists!\n'"File: $tempFile"$'\nAborting execution to avoid overwriting the file.\nPlease Try again...'
                         exit $EXIT_TEMP_FILE_EXISTS
@@ -223,7 +225,7 @@ initMain() {
         vprint "       Dry-Run: $sim"
         vPrintFileInfo
         local exp="Disabled"
-        isExplodeMode && local exp="Enabled"
+        isExplodeMode && exp="Enabled"
         vprint "   Explode PDF: $exp"
         getPageSize
         vPrintRange
